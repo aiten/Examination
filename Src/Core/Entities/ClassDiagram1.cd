@@ -1,0 +1,183 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="Core.Entities.Exam">
+    <Position X="7.25" Y="3.25" Width="1.5" />
+    <AssociationLine Name="StudentExams" Type="Core.Entities.StudentExam" FixedToPoint="true">
+      <Path>
+        <Point X="7.25" Y="5.25" />
+        <Point X="5" Y="5.25" />
+      </Path>
+    </AssociationLine>
+    <AssociationLine Name="Course" Type="Core.Entities.Course" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="8.75" Y="3.875" />
+        <Point X="11.906" Y="3.875" />
+        <Point X="11.906" Y="1.925" />
+      </Path>
+    </AssociationLine>
+    <TypeIdentifier>
+      <HashCode>AgEEAAAAAACgAAAAAJACCAAAAAAIIAQBAAAAAAAAAAA=</HashCode>
+      <FileName>Entities\Exam.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="Teacher" />
+      <Property Name="Course" />
+    </ShowAsAssociation>
+    <ShowAsCollectionAssociation>
+      <Property Name="Subtasks" />
+      <Property Name="StudentExams" />
+    </ShowAsCollectionAssociation>
+  </Class>
+  <Class Name="Core.Entities.Class">
+    <Position X="4.75" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAMAAAAABAAgAAAAAAAACAAAAAAAAAAAAAAAABAAAAA=</HashCode>
+      <FileName>Entities\Class.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="Teacher" />
+    </ShowAsAssociation>
+    <ShowAsCollectionAssociation>
+      <Property Name="Students" />
+    </ShowAsCollectionAssociation>
+  </Class>
+  <Class Name="Core.Entities.Teacher">
+    <Position X="7.25" Y="0.5" Width="1.5" />
+    <AssociationLine Name="Courses" Type="Core.Entities.Course" FixedFromPoint="true">
+      <Path>
+        <Point X="8.75" Y="1.125" />
+        <Point X="10.75" Y="1.125" />
+      </Path>
+    </AssociationLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAEBAAAAAAAAAAAAAAAAAAAAAAAEAAAAAABAgAAg=</HashCode>
+      <FileName>Entities\Teacher.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsCollectionAssociation>
+      <Property Name="Exams" />
+      <Property Name="Courses" />
+    </ShowAsCollectionAssociation>
+  </Class>
+  <Class Name="Core.Entities.Subtask">
+    <Position X="10" Y="5" Width="1.5" />
+    <AssociationLine Name="StudentSubtasks" Type="Core.Entities.StudentSubtask" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="10.344" Y="7.002" />
+        <Point X="10.344" Y="7.479" />
+        <Point X="7" Y="7.479" />
+      </Path>
+    </AssociationLine>
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAAggAAAAAAAAAAAAgAAAABAAAAAAACAACA=</HashCode>
+      <FileName>Entities\Subtask.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="Exam" />
+    </ShowAsAssociation>
+    <ShowAsCollectionAssociation>
+      <Property Name="StudentSubtasks" />
+    </ShowAsCollectionAssociation>
+  </Class>
+  <Class Name="Core.Entities.Student">
+    <Position X="2" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAEAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAg=</HashCode>
+      <FileName>Entities\Student.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsCollectionAssociation>
+      <Property Name="Classes" />
+    </ShowAsCollectionAssociation>
+  </Class>
+  <Class Name="Core.Entities.StudentExam">
+    <Position X="3.5" Y="4.5" Width="1.5" />
+    <AssociationLine Name="Exam" Type="Core.Entities.Exam" FixedFromPoint="true">
+      <Path>
+        <Point X="5" Y="4.875" />
+        <Point X="7.25" Y="4.875" />
+      </Path>
+    </AssociationLine>
+    <TypeIdentifier>
+      <HashCode>CEACAAAAQAAAAAAAAAAAAAAAAAAAAABAAAAAAACCAAA=</HashCode>
+      <FileName>Entities\StudentExam.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="Student" />
+      <Property Name="Exam" />
+    </ShowAsAssociation>
+    <ShowAsCollectionAssociation>
+      <Property Name="StudentSubtasks" />
+    </ShowAsCollectionAssociation>
+  </Class>
+  <Class Name="Core.Entities.StudentSubtask">
+    <Position X="5.5" Y="6.5" Width="1.5" />
+    <AssociationLine Name="Subtask" Type="Core.Entities.Subtask" ManuallyRouted="true" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="7" Y="7.759" />
+        <Point X="10.75" Y="7.759" />
+        <Point X="10.75" Y="7.002" />
+      </Path>
+    </AssociationLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAEAEAAgAAAAgAAAAQAAAAAIAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Entities\StudentSubtask.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="StudentExam" />
+      <Property Name="Subtask" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="Core.Entities.Course">
+    <Position X="10.75" Y="0.5" Width="1.5" />
+    <AssociationLine Name="Teachers" Type="Core.Entities.Teacher" FixedToPoint="true">
+      <Path>
+        <Point X="10.75" Y="1.562" />
+        <Point X="8.75" Y="1.562" />
+      </Path>
+    </AssociationLine>
+    <AssociationLine Name="Exams" Type="Core.Entities.Exam" ManuallyRouted="true" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="11.312" Y="1.925" />
+        <Point X="11.312" Y="3.543" />
+        <Point X="8.75" Y="3.543" />
+      </Path>
+    </AssociationLine>
+    <AssociationLine Name="Subject" Type="Core.Entities.Subject" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="12.25" Y="1.491" />
+        <Point X="13.188" Y="1.491" />
+        <Point X="13.188" Y="3.5" />
+      </Path>
+    </AssociationLine>
+    <AssociationLine Name="Classes" Type="Core.Entities.Class" ManuallyRouted="true" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="11.375" Y="0.5" />
+        <Point X="11.375" Y="0.26" />
+        <Point X="5.812" Y="0.26" />
+        <Point X="5.812" Y="1.5" />
+      </Path>
+    </AssociationLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAEAEAAAAAAIAAAAQAAAAAAAAAAAAAAgAgAAA=</HashCode>
+      <FileName>Entities\Course.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="Subject" />
+    </ShowAsAssociation>
+    <ShowAsCollectionAssociation>
+      <Property Name="Teachers" />
+      <Property Name="Exams" />
+      <Property Name="Classes" />
+    </ShowAsCollectionAssociation>
+  </Class>
+  <Class Name="Core.Entities.Subject">
+    <Position X="12.75" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAABAAAAA=</HashCode>
+      <FileName>Entities\Subject.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsCollectionAssociation>
+      <Property Name="Courses" />
+    </ShowAsCollectionAssociation>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>
