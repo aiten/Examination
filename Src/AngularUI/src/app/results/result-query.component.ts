@@ -1,6 +1,6 @@
-import { Component, signal } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ResultService } from '../services/result.service';
 import { StudentExamResultQuery } from '../models/exam-result.model';
 
@@ -40,7 +40,7 @@ import { StudentExamResultQuery } from '../models/exam-result.model';
     </div>
   `
 })
-export class ResultQueryComponent {
+export class ResultQueryComponent implements OnInit {
   firstName = '';
   lastName = '';
   pin: number | null = null;
@@ -48,7 +48,15 @@ export class ResultQueryComponent {
   loading = signal(false);
   error = signal('');
 
-  constructor(private service: ResultService, private router: Router) {}
+  constructor(private service: ResultService, private router: Router, private route: ActivatedRoute) {}
+
+  ngOnInit(): void {
+    const p = this.route.snapshot.queryParamMap;
+    if (p.has('firstName'))       this.firstName = p.get('firstName')!;
+    if (p.has('lastName'))        this.lastName = p.get('lastName')!;
+    if (p.has('pin'))             this.pin = Number(p.get('pin'));
+    if (p.has('registrationCode')) this.registrationCode = p.get('registrationCode')!;
+  }
 
   submit(): void {
     this.loading.set(true);

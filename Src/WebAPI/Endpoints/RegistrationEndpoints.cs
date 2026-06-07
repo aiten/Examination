@@ -6,7 +6,7 @@ using WebAPI.Filters;
 
 public record ExamRegistrationDto(string FirstName, string LastName, string LoginName, int Pin);
 
-public record ExamRegistrationResultDto(int Id, string StudentName, string ExamDescription, DateOnly ExamDate, string RegistrationCode);
+public record ExamRegistrationResultDto(int Id, string LastName, string FirstName, int Pin, string ExamDescription, DateOnly ExamDate, string RegistrationCode);
 
 public static class RegistrationEndpoints
 {
@@ -29,7 +29,9 @@ public static class RegistrationEndpoints
                     return Results.Created($"/api/exam/{registration.ExamId}",
                         new ExamRegistrationResultDto(
                             registration.Id,
-                            $"{registration.Student.LastName}, {registration.Student.FirstName}",
+                            registration.Student.LastName, 
+                            registration.Student.FirstName,
+                            registration.Exam.Pin??0,
                             registration.Exam.Description,
                             registration.Exam.Date,
                             registration.RegistrationCode));

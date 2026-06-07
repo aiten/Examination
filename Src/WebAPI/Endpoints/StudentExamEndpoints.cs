@@ -125,6 +125,8 @@ public static class StudentExamEndpoints
 
         route.MapDelete("/{id:int}", async (int examId, int id, IUnitOfWork uow) =>
             {
+                using var trans = await  uow.BeginTransactionAsync();
+
                 var entity = await uow.StudentExams.GetByIdAsync(id);
 
                 if (entity is null || entity.ExamId != examId)
@@ -135,8 +137,19 @@ public static class StudentExamEndpoints
                         detail: $"No StudentExam found with ID {id} for exam {examId}");
                 }
 
-                uow.StudentExams.Remove(entity);
-                await uow.SaveChangesAsync();
+                try
+                {
+                    await uow.StudentExams.DeleteAsync(entity.Id);
+                    await trans.CommitTransactionAsync();
+                }
+                catch (InvalidOperationException ex)
+                {
+                    return Results.Problem(
+                        statusCode: StatusCodes.Status400BadRequest,
+                        title: "Delete failed",
+                        detail: ex.Message);
+                }
+
 
                 return Results.NoContent();
             })

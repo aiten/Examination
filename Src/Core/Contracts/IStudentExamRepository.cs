@@ -14,5 +14,7 @@ public interface IStudentExamRepository : IGenericRepository<StudentExam>
     Task<IList<StudentExamSummary>> GetStudentExamSummaryAsync(int examId);
     Task<StudentExamResult> GetStudentResultAsync(string firstName, string lastName, int pin, string registrationCode);
 
+    Task DeleteAsync(int studentExamId);
+
     void Check(int examId, int studentExamId);
 }

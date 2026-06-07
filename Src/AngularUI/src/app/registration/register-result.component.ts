@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, computed, effect, ElementRef, ViewChild } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { RegistrationService } from '../services/registration.service';
+import QRCode from 'qrcode';
 
 @Component({
   selector: 'app-register-result',
@@ -13,7 +14,7 @@ import { RegistrationService } from '../services/registration.service';
         <div class="form">
           <div class="form-group">
             <label>Student</label>
-            <p>{{ result()!.studentName }}</p>
+            <p>{{ result()!.lastName }}, {{ result()!.firstName }}</p>
           </div>
           <div class="form-group">
             <label>Exam</label>
@@ -27,8 +28,12 @@ import { RegistrationService } from '../services/registration.service';
             <label>Registration Code</label>
             <p class="code-box">{{ result()!.registrationCode }}</p>
           </div>
+          <div class="form-group">
+            <label>Result QR Code</label>
+            <canvas #qrCanvas></canvas>
+          </div>
           <div class="form-actions">
-            <a routerLink="/registration" class="btn btn-primary">Register again</a>
+            <a [routerLink]="['/result']" [queryParams]="resultQueryParams()" class="btn btn-primary">View My Result</a>
           </div>
         </div>
       </div>
@@ -40,9 +45,39 @@ import { RegistrationService } from '../services/registration.service';
   `
 })
 export class RegisterResultComponent {
+  @ViewChild('qrCanvas') qrCanvas!: ElementRef<HTMLCanvasElement>;
+
   result;
+  resultQueryParams;
+  resultUrl;
 
   constructor(private service: RegistrationService) {
     this.result = service.result;
+    this.resultQueryParams = computed(() => {
+      const r = this.result();
+      if (!r) return {};
+      return { firstName: r.firstName, lastName: r.lastName, pin: r.pin, registrationCode: r.registrationCode };
+    });
+    this.resultUrl = computed(() => {
+      const r = this.result();
+      if (!r) return '';
+      const params = new URLSearchParams({
+        firstName: r.firstName,
+        lastName: r.lastName,
+        pin: String(r.pin),
+        registrationCode: r.registrationCode
+      });
+      return `${window.location.origin}/result?${params}`;
+    });
+
+    effect(() => {
+      const url = this.resultUrl();
+      if (!url) return;
+      setTimeout(() => {
+        if (this.qrCanvas?.nativeElement) {
+          QRCode.toCanvas(this.qrCanvas.nativeElement, url, { width: 200 });
+        }
+      });
+    });
   }
 }

@@ -7,7 +7,9 @@ export interface ExamRegistrationRequest {
 
 export interface ExamRegistrationResult {
   id: number;
-  studentName: string;
+  firstName: string;
+  lastName: string;
+  pin: number;
   examDescription: string;
   examDate: string;
   registrationCode: string;

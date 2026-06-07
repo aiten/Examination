@@ -31,6 +31,7 @@ import { StudentExamService } from '../services/student-exam.service';
           </div>
           <div class="form-actions">
             <button type="submit" class="btn btn-primary" [disabled]="form.invalid">Save</button>
+            <button type="button" class="btn btn-danger" (click)="remove()">Remove from Exam</button>
             <a [routerLink]="['/exams', examId, 'students']" class="btn">Cancel</a>
           </div>
           @if (error()) {
@@ -70,6 +71,13 @@ export class StudentExamFormComponent implements OnInit {
         this.error.set('Failed to load student exam.');
         this.loading.set(false);
       }
+    });
+  }
+
+  remove(): void {
+    this.service.delete(this.examId, this.studentExamId).subscribe({
+      next: () => this.router.navigate(['/exams', this.examId, 'students']),
+      error: err => this.error.set(err.error?.detail ?? 'Remove failed.')
     });
   }
 

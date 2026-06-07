@@ -227,7 +227,8 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         var result   = await response.Content.ReadFromJsonAsync<ExamRegistrationResultDto>();
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        result!.StudentName.Should().Be("Alice Smith");
+        result!.LastName.Should().Be("Alice");
+        result!.FirstName.Should().Be("Smith");
         result.ExamDescription.Should().Be("Test");
         await trans.Received(1).CommitTransactionAsync();
     }

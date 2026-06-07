@@ -28,4 +28,8 @@ export class StudentExamService {
   updateStudentExam(examId: number, id: number, data: StudentExamEdit): Observable<void> {
     return this.http.put<void>(`${this.url(examId)}/${id}`, data);
   }
+
+  delete(examId: number, id: number): Observable<void> {
+    return this.http.delete<void>(`${this.url(examId)}/${id}`);
+  }
 }

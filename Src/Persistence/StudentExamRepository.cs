@@ -19,6 +19,23 @@ public class StudentExamRepository : GenericRepository<StudentExam>, IStudentExa
         _dbContext = dbContext;
     }
 
+    public async Task DeleteAsync(int studentExamId)
+    {
+        var entity = await GetByIdAsync(studentExamId, nameof(StudentExam.StudentSubtasks));
+        if (entity is null)
+        {
+            throw new InvalidOperationException("StudentExam not found.");
+        }
+        if (entity.StudentSubtasks.Count(s => s.Result is not null) > 0) 
+        {
+            throw new InvalidOperationException("StudentExam has results and cannot be deleted.");
+        }
+
+        _dbContext.StudentSubtasks.RemoveRange(entity.StudentSubtasks);
+        Remove(entity);
+    }
+
+
     public async Task<IList<StudentExamOverview>> GetStudentExamOverviewsAsync(int examId)
     {
         var subtasks = await _dbContext.Subtasks
