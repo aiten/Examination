@@ -62,7 +62,7 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     {
         var overviews = new List<ExamOverview>
         {
-            new(1, "Kinder, lernt!", 123, "Mustermann", "2AHIF", new DateOnly(2026, 5, 7), new TimeOnly(8, 0), new TimeOnly(10, 0), ["X", "Y"], ["S1", "S2"])
+            new(1, "Kinder, lernt!", 12345, "Mustermann", "2AHIF", new DateOnly(2026, 5, 7), new TimeOnly(8, 0), new TimeOnly(10, 0), ["X", "Y"], ["S1", "S2"])
         };
         _examRepo.GetExamOverviewsAsync(null, null).ReturnsForAnyArgs(overviews);
 
@@ -199,9 +199,9 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task PostExam_ValidPin_ReturnsCreated()
     {
-        var dto     = new ExamDto(0, "Test", (int)ExamType.Standard, 1, 1, new DateOnly(2026, 1, 1), new TimeOnly(8, 0), new TimeOnly(10, 0), 123);
+        var dto     = new ExamDto(0, "Test", (int)ExamType.Standard, 1, 1, new DateOnly(2026, 1, 1), new TimeOnly(8, 0), new TimeOnly(10, 0), 12345);
         var teacher = new Teacher { Id = 1, LastName    = "Mustermann" };
-        var created = new Exam { Id    = 1, Description = "Test", TeacherId = 1, Teacher = teacher, Created = DateTime.Today, ExamType = ExamType.Standard, Pin = 123, From = new TimeOnly(8, 0), To = new TimeOnly(10, 0) };
+        var created = new Exam { Id    = 1, Description = "Test", TeacherId = 1, Teacher = teacher, Created = DateTime.Today, ExamType = ExamType.Standard, Pin = 12345, From = new TimeOnly(8, 0), To = new TimeOnly(10, 0) };
 
         _examRepo.AddAsync(Arg.Any<Exam>()).Returns(Task.FromResult<EntityEntry<Exam>>(null!));
         _examRepo.GetByIdAsync(Arg.Any<int>()).ReturnsForAnyArgs(created);
@@ -214,13 +214,13 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task RegisterForExam_ValidRegistration_ReturnsCreated()
     {
-        var exam         = new Exam { Id = 1, Description = "Test", CourseId = 1, Pin = 123, Date = new DateOnly(2026, 1, 1), ExamType = ExamType.Standard };
+        var exam         = new Exam { Id = 1, Description = "Test", CourseId = 1, Pin = 12345, Date = new DateOnly(2026, 1, 1), ExamType = ExamType.Standard };
         var student      = new Student { Id = 1, FirstName = "Alice", LastName = "Smith" };
         var registration = new StudentExam { Id = 1, StudentId = 1, ExamId = 1, LoginName = "alice", RegistrationCode = "ABC12", Student = student, Exam = exam };
         var trans        = Substitute.For<ITransaction>();
-        var dto          = new ExamRegistrationDto("Alice", "Smith", "alice", 123);
+        var dto          = new ExamRegistrationDto("Alice", "Smith", "alice", 12345);
 
-        _examRepo.RegisterStudentAsync("Alice", "Smith", "alice", 123).Returns(registration);
+        _examRepo.RegisterStudentAsync("Alice", "Smith", "alice", 12345).Returns(registration);
         _uow.BeginTransactionAsync().Returns(trans);
 
         var response = await _client.PostAsJsonAsync("/api/exam/register", dto);
@@ -235,8 +235,8 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task RegisterForExam_InvalidPin_ReturnsBadRequest()
     {
-        var dto = new ExamRegistrationDto("Alice", "Smith", "alice", 123);
-        _examRepo.RegisterStudentAsync(default!, default!, default!, default).ReturnsForAnyArgs<StudentExam>(_ => throw new InvalidOperationException("No exam found with PIN 123"));
+        var dto = new ExamRegistrationDto("Alice", "Smith", "alice", 12345);
+        _examRepo.RegisterStudentAsync(default!, default!, default!, default).ReturnsForAnyArgs<StudentExam>(_ => throw new InvalidOperationException("No exam found with PIN 12345"));
 
         var response = await _client.PostAsJsonAsync("/api/exam/register", dto);
 
@@ -246,7 +246,7 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task RegisterForExam_StudentNotFound_ReturnsBadRequest()
     {
-        var dto = new ExamRegistrationDto("Unknown", "User", "unknown", 123);
+        var dto = new ExamRegistrationDto("Unknown", "User", "unknown", 12345);
         _examRepo.RegisterStudentAsync(default!, default!, default!, default).ReturnsForAnyArgs<StudentExam>(_ => throw new InvalidOperationException("No student found with name 'Unknown User'"));
 
         var response = await _client.PostAsJsonAsync("/api/exam/register", dto);
@@ -257,7 +257,7 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task RegisterForExam_StudentNotInClass_ReturnsBadRequest()
     {
-        var dto = new ExamRegistrationDto("Alice", "Smith", "alice", 123);
+        var dto = new ExamRegistrationDto("Alice", "Smith", "alice", 12345);
         _examRepo.RegisterStudentAsync(default!, default!, default!, default).ReturnsForAnyArgs<StudentExam>(_ => throw new InvalidOperationException("Student 'Alice Smith' is not enrolled in the class of this exam"));
 
         var response = await _client.PostAsJsonAsync("/api/exam/register", dto);
@@ -268,7 +268,7 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task RegisterForExam_AlreadyRegistered_ReturnsBadRequest()
     {
-        var dto = new ExamRegistrationDto("Alice", "Smith", "alice", 123);
+        var dto = new ExamRegistrationDto("Alice", "Smith", "alice", 12345);
         _examRepo.RegisterStudentAsync(default!, default!, default!, default).ReturnsForAnyArgs<StudentExam>(_ => throw new InvalidOperationException("Student 'Alice Smith' is already registered for this exam"));
 
         var response = await _client.PostAsJsonAsync("/api/exam/register", dto);
@@ -289,7 +289,7 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task RegisterForExam_EmptyLoginName_ReturnsBadRequest()
     {
-        var dto = new ExamRegistrationDto("Alice", "Smith", "", 123);
+        var dto = new ExamRegistrationDto("Alice", "Smith", "", 12345);
 
         var response = await _client.PostAsJsonAsync("/api/exam/register", dto);
 

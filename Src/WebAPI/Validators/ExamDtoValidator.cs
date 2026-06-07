@@ -17,8 +17,8 @@ public class ExamDtoValidator : AbstractValidator<ExamDto>
             .WithMessage("From time must be before To time.");
 
         RuleFor(x => x.Pin)
-            .InclusiveBetween(100, 999)
+            .InclusiveBetween(10000, 99999)
             .When(x => x.Pin.HasValue)
-            .WithMessage("Pin must be between 100 and 999.");
+            .WithMessage("Pin must be between 10000 and 99999.");
     }
 }

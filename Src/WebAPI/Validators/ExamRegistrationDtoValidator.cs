@@ -24,7 +24,7 @@ public class ExamRegistrationDtoValidator : AbstractValidator<ExamRegistrationDt
             .WithMessage("LoginName must not be empty and at most 32 characters.");
 
         RuleFor(x => x.Pin)
-            .InclusiveBetween(100, 999)
-            .WithMessage("Pin must be between 100 and 999.");
+            .InclusiveBetween(10000, 99999)
+            .WithMessage("Pin must be between 10000 and 99999.");
     }
 }

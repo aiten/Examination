@@ -20,7 +20,7 @@ public class Exam : EntityObject
     [ExamRange]
     public TimeOnly To { get; set; }
 
-    [Range(100, 999)]
+    [Range(10000, 99999)]
     public int? Pin { get; set; }
 
     public DateTime  Created  { get; set; }

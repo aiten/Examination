@@ -26,7 +26,7 @@ import { ExamRegistrationRequest } from '../models/registration.model';
         </div>
         <div class="form-group">
           <label>PIN *</label>
-          <input type="number" name="pin" [(ngModel)]="pin" required min="100" max="999" class="form-control" />
+          <input type="number" name="pin" [(ngModel)]="pin" required min="10000" max="99999" class="form-control" />
         </div>
         <div class="form-actions">
           <button type="submit" class="btn btn-primary" [disabled]="form.invalid || loading()">

@@ -63,8 +63,8 @@ import { CourseService } from '../services/course.service';
           <p class="error">End time must be after start time.</p>
         }
         <div class="form-group">
-          <label>PIN (100–999)</label>
-          <input type="number" name="pin" [(ngModel)]="exam().pin" min="100" max="999" class="form-control" />
+          <label>PIN (10000–99999)</label>
+          <input type="number" name="pin" [(ngModel)]="exam().pin" min="10000" max="99999" class="form-control" />
         </div>
         <div class="form-actions">
           <button type="submit" class="btn btn-primary" [disabled]="form.invalid || (exam().from && exam().to && exam().from >= exam().to)">Save</button>
