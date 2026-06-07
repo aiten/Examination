@@ -15,7 +15,9 @@ public record ExamDto(
     DateOnly Date,
     TimeOnly From,
     TimeOnly To,
-    int?     Pin
+    int?     Pin,
+    bool     CanRegister    = true,
+    bool     CanShowResults = false
 );
 
 public static class ExamEndpoints
@@ -48,7 +50,9 @@ public static class ExamEndpoints
             entity.Date,
             entity.From,
             entity.To,
-            entity.Pin
+            entity.Pin,
+            entity.CanRegister,
+            entity.CanShowResults
         );
     }
 
@@ -131,15 +135,17 @@ public static class ExamEndpoints
                             detail: $"No Exam found with ID {id}");
                     }
 
-                    entity.Description = dto.Description;
-                    entity.ExamType    = (ExamType)dto.ExamType;
-                    entity.CourseId    = dto.CourseId;
-                    entity.TeacherId   = dto.TeacherId;
-                    entity.Pin         = dto.Pin;
-                    entity.Date        = dto.Date;
-                    entity.From        = dto.From;
-                    entity.To          = dto.To;
-                    entity.Modified    = DateTime.Now;
+                    entity.Description    = dto.Description;
+                    entity.ExamType       = (ExamType)dto.ExamType;
+                    entity.CourseId       = dto.CourseId;
+                    entity.TeacherId      = dto.TeacherId;
+                    entity.Pin            = dto.Pin;
+                    entity.Date           = dto.Date;
+                    entity.From           = dto.From;
+                    entity.To             = dto.To;
+                    entity.CanRegister    = dto.CanRegister;
+                    entity.CanShowResults = dto.CanShowResults;
+                    entity.Modified       = DateTime.Now;
 
                     await trans.CommitTransactionAsync();
                 }
@@ -167,15 +173,17 @@ public static class ExamEndpoints
                 {
                     var entity = ToEntity(dto);
 
-                    entity.Created   = DateTime.Now;
-                    entity.Modified  = null;
-                    entity.ExamType  = (ExamType)dto.ExamType;
-                    entity.CourseId  = dto.CourseId;
-                    entity.TeacherId = dto.TeacherId;
-                    entity.Pin       = dto.Pin;
-                    entity.Date      = dto.Date;
-                    entity.From      = dto.From;
-                    entity.To        = dto.To;
+                    entity.Created        = DateTime.Now;
+                    entity.Modified       = null;
+                    entity.ExamType       = (ExamType)dto.ExamType;
+                    entity.CourseId       = dto.CourseId;
+                    entity.TeacherId      = dto.TeacherId;
+                    entity.Pin            = dto.Pin;
+                    entity.Date           = dto.Date;
+                    entity.From           = dto.From;
+                    entity.To             = dto.To;
+                    entity.CanRegister    = dto.CanRegister;
+                    entity.CanShowResults = dto.CanShowResults;
 
                     await uow.Exams.AddAsync(entity);
 
