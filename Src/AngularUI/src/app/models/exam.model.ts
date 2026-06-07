@@ -8,4 +8,6 @@ export interface Exam {
   from: string;
   to: string;
   pin: number | null;
+  canRegister: boolean;
+  canShowResults: boolean;
 }

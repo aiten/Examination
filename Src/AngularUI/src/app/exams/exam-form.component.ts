@@ -21,6 +21,22 @@ import { CourseService } from '../services/course.service';
           <textarea name="description" [(ngModel)]="exam().description" required rows="3" class="form-control"></textarea>
         </div>
         <div class="form-group">
+          <label>PIN (10000–99999)</label>
+          <input type="number" name="pin" [(ngModel)]="exam().pin" min="10000" max="99999" class="form-control" />
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" name="canRegister" [(ngModel)]="exam().canRegister" />
+            Can Register
+          </label>
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" name="canShowResults" [(ngModel)]="exam().canShowResults" />
+            Can Show Results
+          </label>
+        </div>
+        <div class="form-group">
           <label>Type *</label>
           <select name="examType" [(ngModel)]="exam().examType" class="form-control">
             <option [ngValue]="0">Standard</option>
@@ -62,10 +78,6 @@ import { CourseService } from '../services/course.service';
         @if (exam().from && exam().to && exam().from >= exam().to) {
           <p class="error">End time must be after start time.</p>
         }
-        <div class="form-group">
-          <label>PIN (10000–99999)</label>
-          <input type="number" name="pin" [(ngModel)]="exam().pin" min="10000" max="99999" class="form-control" />
-        </div>
         <div class="form-actions">
           <button type="submit" class="btn btn-primary" [disabled]="form.invalid || (exam().from && exam().to && exam().from >= exam().to)">Save</button>
           <a routerLink="/exams" class="btn">Cancel</a>
@@ -78,7 +90,7 @@ import { CourseService } from '../services/course.service';
   `
 })
 export class ExamFormComponent implements OnInit {
-  exam = signal<Exam>({ id: 0, description: '', examType: 0, teacherId: 0, courseId: 0, date: '2026-05-07', from: '08:00', to: '09:00', pin: null });
+  exam = signal<Exam>({ id: 0, description: '', examType: 0, teacherId: 0, courseId: 0, date: '2026-05-07', from: '08:00', to: '09:00', pin: null, canRegister: true, canShowResults: false });
   teachers = signal<Teacher[]>([]);
   courses = signal<Course[]>([]);
   isNew = true;
