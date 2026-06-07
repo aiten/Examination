@@ -117,7 +117,7 @@ public class StudentExamRepository : GenericRepository<StudentExam>, IStudentExa
         return new StudentExamResult(
             exam.Description,
             exam.Date,
-            $"{studentExam.Student.FirstName} {studentExam.Student.LastName}",
+            $"{studentExam.Student.LastName}, {studentExam.Student.FirstName}",
             resultSubtasks,
             totalPoints,
             percent,

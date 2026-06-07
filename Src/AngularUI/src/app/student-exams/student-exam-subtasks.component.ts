@@ -113,7 +113,7 @@ export class StudentExamSubtasksComponent implements OnInit {
     this.loading.set(true);
     this.studentExamService.getById(this.examId, this.studentExamId).subscribe({
       next: detail => {
-        this.title.set(`${detail.lastName} ${detail.firstName} — Subtask Results`);
+        this.title.set(`${detail.lastName}, ${detail.firstName} — Subtask Results`);
       }
     });
     this.subtaskService.getAll(this.examId, this.studentExamId).subscribe({

@@ -23,7 +23,7 @@ export class UserProfileComponent implements OnInit {
       console.log(await this.keycloak.hasResourceRole(environment.roles.viewProfile));
 
       this.user = {
-        name: `${profile?.firstName} ${profile.lastName}`,
+        name: `${profile.lastName}, ${profile?.firstName}`,
         email: profile?.email,
         username: profile?.username
       };

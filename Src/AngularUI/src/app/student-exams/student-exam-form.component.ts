@@ -62,7 +62,7 @@ export class StudentExamFormComponent implements OnInit {
     this.loading.set(true);
     this.service.getById(this.examId, this.studentExamId).subscribe({
       next: detail => {
-        this.title.set(`Edit — ${detail.lastName} ${detail.firstName}`);
+        this.title.set(`Edit — ${detail.lastName}, ${detail.firstName}`);
         this.data.set({ id: detail.id, loginName: detail.loginName, registrationCode: detail.registrationCode });
         this.loading.set(false);
       },

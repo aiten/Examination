@@ -21,6 +21,8 @@ import { CourseListComponent } from './courses/course-list.component';
 import { CourseFormComponent } from './courses/course-form.component';
 import { RegisterFormComponent } from './registration/register-form.component';
 import { RegisterResultComponent } from './registration/register-result.component';
+import { ResultQueryComponent } from './results/result-query.component';
+import { ResultDisplayComponent } from './results/result-display.component';
 import { SubtaskListComponent } from './subtasks/subtask-list.component';
 import { StudentExamListComponent } from './student-exams/student-exam-list.component';
 import { StudentExamFormComponent } from './student-exams/student-exam-form.component';
@@ -48,6 +50,8 @@ export const routes: Routes = [
   { path: 'courses/:id', component: CourseFormComponent, canActivate: [canActivateAuthRole],   data: { role: environment.roles.admin },  },
   { path: 'registration', component: RegisterFormComponent },
   { path: 'registration/result', component: RegisterResultComponent },
+  { path: 'result', component: ResultQueryComponent },
+  { path: 'result/display', component: ResultDisplayComponent },
   { path: 'profile', component: UserProfileComponent,  canActivate: [canActivateAuthRole],    data: { role: environment.roles.viewProfile }  },
   { path: 'forbidden', component: ForbiddenComponent },
   { path: '**', redirectTo: '/home' } 

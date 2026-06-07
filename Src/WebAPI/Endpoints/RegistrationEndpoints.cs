@@ -29,7 +29,7 @@ public static class RegistrationEndpoints
                     return Results.Created($"/api/exam/{registration.ExamId}",
                         new ExamRegistrationResultDto(
                             registration.Id,
-                            $"{registration.Student.FirstName} {registration.Student.LastName}",
+                            $"{registration.Student.LastName}, {registration.Student.FirstName}",
                             registration.Exam.Description,
                             registration.Exam.Date,
                             registration.RegistrationCode));

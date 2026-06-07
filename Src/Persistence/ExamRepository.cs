@@ -33,18 +33,18 @@ public class ExamRepository : GenericRepository<Exam>, IExamRepository
             .Include(s => s.Classes)
             .FirstOrDefaultAsync(s => s.FirstName == firstName && s.LastName == lastName);
         if (student is null)
-            throw new InvalidOperationException($"No student found with name '{firstName} {lastName}'");
+            throw new InvalidOperationException($"No student found with name '{lastName}, {firstName}'");
 
         var course = await _dbContext.Courses
             .Include(c => c.Classes)
             .FirstOrDefaultAsync(c => c.Id == exam.CourseId);
         if (course is null || !course.Classes.Any(c => student.Classes.Any(sc => sc.Id == c.Id)))
-            throw new InvalidOperationException($"Student '{firstName} {lastName}' is not enrolled in any class of this exam's course");
+            throw new InvalidOperationException($"Student '{lastName}, {firstName} ' is not enrolled in any class of this exam's course");
 
         bool alreadyRegistered = await _dbContext.StudentExams
             .AnyAsync(se => se.StudentId == student.Id && se.ExamId == exam.Id);
         if (alreadyRegistered)
-            throw new InvalidOperationException($"Student '{firstName} {lastName}' is already registered for this exam");
+            throw new InvalidOperationException($"Student '{lastName}, {firstName}' is already registered for this exam");
 
         var registration = new StudentExam
         {
@@ -98,7 +98,7 @@ public class ExamRepository : GenericRepository<Exam>, IExamRepository
                 e.From,
                 e.To,
                 e.Subtasks.Select(s => s.Description).ToList(),
-                e.StudentExams.Select(se => $"{se.Student.FirstName} {se.Student.LastName}").ToList()
+                e.StudentExams.Select(se => $"{se.Student.LastName}, {se.Student.FirstName}").ToList()
             ))
             .ToListAsync();
     }
