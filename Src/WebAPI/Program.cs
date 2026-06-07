@@ -157,6 +157,7 @@ app.MapStudentExamEndpoints("/api/exam");
 app.MapStudentSubtaskEndpoints("/api/exam");
 app.MapStudentEndpoints("/api/student");
 app.MapRegistrationEndpoints("/api/registration");
+app.MapResultEndpoints("/api/result");
 
 app.MapFallbackToFile("index.html");
 

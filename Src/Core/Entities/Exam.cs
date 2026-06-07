@@ -23,6 +23,9 @@ public class Exam : EntityObject
     [Range(10000, 99999)]
     public int? Pin { get; set; }
 
+    public bool CanRegister    { get; set; } = true;
+    public bool CanShowResults { get; set; } = false;
+
     public DateTime  Created  { get; set; }
     public DateTime? Modified { get; set; } = null;
 

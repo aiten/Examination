@@ -38,7 +38,7 @@ public class StudentExamRepository : GenericRepository<StudentExam>, IStudentExa
                 se.Student.LastName,
                 se.LoginName,
                 se.RegistrationCode,
-                Points     = (decimal) se.StudentSubtasks.Sum(ss => (double)(ss.Result ?? 0m) * (double) ss.Subtask.Points),
+                Points     = (decimal)se.StudentSubtasks.Sum(ss => (double)(ss.Result ?? 0m) * (double)ss.Subtask.Points),
                 CountRated = se.StudentSubtasks.Count(ss => ss.Result.HasValue && ss.Subtask.Bonus == false)
             })
             .ToListAsync();
@@ -52,7 +52,7 @@ public class StudentExamRepository : GenericRepository<StudentExam>, IStudentExa
             r.RegistrationCode,
             r.CountRated,
             r.CountRated == countRatable ? r.Points : null,
-            r.CountRated == countRatable ? Math.Round(r.Points / totalMaxPoints * 100m,2) : null,
+            r.CountRated == countRatable ? Math.Round(r.Points / totalMaxPoints * 100m, 2) : null,
             r.CountRated == countRatable ? ExamRepository.CalculateGrade(r.Points / totalMaxPoints) : null
         )).ToList();
     }
@@ -64,6 +64,65 @@ public class StudentExamRepository : GenericRepository<StudentExam>, IStudentExa
             .GroupBy(r => r.Grade)
             .Select(g => new StudentExamSummary(g.Key, g.Count()))
             .ToList();
+    }
+
+    public async Task<StudentExamResult> GetStudentResultAsync(string firstName, string lastName, int pin, string registrationCode)
+    {
+        var exam = await _dbContext.Exams.FirstOrDefaultAsync(e => e.Pin == pin);
+        if (exam is null)
+            throw new InvalidOperationException("No result found for the given data.");
+
+        if (!exam.CanShowResults)
+            throw new InvalidOperationException("Results are not yet available for this exam.");
+
+        var studentExam = await _dbContext.StudentExams
+            .Include(se => se.Student)
+            .Include(se => se.StudentSubtasks)
+            .ThenInclude(ss => ss.Subtask)
+            .FirstOrDefaultAsync(se =>
+                se.ExamId == exam.Id &&
+                se.RegistrationCode == registrationCode &&
+                se.Student.FirstName == firstName &&
+                se.Student.LastName == lastName);
+
+        if (studentExam is null)
+            throw new InvalidOperationException("No result found for the given data.");
+
+        var subtasks = await _dbContext.Subtasks
+            .Where(s => s.ExamId == exam.Id)
+            .ToListAsync();
+
+        var totalMaxPoints = subtasks.Sum(s => s.Bonus ? 0 : s.Points);
+        var countRatable   = subtasks.Count(s => !s.Bonus);
+
+        var resultSubtasks = subtasks
+            .OrderBy(s => s.SeqNo)
+            .Select(s =>
+            {
+                var ss = studentExam.StudentSubtasks.FirstOrDefault(x => x.SubtaskId == s.Id);
+                return new StudentExamResultSubtask(s.SeqNo, s.Description, s.Points, ss?.Result, ss?.Comment, s.Bonus);
+            })
+            .ToList();
+
+        var countRated = studentExam.StudentSubtasks.Count(ss => ss.Result.HasValue && !ss.Subtask.Bonus);
+        var allRated   = countRated == countRatable;
+
+        if (!allRated)
+            throw new InvalidOperationException("Results are not yet available for this exam.");
+
+        var totalPoints = (decimal?)studentExam.StudentSubtasks.Sum(ss => (ss.Result ?? 0m) * ss.Subtask.Points);
+        var percent     = totalMaxPoints > 0 ? Math.Round(totalPoints!.Value / totalMaxPoints * 100m, 2) : (decimal?)null;
+        var grade       = totalMaxPoints > 0 ? (int?)ExamRepository.CalculateGrade(totalPoints!.Value / totalMaxPoints) : null;
+
+        return new StudentExamResult(
+            exam.Description,
+            exam.Date,
+            $"{studentExam.Student.FirstName} {studentExam.Student.LastName}",
+            resultSubtasks,
+            totalPoints,
+            percent,
+            grade
+        );
     }
 
     public void Check(int examId, int studentExamId)
