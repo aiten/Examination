@@ -11,8 +11,6 @@
     <a routerLink="/courses" class="action-item" *kaHasRoles="[roles.admin]">Courses</a>
     <a routerLink="/students" class="action-item" *kaHasRoles="[roles.admin]">Students</a>
     <a routerLink="/exams" class="action-item" *kaHasRoles="[roles.user]">Exams</a>
-    <a routerLink="/registration" class="action-item" routerLinkActive="active">Register</a>
-    <a routerLink="/result" class="action-item" routerLinkActive="active">My Result</a>
     <a routerLink="/profile" class="action-item" *kaHasRoles="[roles.viewProfile]">Profile</a>
 
     @if (this.keycloak.hasResourceRole(roles.viewProfile) || this.keycloak.hasRealmRole(roles.viewProfile)) {
