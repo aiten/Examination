@@ -101,7 +101,7 @@ export class ResultDisplayComponent {
   reachedPercent(row: StudentExamResultSubtask): string {
     if (row.result == null) return '—';
     if (row.points === 0) return '—';
-    return (Math.round((row.result / row.points) * 1000) / 10) + ' %';
+    return Math.round((row.result * 1000) / 10) + ' %';
   }
 
   private compare(a: StudentExamResultSubtask, b: StudentExamResultSubtask): number {

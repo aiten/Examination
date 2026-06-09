@@ -12,7 +12,7 @@ import { ExamService } from '../services/exam.service';
   styles: [`
     .grid-input { width: 100%; padding: 4px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: .95rem; box-sizing: border-box; }
     .grid-input:focus { outline: none; border-color: #1a73e8; box-shadow: 0 0 0 2px rgba(26,115,232,.2); }
-    .col-seq { width: 70px; }
+    .col-seq { width: 90px; }
     .col-points { width: 110px; }
     .col-bonus { width: 80px; text-align: center; }
     .col-actions { width: 170px; white-space: nowrap; }
