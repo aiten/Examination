@@ -15,7 +15,7 @@ import { ExamService } from '../services/exam.service';
     .col-seq { width: 90px; }
     .col-points { width: 110px; }
     .col-bonus { width: 80px; text-align: center; }
-    .col-actions { width: 170px; white-space: nowrap; }
+    .col-actions { width: 220px; white-space: nowrap; }
   `],
   template: `
     <div class="page">
@@ -81,6 +81,7 @@ import { ExamService } from '../services/exam.service';
                 <td class="col-actions">
                   <button class="btn btn-sm" (click)="startEdit(s)">Edit</button>
                   <button class="btn btn-sm btn-danger" (click)="delete(s.id)">Delete</button>
+                  <a [routerLink]="['/exams', examId, 'subtasks', s.id, 'students']" class="btn btn-sm">Result</a>
                 </td>
               </tr>
             }
@@ -139,7 +140,7 @@ import { ExamService } from '../services/exam.service';
   `
 })
 export class SubtaskListComponent implements OnInit {
-  private examId = 0;
+  examId = 0;
 
   subtasks = signal<Subtask[]>([]);
   examDescription = signal('');

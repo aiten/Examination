@@ -27,6 +27,7 @@ import { SubtaskListComponent } from './subtasks/subtask-list.component';
 import { StudentExamListComponent } from './student-exams/student-exam-list.component';
 import { StudentExamFormComponent } from './student-exams/student-exam-form.component';
 import { StudentExamSubtasksComponent } from './student-exams/student-exam-subtasks.component';
+import { SubtaskStudentsComponent } from './subtasks/subtask-students.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/home', pathMatch: 'full' },
@@ -37,6 +38,7 @@ export const routes: Routes = [
   { path: 'classes/:id', component: ClassFormComponent, canActivate: [canActivateAuthRole],   data: { role: environment.roles.admin },  },
   { path: 'exams', component: ExamListComponent , canActivate: [canActivateAuthRole],   data: { role: environment.roles.user },},
   { path: 'exams/:examId/subtasks', component: SubtaskListComponent , canActivate: [canActivateAuthRole],   data: { role: environment.roles.user },},
+  { path: 'exams/:examId/subtasks/:subtaskId/students', component: SubtaskStudentsComponent, canActivate: [canActivateAuthRole], data: { role: environment.roles.user } },
   { path: 'exams/:examId/students', component: StudentExamListComponent , canActivate: [canActivateAuthRole],   data: { role: environment.roles.user },},
   { path: 'exams/:examId/students/:id/edit', component: StudentExamFormComponent, canActivate: [canActivateAuthRole], data: { role: environment.roles.user } },
   { path: 'exams/:examId/students/:id/subtasks', component: StudentExamSubtasksComponent , canActivate: [canActivateAuthRole],   data: { role: environment.roles.user },},

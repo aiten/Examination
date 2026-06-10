@@ -118,7 +118,7 @@ public static class SubtaskStudentEndpoints
                 await uow.StudentSubtasks.AddAsync(entity);
                 await uow.SaveChangesAsync();
 
-                var created = await uow.StudentSubtasks.GetByIdAsync(entity.Id, "StudentExam");
+                var created = await uow.StudentSubtasks.GetByIdAsync(entity.Id, "StudentExam", "StudentExam.Student");
                 return Results.Created($"{examId}/subtasks/{subtaskId}/students/{entity.Id}", ToDto(created!));
             })
             .WithName("AddSubtaskStudent")
