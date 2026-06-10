@@ -10,6 +10,7 @@ public class ApplicationDbContext : DbContext
     {
     }
 
+    public DbSet<AuditLog>       AuditLogs       { get; set; }
     public DbSet<Teacher>        Teachers        { get; set; }
     public DbSet<Subtask>        Subtasks        { get; set; }
     public DbSet<Exam>           Exams           { get; set; }

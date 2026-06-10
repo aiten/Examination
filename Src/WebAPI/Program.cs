@@ -2,6 +2,8 @@ using Base.Core;
 
 using Core.Contracts;
 
+using Serilog;
+
 using FluentValidation;
 
 using Keycloak.AuthServices.Authentication;
@@ -19,6 +21,9 @@ using WebAPI;
 using WebAPI.Endpoints;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((ctx, lc) => lc
+    .ReadFrom.Configuration(ctx.Configuration));
 
 builder.Services.AddKeycloakWebApiAuthentication(builder.Configuration);
 builder.Services.AddCors();

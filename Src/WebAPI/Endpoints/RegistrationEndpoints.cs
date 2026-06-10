@@ -17,27 +17,36 @@ public static class RegistrationEndpoints
             .WithTags("Registration");
             // NO Auth required .RequireAuthorization(Settings.AdminPolicyName);
 
-        route.MapPost("", async (ExamRegistrationDto dto, IUnitOfWork uow) =>
+        route.MapPost("", async (ExamRegistrationDto dto, IUnitOfWork uow, ILoggerFactory loggerFactory) =>
             {
+                var logger = loggerFactory.CreateLogger(nameof(RegistrationEndpoints));
                 try
                 {
                     using var trans = await uow.BeginTransactionAsync();
                     var registration = await uow.Exams.RegisterStudentAsync(dto.FirstName, dto.LastName, dto.LoginName, dto.Pin);
-                   
+
                     await trans.CommitTransactionAsync();
-                    
+
+                    logger.LogInformation("Registration success: '{LastName}, {FirstName}' Exam={ExamDescription}",
+                        registration.Student.LastName,
+                        registration.Student.FirstName,
+                        registration.Exam.Description);
+
                     return Results.Created($"/api/exam/{registration.ExamId}",
                         new ExamRegistrationResultDto(
                             registration.Id,
-                            registration.Student.LastName, 
+                            registration.Student.LastName,
                             registration.Student.FirstName,
-                            registration.Exam.Pin??0,
+                            registration.Exam.Pin ?? 0,
                             registration.Exam.Description,
                             registration.Exam.Date,
                             registration.RegistrationCode));
                 }
                 catch (InvalidOperationException ex)
                 {
+                    logger.LogWarning("Registration failed: '{LastName}, {FirstName}' Pin={Pin} Error={Error}",
+                        dto.LastName, dto.FirstName, dto.Pin, ex.Message);
+
                     return Results.Problem(
                         statusCode: StatusCodes.Status400BadRequest,
                         title: "Registration failed",
