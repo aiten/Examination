@@ -16,4 +16,6 @@ public class Teacher : EntityObject
     public string? NickName { get; set; }
 
     public string? Abbreviation { get; set; }
+
+    public string? KeycloakUserId { get; set; }
 }

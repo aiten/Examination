@@ -27,5 +27,12 @@ public class TeacherConfiguration : IEntityTypeConfiguration<Teacher>
 
         builder.Property(c => c.Abbreviation)
             .HasMaxLength(10);
+
+        builder.Property(c => c.KeycloakUserId)
+            .HasMaxLength(64);
+
+        builder.HasIndex(c => c.KeycloakUserId)
+            .IsUnique()
+            .HasFilter("[KeycloakUserId] IS NOT NULL");
     }
 }

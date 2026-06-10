@@ -19,6 +19,7 @@ using Persistence;
 
 using WebAPI;
 using WebAPI.Endpoints;
+using WebAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -110,6 +111,8 @@ builder.Services.AddProblemDetails();
 
 builder.Services.AddCors(options => { options.AddDefaultPolicy(policy => { policy.AllowAnyHeader().AllowAnyOrigin().AllowAnyMethod(); }); });
 
+
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 builder.Services
     .AddScoped<IUnitOfWork, UnitOfWork>()
