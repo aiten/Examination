@@ -16,7 +16,7 @@ public class StudentSubtaskRepository : GenericRepository<StudentSubtask>, IStud
         _dbContext = dbContext;
     }
 
-    public async Task<IList<StudentSubtask>> GetAllPossibleAsync(int examId, int studentExamId)
+    public async Task<IList<StudentSubtask>> GetAllForStudentAsync(int examId, int studentExamId)
     {
         var subtasksPossible = await _dbContext
             .Subtasks
@@ -41,7 +41,39 @@ public class StudentSubtaskRepository : GenericRepository<StudentSubtask>, IStud
 
         subtasksPossible = subtasksPossible.ExceptBy(listInDb.Select(ss => ss.SubtaskId), s => s.SubtaskId).ToList();
         listInDb.AddRange(subtasksPossible);
-        
+
         return listInDb;
+    }
+
+    public async Task<IList<StudentSubtask>> GetAllForSubtaskAsync(int examId, int subtaskId)
+    {
+        var allStudentExams = await _dbContext
+            .StudentExams
+            .AsNoTracking()
+            .Include(se => se.Student)
+            .Where(se => se.ExamId == examId)
+            .ToListAsync();
+
+        var existingResults = await _dbContext
+            .StudentSubtasks
+            .AsNoTracking()
+            .Include(ss => ss.StudentExam)
+            .ThenInclude(se => se.Student)
+            .Where(ss => ss.SubtaskId == subtaskId && ss.StudentExam.ExamId == examId)
+            .ToListAsync();
+
+        var notYetGraded = allStudentExams
+            .Where(se => !existingResults.Any(ss => ss.StudentExamId == se.Id))
+            .Select(se => new StudentSubtask
+            {
+                Result        = null,
+                StudentExamId = se.Id,
+                StudentExam   = se,
+                SubtaskId     = subtaskId,
+            })
+            .ToList();
+
+        existingResults.AddRange(notYetGraded);
+        return existingResults;
     }
 }

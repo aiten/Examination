@@ -9,5 +9,6 @@ using Base.Core.Contracts;
 
 public interface IStudentSubtaskRepository : IGenericRepository<StudentSubtask>
 {
-    Task<IList<StudentSubtask>> GetAllPossibleAsync(int examId, int studentExamId);
+    Task<IList<StudentSubtask>> GetAllForStudentAsync(int examId, int studentExamId);
+    Task<IList<StudentSubtask>> GetAllForSubtaskAsync(int examId, int subtaskId);
 }

@@ -155,6 +155,7 @@ app.MapExamEndpoints("/api/exam");
 app.MapSubtaskEndpoints("/api/exam");
 app.MapStudentExamEndpoints("/api/exam");
 app.MapStudentSubtaskEndpoints("/api/exam");
+app.MapSubtaskStudentEndpoints("/api/exam");
 app.MapStudentEndpoints("/api/student");
 app.MapRegistrationEndpoints("/api/registration");
 app.MapResultEndpoints("/api/result");

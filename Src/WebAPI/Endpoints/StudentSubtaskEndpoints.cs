@@ -50,7 +50,7 @@ public static class StudentSubtaskEndpoints
                         detail: $"No StudentExam found with ID {studentExamId} for exam {examId}");
                 }
 
-                var list = await uow.StudentSubtasks.GetAllPossibleAsync(examId, studentExamId);
+                var list = await uow.StudentSubtasks.GetAllForStudentAsync(examId, studentExamId);
 
                 return Results.Ok(ToDto(list));
             })
