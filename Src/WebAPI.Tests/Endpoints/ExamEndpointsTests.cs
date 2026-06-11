@@ -103,7 +103,7 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task PostExam_ValidDto_ReturnsCreated()
     {
-        var dto     = new ExamDto(0, "Kinder, lernt!", (int)ExamType.Standard, 1, 1, new DateOnly(2026, 1, 1), new TimeOnly(8, 0), new TimeOnly(10, 0), null);
+        var dto     = new ExamDto(0, "Kinder, lernt!", (int)ExamType.Standard, 1, 1, new DateOnly(2026, 1, 1), new TimeOnly(8, 0), new TimeOnly(10, 0), null,false,false);
         var teacher = new Teacher { Id = 1, LastName    = "Mustermann" };
         var created = new Exam { Id    = 1, Description = "Kinder, lernt!", TeacherId = 1, Teacher = teacher, Created = DateTime.Today, ExamType = ExamType.Standard, From = new TimeOnly(8, 0), To = new TimeOnly(10, 0) };
 
@@ -119,7 +119,7 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task PostExam_NonZeroId_ReturnsBadRequest()
     {
-        var dto = new ExamDto(5, "Kinder, lernt!", (int)ExamType.Standard, 1, 1, new DateOnly(2026, 1, 1), new TimeOnly(8, 0), new TimeOnly(10, 0), null);
+        var dto = new ExamDto(5, "Kinder, lernt!", (int)ExamType.Standard, 1, 1, new DateOnly(2026, 1, 1), new TimeOnly(8, 0), new TimeOnly(10, 0), null, false, false);
 
         var response = await _client.PostAsJsonAsync("/api/exam", dto);
 
@@ -131,7 +131,7 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     {
         var teacher  = new Teacher { Id = 1, LastName    = "Mustermann" };
         var existing = new Exam { Id    = 1, Description = "Old", TeacherId = 1, Teacher = teacher, Created = DateTime.Today, ExamType = ExamType.Standard };
-        var dto      = new ExamDto(1, "Kinder, lernt!", (int)ExamType.Standard, 1, 1, new DateOnly(2026, 1, 1), new TimeOnly(8, 0), new TimeOnly(10, 0), null);
+        var dto      = new ExamDto(1, "Kinder, lernt!", (int)ExamType.Standard, 1, 1, new DateOnly(2026, 1, 1), new TimeOnly(8, 0), new TimeOnly(10, 0), null, false, false);
         var trans    = Substitute.For<ITransaction>();
         _examRepo.GetByIdAsync(1).ReturnsForAnyArgs(existing);
         _uow.BeginTransactionAsync().Returns(trans);
@@ -145,7 +145,7 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task PutExam_IdMismatch_ReturnsBadRequest()
     {
-        var dto = new ExamDto(2, "Kinder, lernt!", (int)ExamType.Standard, 1, 1, new DateOnly(2026, 1, 1), new TimeOnly(8, 0), new TimeOnly(10, 0), null);
+        var dto = new ExamDto(2, "Kinder, lernt!", (int)ExamType.Standard, 1, 1, new DateOnly(2026, 1, 1), new TimeOnly(8, 0), new TimeOnly(10, 0), null, false, false);
 
         var response = await _client.PutAsJsonAsync("/api/exam/1", dto);
 
@@ -155,7 +155,7 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task PutExam_NotFound_ReturnsBadRequest()
     {
-        var dto = new ExamDto(99, "Kinder, lernt!", (int)ExamType.Standard, 1, 1, new DateOnly(2026, 1, 1), new TimeOnly(8, 0), new TimeOnly(10, 0), null);
+        var dto = new ExamDto(99, "Kinder, lernt!", (int)ExamType.Standard, 1, 1, new DateOnly(2026, 1, 1), new TimeOnly(8, 0), new TimeOnly(10, 0), null, false, false);
         _examRepo.GetByIdAsync(99).ReturnsForAnyArgs((Exam?)null);
 
         var response = await _client.PutAsJsonAsync("/api/exam/99", dto);
@@ -190,7 +190,7 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task PostExam_PinOutOfRange_ReturnsBadRequest()
     {
-        var dto = new ExamDto(0, "Test", (int)ExamType.Standard, 1, 1, new DateOnly(2026, 1, 1), new TimeOnly(8, 0), new TimeOnly(10, 0), 99);
+        var dto = new ExamDto(0, "Test", (int)ExamType.Standard, 1, 1, new DateOnly(2026, 1, 1), new TimeOnly(8, 0), new TimeOnly(10, 0), 99, false, false);
 
         var response = await _client.PostAsJsonAsync("/api/exam", dto);
 
@@ -200,7 +200,7 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task PostExam_ValidPin_ReturnsCreated()
     {
-        var dto     = new ExamDto(0, "Test", (int)ExamType.Standard, 1, 1, new DateOnly(2026, 1, 1), new TimeOnly(8, 0), new TimeOnly(10, 0), 12345);
+        var dto     = new ExamDto(0, "Test", (int)ExamType.Standard, 1, 1, new DateOnly(2026, 1, 1), new TimeOnly(8, 0), new TimeOnly(10, 0), 12345, false, false);
         var teacher = new Teacher { Id = 1, LastName    = "Mustermann" };
         var created = new Exam { Id    = 1, Description = "Test", TeacherId = 1, Teacher = teacher, Created = DateTime.Today, ExamType = ExamType.Standard, Pin = 12345, From = new TimeOnly(8, 0), To = new TimeOnly(10, 0) };
 

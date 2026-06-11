@@ -1,3 +1,5 @@
+using Base.Persistence.Contracts;
+
 using Serilog;
 
 using FluentValidation;
@@ -17,6 +19,7 @@ using Service;
 
 using WebAPI;
 using WebAPI.Endpoints;
+using WebAPI.ExceptionHandlers;
 using WebAPI.Services;
 
 using Base.Tools;
@@ -107,6 +110,7 @@ builder.Services.AddOpenApi(options =>
     });
 });
 
+builder.Services.AddExceptionHandler<DomainExceptionHandler>();
 builder.Services.AddProblemDetails();
 
 builder.Services.AddCors(options => { options.AddDefaultPolicy(policy => { policy.AllowAnyHeader().AllowAnyOrigin().AllowAnyMethod(); }); });
@@ -115,7 +119,9 @@ builder.Services.AddCors(options => { options.AddDefaultPolicy(policy => { polic
 //builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 builder.Services
-    .AddScoped<IUnitOfWork, UnitOfWork>()
+    .AddScoped<UnitOfWork>()
+    .AddScoped<ITransactionProvider>(sp => sp.GetRequiredService<UnitOfWork>())
+    .AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<UnitOfWork>())
     .AddAssemblyIncludingInternals(name => name.EndsWith("Repository"), ServiceLifetime.Transient, typeof(ApplicationDbContext).Assembly)
     .AddAssemblyIncludingInternals(name => name.EndsWith("Service"),    ServiceLifetime.Transient, typeof(ExamService).Assembly);
 

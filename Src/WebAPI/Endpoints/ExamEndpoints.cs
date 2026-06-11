@@ -1,8 +1,12 @@
 namespace WebAPI.Endpoints;
 
+using Base.Persistence.Contracts;
+
 using Persistence;
 using Persistence.Model;
 using Persistence.QueryResult;
+
+using Service;
 
 using WebAPI.Filters;
 
@@ -16,8 +20,8 @@ public record ExamDto(
     TimeOnly From,
     TimeOnly To,
     int?     Pin,
-    bool     CanRegister    = true,
-    bool     CanShowResults = false
+    bool     CanRegister,
+    bool     CanShowResults
 );
 
 public static class ExamEndpoints
@@ -28,9 +32,17 @@ public static class ExamEndpoints
     {
         return new Exam()
         {
-            Id          = dto.Id,
-            ExamType    = (ExamType)dto.ExamType,
-            Description = dto.Description
+            Id             = dto.Id,
+            ExamType       = (ExamType)dto.ExamType,
+            Description    = dto.Description,
+            CourseId       = dto.CourseId,
+            TeacherId      = dto.TeacherId,
+            Pin            = dto.Pin,
+            Date           = dto.Date,
+            From           = dto.From,
+            To             = dto.To,
+            CanRegister    = dto.CanRegister,
+            CanShowResults = dto.CanShowResults
         };
     }
 
@@ -78,42 +90,33 @@ public static class ExamEndpoints
             .ProducesProblem(StatusCodes.Status403Forbidden);
 
 
-        route.MapGet("", async (IUnitOfWork uow) =>
+        route.MapGet("", async (IExamService examService) =>
             {
-                var dtos = ToDto(await uow.Exams.GetNoTrackingAsync(null, null, nameof(Exam.Teacher), nameof(Exam.Course)));
+                var dtos = ToDto(await examService.GetAllAsync());
                 return Results.Ok(dtos);
             })
             .WithName("GetExams")
             .Produces<List<ExamDto>>(StatusCodes.Status200OK);
 
 
-        route.MapGet("overview", async (int? teacherId, int? courseId, IUnitOfWork uow) =>
+        route.MapGet("overview", async (int? teacherId, int? courseId, IExamService examService) =>
             {
-                var dtos = await uow.Exams.GetExamOverviewsAsync(teacherId, courseId);
+                var dtos = await examService.GetExamOverviewsAsync(teacherId, courseId);
                 return Results.Ok(dtos);
             })
             .WithName("GetExamOverview")
             .Produces<List<ExamOverview>>(StatusCodes.Status200OK);
 
-        route.MapGet("/{id:int}", async (int id, IUnitOfWork uow) =>
+        route.MapGet("/{id:int}", async (int id, IExamService examService) =>
             {
-                var dto = ToDto(await uow.Exams.GetByIdAsync(id, nameof(Exam.Teacher), nameof(Exam.Course)));
-
-                if (dto is null)
-                {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status404NotFound,
-                        title: "Exam not found",
-                        detail: $"No Exam found with ID {id}");
-                }
-
+                var dto = ToDto(await examService.GetByIdAsync(id, nameof(Exam.Teacher), nameof(Exam.Course)));
                 return Results.Ok(dto);
             })
             .WithName("GetExam")
             .Produces<ExamDto>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-        route.MapPut("/{id:int}", async (int id, ExamDto dto, IUnitOfWork uow) =>
+        route.MapPut("/{id:int}", async (int id, ExamDto dto, IExamService examService, ITransactionProvider transactionProvider) =>
             {
                 if (id != dto.Id)
                 {
@@ -123,30 +126,9 @@ public static class ExamEndpoints
                         detail: "The ID in the URL does not match the ID in the request body");
                 }
 
-                using (var trans = await uow.BeginTransactionAsync())
+                using (var trans = await transactionProvider.BeginTransactionAsync())
                 {
-                    var entity = await uow.Exams.GetByIdAsync(id);
-
-                    if (entity is null)
-                    {
-                        return Results.Problem(
-                            statusCode: StatusCodes.Status400BadRequest,
-                            title: "Exam not found",
-                            detail: $"No Exam found with ID {id}");
-                    }
-
-                    entity.Description    = dto.Description;
-                    entity.ExamType       = (ExamType)dto.ExamType;
-                    entity.CourseId       = dto.CourseId;
-                    entity.TeacherId      = dto.TeacherId;
-                    entity.Pin            = dto.Pin;
-                    entity.Date           = dto.Date;
-                    entity.From           = dto.From;
-                    entity.To             = dto.To;
-                    entity.CanRegister    = dto.CanRegister;
-                    entity.CanShowResults = dto.CanShowResults;
-                    entity.Modified       = DateTime.Now;
-
+                    await examService.UpdateExamAsync(id, ToEntity(dto));
                     await trans.CommitTransactionAsync();
                 }
 
@@ -159,7 +141,7 @@ public static class ExamEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound);
 
 
-        route.MapPost("", async (ExamDto dto, IUnitOfWork uow) =>
+        route.MapPost("", async (ExamDto dto, IExamService examService, ITransactionProvider transactionProvider) =>
             {
                 if (dto.Id != 0)
                 {
@@ -169,29 +151,14 @@ public static class ExamEndpoints
                         detail: "The ID in the request body must be 0");
                 }
 
-                using (var trans = await uow.BeginTransactionAsync())
+                using (var trans = await transactionProvider.BeginTransactionAsync())
                 {
                     var entity = ToEntity(dto);
-
-                    entity.Created        = DateTime.Now;
-                    entity.Modified       = null;
-                    entity.ExamType       = (ExamType)dto.ExamType;
-                    entity.CourseId       = dto.CourseId;
-                    entity.TeacherId      = dto.TeacherId;
-                    entity.Pin            = dto.Pin;
-                    entity.Date           = dto.Date;
-                    entity.From           = dto.From;
-                    entity.To             = dto.To;
-                    entity.CanRegister    = dto.CanRegister;
-                    entity.CanShowResults = dto.CanShowResults;
-
-                    await uow.Exams.AddAsync(entity);
+                    var created = await examService.AddExamAsync(entity);
 
                     await trans.CommitTransactionAsync();
 
-                    int id = entity.Id;
-
-                    return Results.Created($"{baseRoute}/{id}", await uow.Exams.GetByIdAsync(id));
+                    return Results.Created($"{baseRoute}/{created.Id}", ToDto(created));
                 }
             })
             .WithValidation<ExamDto>()
@@ -199,21 +166,13 @@ public static class ExamEndpoints
             .Produces(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest);
 
-        route.MapDelete("/{id:int}", async (int id, IUnitOfWork uow) =>
+        route.MapDelete("/{id:int}", async (int id, IExamService examService, ITransactionProvider transactionProvider) =>
             {
-                var entity = await uow.Exams.GetByIdAsync(id);
-
-                if (entity is null)
+                using (var trans = await transactionProvider.BeginTransactionAsync())
                 {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status400BadRequest,
-                        title: "Exam not found",
-                        detail: $"No Exam found with ID {id}");
+                    await examService.DeleteExamAsync(id);
+                    await trans.CommitTransactionAsync();
                 }
-
-                uow.Exams.Remove(entity);
-
-                await uow.SaveChangesAsync();
 
                 return Results.NoContent();
             })
