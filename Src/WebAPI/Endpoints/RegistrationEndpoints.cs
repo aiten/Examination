@@ -1,6 +1,8 @@
 namespace WebAPI.Endpoints;
 
-using Persistence;
+using Base.Persistence.Contracts;
+
+using Service;
 
 using WebAPI.Filters;
 
@@ -17,13 +19,14 @@ public static class RegistrationEndpoints
             .WithTags("Registration");
         // NO Auth required .RequireAuthorization(Settings.AdminPolicyName);
 
-        route.MapPost("", async (ExamRegistrationDto dto, IUnitOfWork uow, ILoggerFactory loggerFactory) =>
+        route.MapPost("", async (ExamRegistrationDto dto, IExamService examService, ITransactionProvider transactionProvider, ILoggerFactory loggerFactory) =>
             {
                 var logger = loggerFactory.CreateLogger(nameof(RegistrationEndpoints));
                 try
                 {
-                    using var trans        = await uow.BeginTransactionAsync();
-                    var       registration = await uow.Exams.RegisterStudentAsync(dto.FirstName, dto.LastName, dto.LoginName, dto.Pin);
+                    using var trans = await transactionProvider.BeginTransactionAsync();
+
+                    var registration = await examService.RegisterStudentAsync(dto.FirstName, dto.LastName, dto.LoginName, dto.Pin);
 
                     await trans.CommitTransactionAsync();
 

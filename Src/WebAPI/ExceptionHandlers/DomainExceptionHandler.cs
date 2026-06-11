@@ -7,15 +7,16 @@ using Shared.Exceptions;
 public class DomainExceptionHandler : IExceptionHandler
 {
     public async ValueTask<bool> TryHandleAsync(
-        HttpContext          httpContext,
-        Exception            exception,
-        CancellationToken    cancellationToken)
+        HttpContext       httpContext,
+        Exception         exception,
+        CancellationToken cancellationToken)
     {
         var (status, title) = exception switch
         {
-            NotFoundException e    => (StatusCodes.Status404NotFound,                  e.Message),
-            BusinessRuleException e => (StatusCodes.Status422UnprocessableEntity,       e.Message),
-            _                      => (0, null)
+            NotFoundException e      => (StatusCodes.Status404NotFound, e.Message),
+            BusinessRuleException e  => (StatusCodes.Status422UnprocessableEntity, e.Message),
+            IllegalValuesException e => (StatusCodes.Status400BadRequest, e.Message),
+            _                        => (0, null)
         };
 
         if (status == 0)
@@ -25,7 +26,7 @@ public class DomainExceptionHandler : IExceptionHandler
 
         httpContext.Response.StatusCode = status;
         await Results.Problem(statusCode: status, title: title)
-                     .ExecuteAsync(httpContext);
+            .ExecuteAsync(httpContext);
         return true;
     }
 }

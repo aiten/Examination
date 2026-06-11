@@ -18,6 +18,8 @@ using Persistence.Model;
 using Persistence.QueryResult;
 using Persistence.Repositories;
 
+using Service;
+
 public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly HttpClient             _client;
@@ -25,12 +27,14 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     private readonly IExamRepository        _examRepo;
     private readonly IStudentRepository     _studentRepo;
     private readonly IStudentExamRepository _studentExamRepo;
+    private readonly IExamService           _examService;
 
     public ExamEndpointsTests(CustomWebApplicationFactory factory)
     {
         _client = factory.CreateClient();
         _uow    = factory.UnitOfWork;
         _uow.ClearReceivedCalls();
+        _examService     = Substitute.For<IExamService>();
         _examRepo        = Substitute.For<IExamRepository>();
         _studentRepo     = Substitute.For<IStudentRepository>();
         _studentExamRepo = Substitute.For<IStudentExamRepository>();
@@ -103,7 +107,7 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task PostExam_ValidDto_ReturnsCreated()
     {
-        var dto     = new ExamDto(0, "Kinder, lernt!", (int)ExamType.Standard, 1, 1, new DateOnly(2026, 1, 1), new TimeOnly(8, 0), new TimeOnly(10, 0), null,false,false);
+        var dto     = new ExamDto(0, "Kinder, lernt!", (int)ExamType.Standard, 1, 1, new DateOnly(2026, 1, 1), new TimeOnly(8, 0), new TimeOnly(10, 0), null, false, false);
         var teacher = new Teacher { Id = 1, LastName    = "Mustermann" };
         var created = new Exam { Id    = 1, Description = "Kinder, lernt!", TeacherId = 1, Teacher = teacher, Created = DateTime.Today, ExamType = ExamType.Standard, From = new TimeOnly(8, 0), To = new TimeOnly(10, 0) };
 
@@ -221,7 +225,7 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         var trans        = Substitute.For<ITransaction>();
         var dto          = new ExamRegistrationDto("Alice", "Smith", "alice", 12345);
 
-        _examRepo.RegisterStudentAsync("Alice", "Smith", "alice", 12345).Returns(registration);
+        _examService.RegisterStudentAsync("Alice", "Smith", "alice", 12345).Returns(registration);
         _uow.BeginTransactionAsync().Returns(trans);
 
         var response = await _client.PostAsJsonAsync("/api/exam/register", dto);
@@ -238,7 +242,7 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     public async Task RegisterForExam_InvalidPin_ReturnsBadRequest()
     {
         var dto = new ExamRegistrationDto("Alice", "Smith", "alice", 12345);
-        _examRepo.RegisterStudentAsync(default!, default!, default!, default).ReturnsForAnyArgs<StudentExam>(_ => throw new InvalidOperationException("No exam found with PIN 12345"));
+        _examService.RegisterStudentAsync(default!, default!, default!, default).ReturnsForAnyArgs<StudentExam>(_ => throw new InvalidOperationException("No exam found with PIN 12345"));
 
         var response = await _client.PostAsJsonAsync("/api/exam/register", dto);
 
@@ -249,7 +253,7 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     public async Task RegisterForExam_StudentNotFound_ReturnsBadRequest()
     {
         var dto = new ExamRegistrationDto("Unknown", "User", "unknown", 12345);
-        _examRepo.RegisterStudentAsync(default!, default!, default!, default).ReturnsForAnyArgs<StudentExam>(_ => throw new InvalidOperationException("No student found with name 'Unknown User'"));
+        _examService.RegisterStudentAsync(default!, default!, default!, default).ReturnsForAnyArgs<StudentExam>(_ => throw new InvalidOperationException("No student found with name 'Unknown User'"));
 
         var response = await _client.PostAsJsonAsync("/api/exam/register", dto);
 
@@ -260,7 +264,7 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     public async Task RegisterForExam_StudentNotInClass_ReturnsBadRequest()
     {
         var dto = new ExamRegistrationDto("Alice", "Smith", "alice", 12345);
-        _examRepo.RegisterStudentAsync(default!, default!, default!, default).ReturnsForAnyArgs<StudentExam>(_ => throw new InvalidOperationException("Student 'Alice Smith' is not enrolled in the class of this exam"));
+        _examService.RegisterStudentAsync(default!, default!, default!, default).ReturnsForAnyArgs<StudentExam>(_ => throw new InvalidOperationException("Student 'Alice Smith' is not enrolled in the class of this exam"));
 
         var response = await _client.PostAsJsonAsync("/api/exam/register", dto);
 
@@ -271,7 +275,7 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     public async Task RegisterForExam_AlreadyRegistered_ReturnsBadRequest()
     {
         var dto = new ExamRegistrationDto("Alice", "Smith", "alice", 12345);
-        _examRepo.RegisterStudentAsync(default!, default!, default!, default).ReturnsForAnyArgs<StudentExam>(_ => throw new InvalidOperationException("Student 'Alice Smith' is already registered for this exam"));
+        _examService.RegisterStudentAsync(default!, default!, default!, default).ReturnsForAnyArgs<StudentExam>(_ => throw new InvalidOperationException("Student 'Alice Smith' is already registered for this exam"));
 
         var response = await _client.PostAsJsonAsync("/api/exam/register", dto);
 

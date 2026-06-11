@@ -10,6 +10,8 @@ using Persistence.Model;
 public interface IStudentRepository : IGenericRepository<Student>
 {
     Task ImportStudentsAsync(string[] studentLines);
+
+    Task<Student?> GetStudentByNameAsync(string lastName, string firstName);
 }
 
 public class StudentRepository : GenericRepository<Student>, IStudentRepository
@@ -19,6 +21,13 @@ public class StudentRepository : GenericRepository<Student>, IStudentRepository
     public StudentRepository(ApplicationDbContext dbContext) : base(dbContext)
     {
         _dbContext = dbContext;
+    }
+
+    public async Task<Student?> GetStudentByNameAsync(string lastName, string firstName)
+    {
+        return await DbSet
+            .Include(s => s.Classes)
+            .FirstOrDefaultAsync(s => s.FirstName == firstName && s.LastName == lastName);
     }
 
     public async Task ImportStudentsAsync(string[] studentLines)

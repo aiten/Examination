@@ -16,6 +16,9 @@ public interface IStudentExamRepository : IGenericRepository<StudentExam>
 
     Task DeleteAsync(int studentExamId);
 
+    Task<bool> AnyAsync(int examId, int    studentId);
+    Task<bool> AnyAsync(int examId, string registrationCode);
+
     void Check(int examId, int studentExamId);
 }
 
@@ -26,6 +29,18 @@ public class StudentExamRepository : GenericRepository<StudentExam>, IStudentExa
     public StudentExamRepository(ApplicationDbContext dbContext) : base(dbContext)
     {
         _dbContext = dbContext;
+    }
+
+    public async Task<bool> AnyAsync(int examId, int studentId)
+    {
+        return await _dbContext.StudentExams
+            .AnyAsync(se => se.ExamId == examId && se.StudentId == studentId);
+    }
+
+    public async Task<bool> AnyAsync(int examId, string registrationCode)
+    {
+        return await _dbContext.StudentExams
+            .AnyAsync(se => se.ExamId == examId && se.RegistrationCode == registrationCode);
     }
 
     public async Task DeleteAsync(int studentExamId)

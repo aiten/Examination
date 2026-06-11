@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 using Microsoft.Extensions.Logging;
@@ -26,6 +27,7 @@ public interface IExamService
     Task DeleteExamAsync(int id);
 
     Task<IList<ExamOverview>> GetExamOverviewsAsync(int?  teacherId, int?   courseId);
+
     Task<StudentExam>         RegisterStudentAsync(string firstName, string lastName, string loginName, int pin);
 
     Task<int> CalculateGrade(int id, decimal percent);
@@ -113,7 +115,46 @@ public class ExamService : IExamService
 
     public async Task<StudentExam> RegisterStudentAsync(string firstName, string lastName, string loginName, int pin)
     {
-        return await _uow.Exams.RegisterStudentAsync(firstName, lastName, loginName, pin);
+        var exam = await _uow.Exams.GetExamWithPINAsync(pin);
+        if (exam is null)
+            throw new IllegalValuesException($"No exam found with PIN {pin}");
+
+        var student = await _uow.Students.GetStudentByNameAsync(lastName, firstName);
+        if (student is null)
+            throw new InvalidOperationException($"No student found with name '{lastName}, {firstName}'");
+
+        var course = exam.Course;
+        if (course is null || !course.Classes.Any(c => student.Classes.Any(sc => sc.Id == c.Id)))
+            throw new InvalidOperationException($"Student '{lastName}, {firstName} ' is not enrolled in any class of this exam's course");
+
+        bool alreadyRegistered = await _uow.StudentExams.AnyAsync(exam.Id, student.Id);
+        if (alreadyRegistered)
+            throw new InvalidOperationException($"Student '{lastName}, {firstName}' is already registered for this exam");
+
+        var registration = new StudentExam
+        {
+            StudentId        = student.Id,
+            ExamId           = exam.Id,
+            LoginName        = loginName,
+            RegistrationCode = await GenerateUniqueRegistrationCodeAsync(exam.Id),
+            Student          = student,
+            Exam             = exam
+        };
+
+        await _uow.StudentExams.AddAsync(registration);
+        return registration;
+    }
+
+    private async Task<string> GenerateUniqueRegistrationCodeAsync(int examId)
+    {
+        var    rng = Random.Shared;
+        string code;
+        do
+        {
+            code = rng.Next(10000, 100000).ToString();
+        } while (await _uow.StudentExams.AnyAsync(examId, code));
+
+        return code;
     }
 
     public Task<int> CalculateGrade(int id, decimal percent)

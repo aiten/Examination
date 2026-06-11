@@ -13,13 +13,7 @@ public interface IExamRepository : IGenericRepository<Exam>
 {
     Task<IList<ExamOverview>> GetExamOverviewsAsync(int? teacherId, int? courseId);
 
-    /// <summary>
-    /// Registers a student for an exam identified by PIN.
-    /// Throws <see cref="InvalidOperationException"/> when the exam or student is not found,
-    /// the student is not in the exam's class, or the student is already registered.
-    /// Does not call SaveChanges — the caller must commit the enclosing transaction.
-    /// </summary>
-    Task<StudentExam> RegisterStudentAsync(string firstName, string lastName, string loginName, int pin);
+    Task<Exam?> GetExamWithPINAsync(int pin);
 
     Task<int> CalculateGrade(int id, decimal percent);
 }
@@ -35,53 +29,12 @@ public class ExamRepository : GenericRepository<Exam>, IExamRepository
         _logger    = logger;
     }
 
-    public async Task<StudentExam> RegisterStudentAsync(string firstName, string lastName, string loginName, int pin)
+    public async Task<Exam?> GetExamWithPINAsync(int pin)
     {
-        var exam = await _dbContext.Exams.FirstOrDefaultAsync(e => e.Pin == pin);
-        if (exam is null)
-            throw new InvalidOperationException($"No exam found with PIN {pin}");
-
-        var student = await _dbContext.Students
-            .Include(s => s.Classes)
-            .FirstOrDefaultAsync(s => s.FirstName == firstName && s.LastName == lastName);
-        if (student is null)
-            throw new InvalidOperationException($"No student found with name '{lastName}, {firstName}'");
-
-        var course = await _dbContext.Courses
-            .Include(c => c.Classes)
-            .FirstOrDefaultAsync(c => c.Id == exam.CourseId);
-        if (course is null || !course.Classes.Any(c => student.Classes.Any(sc => sc.Id == c.Id)))
-            throw new InvalidOperationException($"Student '{lastName}, {firstName} ' is not enrolled in any class of this exam's course");
-
-        bool alreadyRegistered = await _dbContext.StudentExams
-            .AnyAsync(se => se.StudentId == student.Id && se.ExamId == exam.Id);
-        if (alreadyRegistered)
-            throw new InvalidOperationException($"Student '{lastName}, {firstName}' is already registered for this exam");
-
-        var registration = new StudentExam
-        {
-            StudentId        = student.Id,
-            ExamId           = exam.Id,
-            LoginName        = loginName,
-            RegistrationCode = await GenerateUniqueRegistrationCodeAsync(exam.Id),
-            Student          = student,
-            Exam             = exam
-        };
-
-        await _dbContext.StudentExams.AddAsync(registration);
-        return registration;
-    }
-
-    private async Task<string> GenerateUniqueRegistrationCodeAsync(int examId)
-    {
-        var    rng = Random.Shared;
-        string code;
-        do
-        {
-            code = rng.Next(10000, 100000).ToString();
-        } while (await _dbContext.StudentExams.AnyAsync(se => se.ExamId == examId && se.RegistrationCode == code));
-
-        return code;
+        return await DbSet
+            .Include(e => e.Course)
+            .ThenInclude(c => c.Classes)
+            .FirstOrDefaultAsync(e => e.Pin == pin);
     }
 
     public async Task<IList<ExamOverview>> GetExamOverviewsAsync(int? teacherId, int? courseId)

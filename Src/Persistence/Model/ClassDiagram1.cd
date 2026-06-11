@@ -1,14 +1,14 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <ClassDiagram MajorVersion="1" MinorVersion="1">
-  <Class Name="Core.Entities.Exam">
+  <Class Name="Persistence.Model.Exam">
     <Position X="7.25" Y="3.25" Width="1.5" />
-    <AssociationLine Name="StudentExams" Type="Core.Entities.StudentExam" FixedToPoint="true">
+    <AssociationLine Name="StudentExams" Type="Persistence.Model.StudentExam" FixedToPoint="true">
       <Path>
         <Point X="7.25" Y="5.25" />
         <Point X="5" Y="5.25" />
       </Path>
     </AssociationLine>
-    <AssociationLine Name="Course" Type="Core.Entities.Course" FixedFromPoint="true" FixedToPoint="true">
+    <AssociationLine Name="Course" Type="Persistence.Model.Course" FixedFromPoint="true" FixedToPoint="true">
       <Path>
         <Point X="8.75" Y="3.875" />
         <Point X="11.906" Y="3.875" />
@@ -17,7 +17,7 @@
     </AssociationLine>
     <TypeIdentifier>
       <HashCode>AgEEAAAAAACgAAAAAJACCAAAAAAIIAQBAAAAAAAAAAA=</HashCode>
-      <FileName>Entities\Exam.cs</FileName>
+      <FileName>Model\Exam.cs</FileName>
     </TypeIdentifier>
     <ShowAsAssociation>
       <Property Name="Teacher" />
@@ -28,11 +28,11 @@
       <Property Name="StudentExams" />
     </ShowAsCollectionAssociation>
   </Class>
-  <Class Name="Core.Entities.Class">
+  <Class Name="Persistence.Model.Class">
     <Position X="4.75" Y="1.5" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAMAAAAABAAgAAAAAAAACAAAAAAAAAAAAAAAABAAAAA=</HashCode>
-      <FileName>Entities\Class.cs</FileName>
+      <FileName>Model\Class.cs</FileName>
     </TypeIdentifier>
     <ShowAsAssociation>
       <Property Name="Teacher" />
@@ -41,9 +41,9 @@
       <Property Name="Students" />
     </ShowAsCollectionAssociation>
   </Class>
-  <Class Name="Core.Entities.Teacher">
+  <Class Name="Persistence.Model.Teacher">
     <Position X="7.25" Y="0.5" Width="1.5" />
-    <AssociationLine Name="Courses" Type="Core.Entities.Course" FixedFromPoint="true">
+    <AssociationLine Name="Courses" Type="Persistence.Model.Course" FixedFromPoint="true">
       <Path>
         <Point X="8.75" Y="1.125" />
         <Point X="10.75" Y="1.125" />
@@ -51,16 +51,16 @@
     </AssociationLine>
     <TypeIdentifier>
       <HashCode>AAAAAEBAAAAAAAAAAAAAAAAAAAAAAAEAAAAAABAgAAg=</HashCode>
-      <FileName>Entities\Teacher.cs</FileName>
+      <FileName>Model\Teacher.cs</FileName>
     </TypeIdentifier>
     <ShowAsCollectionAssociation>
       <Property Name="Exams" />
       <Property Name="Courses" />
     </ShowAsCollectionAssociation>
   </Class>
-  <Class Name="Core.Entities.Subtask">
+  <Class Name="Persistence.Model.Subtask">
     <Position X="10" Y="5" Width="1.5" />
-    <AssociationLine Name="StudentSubtasks" Type="Core.Entities.StudentSubtask" FixedFromPoint="true" FixedToPoint="true">
+    <AssociationLine Name="StudentSubtasks" Type="Persistence.Model.StudentSubtask" FixedFromPoint="true" FixedToPoint="true">
       <Path>
         <Point X="10.344" Y="7.002" />
         <Point X="10.344" Y="7.479" />
@@ -69,7 +69,7 @@
     </AssociationLine>
     <TypeIdentifier>
       <HashCode>AAACAAAAAAAggAAAAAAAAAAAAgAAAABAAAAAAACAACA=</HashCode>
-      <FileName>Entities\Subtask.cs</FileName>
+      <FileName>Model\Subtask.cs</FileName>
     </TypeIdentifier>
     <ShowAsAssociation>
       <Property Name="Exam" />
@@ -78,19 +78,19 @@
       <Property Name="StudentSubtasks" />
     </ShowAsCollectionAssociation>
   </Class>
-  <Class Name="Core.Entities.Student">
+  <Class Name="Persistence.Model.Student">
     <Position X="2" Y="2" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAEAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAg=</HashCode>
-      <FileName>Entities\Student.cs</FileName>
+      <FileName>Model\Student.cs</FileName>
     </TypeIdentifier>
     <ShowAsCollectionAssociation>
       <Property Name="Classes" />
     </ShowAsCollectionAssociation>
   </Class>
-  <Class Name="Core.Entities.StudentExam">
+  <Class Name="Persistence.Model.StudentExam">
     <Position X="3.5" Y="4.5" Width="1.5" />
-    <AssociationLine Name="Exam" Type="Core.Entities.Exam" FixedFromPoint="true">
+    <AssociationLine Name="Exam" Type="Persistence.Model.Exam" FixedFromPoint="true">
       <Path>
         <Point X="5" Y="4.875" />
         <Point X="7.25" Y="4.875" />
@@ -98,7 +98,7 @@
     </AssociationLine>
     <TypeIdentifier>
       <HashCode>CEACAAAAQAAAAAAAAAAAAAAAAAAAAABAAAAAAACCAAA=</HashCode>
-      <FileName>Entities\StudentExam.cs</FileName>
+      <FileName>Model\StudentExam.cs</FileName>
     </TypeIdentifier>
     <ShowAsAssociation>
       <Property Name="Student" />
@@ -108,9 +108,9 @@
       <Property Name="StudentSubtasks" />
     </ShowAsCollectionAssociation>
   </Class>
-  <Class Name="Core.Entities.StudentSubtask">
+  <Class Name="Persistence.Model.StudentSubtask">
     <Position X="5.5" Y="6.5" Width="1.5" />
-    <AssociationLine Name="Subtask" Type="Core.Entities.Subtask" ManuallyRouted="true" FixedFromPoint="true" FixedToPoint="true">
+    <AssociationLine Name="Subtask" Type="Persistence.Model.Subtask" ManuallyRouted="true" FixedFromPoint="true" FixedToPoint="true">
       <Path>
         <Point X="7" Y="7.759" />
         <Point X="10.75" Y="7.759" />
@@ -119,36 +119,36 @@
     </AssociationLine>
     <TypeIdentifier>
       <HashCode>AAAAAAAEAEAAgAAAAgAAAAQAAAAAIAAAAAAAAAAAAAA=</HashCode>
-      <FileName>Entities\StudentSubtask.cs</FileName>
+      <FileName>Model\StudentSubtask.cs</FileName>
     </TypeIdentifier>
     <ShowAsAssociation>
       <Property Name="StudentExam" />
       <Property Name="Subtask" />
     </ShowAsAssociation>
   </Class>
-  <Class Name="Core.Entities.Course">
+  <Class Name="Persistence.Model.Course">
     <Position X="10.75" Y="0.5" Width="1.5" />
-    <AssociationLine Name="Teachers" Type="Core.Entities.Teacher" FixedToPoint="true">
+    <AssociationLine Name="Teachers" Type="Persistence.Model.Teacher" FixedToPoint="true">
       <Path>
         <Point X="10.75" Y="1.562" />
         <Point X="8.75" Y="1.562" />
       </Path>
     </AssociationLine>
-    <AssociationLine Name="Exams" Type="Core.Entities.Exam" ManuallyRouted="true" FixedFromPoint="true" FixedToPoint="true">
+    <AssociationLine Name="Exams" Type="Persistence.Model.Exam" ManuallyRouted="true" FixedFromPoint="true" FixedToPoint="true">
       <Path>
         <Point X="11.312" Y="1.925" />
         <Point X="11.312" Y="3.543" />
         <Point X="8.75" Y="3.543" />
       </Path>
     </AssociationLine>
-    <AssociationLine Name="Subject" Type="Core.Entities.Subject" FixedFromPoint="true" FixedToPoint="true">
+    <AssociationLine Name="Subject" Type="Persistence.Model.Subject" FixedFromPoint="true" FixedToPoint="true">
       <Path>
         <Point X="12.25" Y="1.491" />
         <Point X="13.188" Y="1.491" />
         <Point X="13.188" Y="3.5" />
       </Path>
     </AssociationLine>
-    <AssociationLine Name="Classes" Type="Core.Entities.Class" ManuallyRouted="true" FixedFromPoint="true" FixedToPoint="true">
+    <AssociationLine Name="Classes" Type="Persistence.Model.Class" ManuallyRouted="true" FixedFromPoint="true" FixedToPoint="true">
       <Path>
         <Point X="11.375" Y="0.5" />
         <Point X="11.375" Y="0.26" />
@@ -158,7 +158,7 @@
     </AssociationLine>
     <TypeIdentifier>
       <HashCode>AAAAAAAAEAEAAAAAAIAAAAQAAAAAAAAAAAAAAgAgAAA=</HashCode>
-      <FileName>Entities\Course.cs</FileName>
+      <FileName>Model\Course.cs</FileName>
     </TypeIdentifier>
     <ShowAsAssociation>
       <Property Name="Subject" />
@@ -169,11 +169,11 @@
       <Property Name="Classes" />
     </ShowAsCollectionAssociation>
   </Class>
-  <Class Name="Core.Entities.Subject">
+  <Class Name="Persistence.Model.Subject">
     <Position X="12.75" Y="3.5" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAABAAAAA=</HashCode>
-      <FileName>Entities\Subject.cs</FileName>
+      <FileName>Model\Subject.cs</FileName>
     </TypeIdentifier>
     <ShowAsCollectionAssociation>
       <Property Name="Courses" />

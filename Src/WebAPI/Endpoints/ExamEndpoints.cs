@@ -153,7 +153,7 @@ public static class ExamEndpoints
 
                 using (var trans = await transactionProvider.BeginTransactionAsync())
                 {
-                    var entity = ToEntity(dto);
+                    var entity  = ToEntity(dto);
                     var created = await examService.AddExamAsync(entity);
 
                     await trans.CommitTransactionAsync();
