@@ -1,4 +1,4 @@
-namespace WebAPI.Services;
+namespace Core.Contracts;
 
 public interface ICurrentUserService
 {

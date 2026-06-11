@@ -112,11 +112,12 @@ builder.Services.AddProblemDetails();
 builder.Services.AddCors(options => { options.AddDefaultPolicy(policy => { policy.AllowAnyHeader().AllowAnyOrigin().AllowAnyMethod(); }); });
 
 
-builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+//builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 builder.Services
     .AddScoped<IUnitOfWork, UnitOfWork>()
-    .AddAssemblyIncludingInternals(name => name.EndsWith("Repository"), ServiceLifetime.Transient, typeof(ApplicationDbContext).Assembly);
+    .AddAssemblyIncludingInternals(name => name.EndsWith("Repository"), ServiceLifetime.Transient, typeof(ApplicationDbContext).Assembly)
+    .AddAssemblyIncludingInternals(name => name.EndsWith("Service"), ServiceLifetime.Transient, typeof(ExamService).Assembly);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
