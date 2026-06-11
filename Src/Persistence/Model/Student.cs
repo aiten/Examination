@@ -1,8 +1,8 @@
-namespace Core.Entities;
-
-using Base.Core.Entities;
+namespace Persistence.Model;
 
 using System.Collections.Generic;
+
+using Base.Persistence.Entities;
 
 public class Student : EntityObject
 {

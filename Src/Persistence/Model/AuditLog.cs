@@ -1,15 +1,15 @@
-namespace Core.Entities;
+namespace Persistence.Model;
 
 using System;
 
-using Base.Core.Entities;
+using Base.Persistence.Entities;
 
 public class AuditLog : EntityObject
 {
-    public string?   Message         { get; set; }
-    public string?   MessageTemplate { get; set; }
-    public string?   Level           { get; set; }
-    public DateTime  TimeStamp       { get; set; }
-    public string?   Exception       { get; set; }
-    public string?   Properties      { get; set; }
+    public string?  Message         { get; set; }
+    public string?  MessageTemplate { get; set; }
+    public string?  Level           { get; set; }
+    public DateTime TimeStamp       { get; set; }
+    public string?  Exception       { get; set; }
+    public string?  Properties      { get; set; }
 }

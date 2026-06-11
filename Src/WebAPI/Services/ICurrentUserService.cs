@@ -1,7 +1,7 @@
-namespace Core.Contracts;
+namespace WebAPI.Services;
 
 public interface ICurrentUserService
 {
-    bool IsAdmin { get; }
+    bool       IsAdmin { get; }
     Task<int?> GetTeacherIdAsync();
 }

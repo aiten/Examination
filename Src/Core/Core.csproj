@@ -1,11 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Base\Base.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Base\Base.csproj" />
+	</ItemGroup>
 
 </Project>

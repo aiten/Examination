@@ -1,20 +1,16 @@
-﻿using Core.Contracts;
-using Core.Entities;
-
-namespace Persistence;
+﻿namespace Service;
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.Threading.Tasks;
 
-using Base.Persistence;
-
-using Core.QueryResult;
-
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+
+using Persistence;
+using Persistence.Model;
+using Persistence.QueryResult;
+
+using Service.Contracts;
 
 public class ExamService : IExamService
 {
@@ -23,8 +19,8 @@ public class ExamService : IExamService
 
     public ExamService(IUnitOfWork uow, ILogger<ExamService> logger)
     {
-        _uow = uow;
-        _logger    = logger;
+        _uow    = uow;
+        _logger = logger;
     }
 
     public Task<int> CalculateGrade(int id, decimal percent)

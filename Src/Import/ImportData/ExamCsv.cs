@@ -11,8 +11,10 @@ internal class ExamCsv
 
     [CsvImportFormat(Format = "dd.MM.yyyy")]
     public DateOnly Date { get; set; }
+
     [CsvImportFormat(Format = "h:mm")]
     public TimeOnly From { get; set; }
+
     [CsvImportFormat(Format = "h:mm")]
     public TimeOnly To { get; set; }
 

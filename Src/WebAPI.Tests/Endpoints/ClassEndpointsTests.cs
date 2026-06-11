@@ -1,11 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
 
-using Base.Core.Contracts;
-
-using Core.Contracts;
-using Core.Entities;
-
 using FluentAssertions;
 
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -15,6 +10,12 @@ using NSubstitute;
 using WebAPI.Endpoints;
 
 namespace WebAPI.Tests.Endpoints;
+
+using Base.Persistence.Contracts;
+
+using Persistence;
+using Persistence.Model;
+using Persistence.Repositories;
 
 public class ClassEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 {

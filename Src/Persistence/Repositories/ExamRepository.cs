@@ -1,16 +1,28 @@
-﻿using Core.Contracts;
-using Core.Entities;
-
-namespace Persistence;
-
-using System.Diagnostics;
+﻿namespace Persistence.Repositories;
 
 using Base.Persistence;
-
-using Core.QueryResult;
+using Base.Persistence.Contracts;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+
+using Persistence.Model;
+using Persistence.QueryResult;
+
+public interface IExamRepository : IGenericRepository<Exam>
+{
+    Task<IList<ExamOverview>> GetExamOverviewsAsync(int? teacherId, int? courseId);
+
+    /// <summary>
+    /// Registers a student for an exam identified by PIN.
+    /// Throws <see cref="InvalidOperationException"/> when the exam or student is not found,
+    /// the student is not in the exam's class, or the student is already registered.
+    /// Does not call SaveChanges — the caller must commit the enclosing transaction.
+    /// </summary>
+    Task<StudentExam> RegisterStudentAsync(string firstName, string lastName, string loginName, int pin);
+
+    Task<int> CalculateGrade(int id, decimal percent);
+}
 
 public class ExamRepository : GenericRepository<Exam>, IExamRepository
 {

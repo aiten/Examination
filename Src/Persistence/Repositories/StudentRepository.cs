@@ -1,11 +1,16 @@
-using Core.Contracts;
-using Core.Entities;
+namespace Persistence.Repositories;
 
 using Base.Persistence;
+using Base.Persistence.Contracts;
 
 using Microsoft.EntityFrameworkCore;
 
-namespace Persistence;
+using Persistence.Model;
+
+public interface IStudentRepository : IGenericRepository<Student>
+{
+    Task ImportStudentsAsync(string[] studentLines);
+}
 
 public class StudentRepository : GenericRepository<Student>, IStudentRepository
 {
@@ -32,7 +37,7 @@ public class StudentRepository : GenericRepository<Student>, IStudentRepository
                 var classesStr = parts[2].Trim();
 
                 Student? student;
-                var key = (firstName, lastName);
+                var      key = (firstName, lastName);
 
                 if (!newStudents.TryGetValue(key, out student))
                 {

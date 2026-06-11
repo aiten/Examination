@@ -1,8 +1,8 @@
-namespace Core.Entities;
+namespace Persistence.Model;
 
 using System.Collections.Generic;
 
-using Base.Core.Entities;
+using Base.Persistence.Entities;
 
 public class Course : EntityObject
 {

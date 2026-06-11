@@ -4,7 +4,8 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace Persistence.Configurations;
 
 using Base.Persistence;
-using Core.Entities;
+
+using Persistence.Model;
 
 public class StudentSubtaskConfiguration : IEntityTypeConfiguration<StudentSubtask>
 {
@@ -24,7 +25,7 @@ public class StudentSubtaskConfiguration : IEntityTypeConfiguration<StudentSubta
             .HasMaxLength(250);
 
         builder.Property(ss => ss.Result)
-            .AsDecimal(3,2);
+            .AsDecimal(3, 2);
 
         builder.HasOne(ss => ss.StudentExam)
             .WithMany(se => se.StudentSubtasks)

@@ -1,9 +1,13 @@
-﻿using Core.Contracts;
-using Core.Entities;
+﻿namespace Persistence.Repositories;
 
 using Base.Persistence;
+using Base.Persistence.Contracts;
 
-namespace Persistence;
+using Persistence.Model;
+
+public interface IClassRepository : IGenericRepository<Class>
+{
+}
 
 public class ClassRepository : GenericRepository<Class>, IClassRepository
 {

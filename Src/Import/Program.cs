@@ -1,8 +1,4 @@
-﻿using Base.Core;
-using Base.Tools.CsvImport;
-
-using Core.Contracts;
-using Core.Entities;
+﻿using Base.Tools.CsvImport;
 
 using Import.ImportData;
 
@@ -16,6 +12,9 @@ using Persistence;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+
+using Persistence.Model;
+using Base.Tools;
 
 var builder = Host.CreateApplicationBuilder(args);
 

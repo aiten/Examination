@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Persistence.Configurations;
 
-using Core.Entities;
+using Persistence.Model;
 
 public class StudentExamConfiguration : IEntityTypeConfiguration<StudentExam>
 {
@@ -21,7 +21,7 @@ public class StudentExamConfiguration : IEntityTypeConfiguration<StudentExam>
             .IsRequired()
             .HasMaxLength(5);
 
-        builder.HasIndex(se => new {se.RegistrationCode, se.ExamId})
+        builder.HasIndex(se => new { se.RegistrationCode, se.ExamId })
             .IsUnique();
 
         builder.HasIndex(se => new { se.StudentId, se.ExamId })

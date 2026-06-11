@@ -1,10 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
 
-using Core.Contracts;
-using Core.Entities;
-using Core.QueryResult;
-
 using FluentAssertions;
 
 using NSubstitute;
@@ -12,6 +8,11 @@ using NSubstitute;
 using WebAPI.Endpoints;
 
 namespace WebAPI.Tests.Endpoints;
+
+using Persistence;
+using Persistence.Model;
+using Persistence.QueryResult;
+using Persistence.Repositories;
 
 public class StudentExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 {

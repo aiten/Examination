@@ -1,10 +1,9 @@
-﻿using Core.Entities;
-
-using System.ComponentModel.DataAnnotations;
-
-namespace Core.Validations;
+﻿namespace Persistence.Validations;
 
 using System;
+using System.ComponentModel.DataAnnotations;
+
+using Persistence.Model;
 
 public class ExamRange : ValidationAttribute
 {
@@ -16,7 +15,7 @@ public class ExamRange : ValidationAttribute
         }
 
         var to   = (TimeOnly)value;
-        var      exam = (Exam)validationContext.ObjectInstance;
+        var exam = (Exam)validationContext.ObjectInstance;
 
         if (to <= exam.From)
         {

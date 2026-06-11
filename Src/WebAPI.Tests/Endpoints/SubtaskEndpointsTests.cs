@@ -1,11 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
 
-using Base.Core.Contracts;
-
-using Core.Contracts;
-using Core.Entities;
-
 using FluentAssertions;
 
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -16,16 +11,22 @@ using WebAPI.Endpoints;
 
 namespace WebAPI.Tests.Endpoints;
 
+using Base.Persistence.Contracts;
+
+using Persistence;
+using Persistence.Model;
+using Persistence.Repositories;
+
 public class SubtaskEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 {
-    private readonly HttpClient          _client;
-    private readonly IUnitOfWork         _uow;
-    private readonly ISubtaskRepository  _subtaskRepo;
+    private readonly HttpClient         _client;
+    private readonly IUnitOfWork        _uow;
+    private readonly ISubtaskRepository _subtaskRepo;
 
     public SubtaskEndpointsTests(CustomWebApplicationFactory factory)
     {
-        _client      = factory.CreateClient();
-        _uow         = factory.UnitOfWork;
+        _client = factory.CreateClient();
+        _uow    = factory.UnitOfWork;
         _uow.ClearReceivedCalls();
         _subtaskRepo = Substitute.For<ISubtaskRepository>();
         _uow.Subtasks.Returns(_subtaskRepo);
@@ -160,7 +161,7 @@ public class SubtaskEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task PutSubtask_NotFound_ReturnsBadRequest()
     {
-        var dto = new SubtaskDto(99, 12,"Task A", 10, false);
+        var dto = new SubtaskDto(99, 12, "Task A", 10, false);
         _subtaskRepo.GetByIdAsync(99).ReturnsForAnyArgs((Subtask?)null);
 
         var response = await _client.PutAsJsonAsync("/api/exam/1/subtask/99", dto);

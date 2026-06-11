@@ -1,4 +1,4 @@
-namespace Core.QueryResult;
+namespace Persistence.QueryResult;
 
 public record StudentExamOverview(
     int      Id,

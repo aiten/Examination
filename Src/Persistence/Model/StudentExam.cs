@@ -1,12 +1,12 @@
-namespace Core.Entities;
-
-using Base.Core.Entities;
+namespace Persistence.Model;
 
 using System.Collections.Generic;
 
+using Base.Persistence.Entities;
+
 public class StudentExam : EntityObject
 {
-    public required string LoginName       { get; set; }
+    public required string LoginName        { get; set; }
     public required string RegistrationCode { get; set; }
 
     public Student Student   { get; set; } = null!;

@@ -1,6 +1,6 @@
-namespace Core.Entities;
+namespace Persistence.Model;
 
-using Base.Core.Entities;
+using Base.Persistence.Entities;
 
 public class StudentSubtask : EntityObject
 {

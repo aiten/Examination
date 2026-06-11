@@ -14,7 +14,7 @@ public class ApplicationDbContextFactory : IDesignTimeDbContextFactory<Applicati
             .Build();
 
         var connectionString = configuration.GetConnectionString("DefaultConnection")
-            ?? "Server=(localdb)\\mssqllocaldb;Database=Examination;Trusted_Connection=True;";
+                               ?? "Server=(localdb)\\mssqllocaldb;Database=Examination;Trusted_Connection=True;";
 
         var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
         optionsBuilder.UseSqlServer(connectionString);

@@ -1,8 +1,8 @@
 namespace WebAPI.Endpoints;
 
-using Core.Contracts;
-using Core.Entities;
-using Core.QueryResult;
+using Persistence;
+using Persistence.Model;
+using Persistence.QueryResult;
 
 public record StudentSubtaskResultDto(int SubtaskId, string Description, int Points, decimal? Result, string? Comment, string? CommentPrivate);
 
@@ -33,14 +33,14 @@ public static class StudentExamEndpoints
             entity.LoginName,
             entity.RegistrationCode,
             entity.StudentSubtasks
-                  .Select(ss => new StudentSubtaskResultDto(
-                      ss.SubtaskId,
-                      ss.Subtask.Description,
-                      ss.Subtask.Points,
-                      ss.Result.HasValue ? ss.Result * 100: null,
-                      ss.Comment,
-                      ss.CommentPrivate))
-                  .ToList()
+                .Select(ss => new StudentSubtaskResultDto(
+                    ss.SubtaskId,
+                    ss.Subtask.Description,
+                    ss.Subtask.Points,
+                    ss.Result.HasValue ? ss.Result * 100 : null,
+                    ss.Comment,
+                    ss.CommentPrivate))
+                .ToList()
         );
 
     #endregion
@@ -125,7 +125,7 @@ public static class StudentExamEndpoints
 
         route.MapDelete("/{id:int}", async (int examId, int id, IUnitOfWork uow) =>
             {
-                using var trans = await  uow.BeginTransactionAsync();
+                using var trans = await uow.BeginTransactionAsync();
 
                 var entity = await uow.StudentExams.GetByIdAsync(id);
 

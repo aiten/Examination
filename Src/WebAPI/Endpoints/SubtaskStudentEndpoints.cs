@@ -1,7 +1,7 @@
 namespace WebAPI.Endpoints;
 
-using Core.Contracts;
-using Core.Entities;
+using Persistence;
+using Persistence.Model;
 
 public record SubtaskStudentDto(int Id, int StudentExamId, string LastName, string FirstName, decimal? Result, string? Comment, string? CommentPrivate);
 

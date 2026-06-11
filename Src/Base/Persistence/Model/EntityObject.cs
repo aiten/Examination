@@ -1,8 +1,8 @@
-﻿namespace Base.Core.Entities;
+﻿namespace Base.Persistence.Entities;
 
 using System.ComponentModel.DataAnnotations;
 
-using Base.Core.Contracts;
+using Base.Persistence.Contracts;
 
 public class EntityObject : IEntityObject
 {

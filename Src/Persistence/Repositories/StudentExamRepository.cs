@@ -1,14 +1,23 @@
-using Core.Contracts;
-using Core.Entities;
-using Core.QueryResult;
+namespace Persistence.Repositories;
 
 using Base.Persistence;
+using Base.Persistence.Contracts;
 
 using Microsoft.EntityFrameworkCore;
 
-namespace Persistence;
+using Persistence.Model;
+using Persistence.QueryResult;
 
-using System.ClientModel;
+public interface IStudentExamRepository : IGenericRepository<StudentExam>
+{
+    Task<IList<StudentExamOverview>> GetStudentExamOverviewsAsync(int examId);
+    Task<IList<StudentExamSummary>>  GetStudentExamSummaryAsync(int   examId);
+    Task<StudentExamResult>          GetStudentResultAsync(string     firstName, string lastName, int pin, string registrationCode);
+
+    Task DeleteAsync(int studentExamId);
+
+    void Check(int examId, int studentExamId);
+}
 
 public class StudentExamRepository : GenericRepository<StudentExam>, IStudentExamRepository
 {
@@ -26,7 +35,8 @@ public class StudentExamRepository : GenericRepository<StudentExam>, IStudentExa
         {
             throw new InvalidOperationException("StudentExam not found.");
         }
-        if (entity.StudentSubtasks.Count(s => s.Result is not null) > 0) 
+
+        if (entity.StudentSubtasks.Count(s => s.Result is not null) > 0)
         {
             throw new InvalidOperationException("StudentExam has results and cannot be deleted.");
         }

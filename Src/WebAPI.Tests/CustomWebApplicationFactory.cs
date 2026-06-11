@@ -1,5 +1,3 @@
-using Core.Contracts;
-
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
@@ -7,6 +5,8 @@ using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 
 namespace WebAPI.Tests;
+
+using Persistence;
 
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {

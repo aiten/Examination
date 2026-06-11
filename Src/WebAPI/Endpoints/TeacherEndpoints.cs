@@ -1,7 +1,7 @@
 namespace WebAPI.Endpoints;
 
-using Core.Contracts;
-using Core.Entities;
+using Persistence;
+using Persistence.Model;
 
 using WebAPI.Filters;
 

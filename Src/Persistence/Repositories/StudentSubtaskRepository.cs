@@ -1,11 +1,17 @@
-using Core.Contracts;
-using Core.Entities;
+namespace Persistence.Repositories;
 
 using Base.Persistence;
-
-namespace Persistence;
+using Base.Persistence.Contracts;
 
 using Microsoft.EntityFrameworkCore;
+
+using Persistence.Model;
+
+public interface IStudentSubtaskRepository : IGenericRepository<StudentSubtask>
+{
+    Task<IList<StudentSubtask>> GetAllForStudentAsync(int examId, int studentExamId);
+    Task<IList<StudentSubtask>> GetAllForSubtaskAsync(int examId, int subtaskId);
+}
 
 public class StudentSubtaskRepository : GenericRepository<StudentSubtask>, IStudentSubtaskRepository
 {
@@ -24,11 +30,10 @@ public class StudentSubtaskRepository : GenericRepository<StudentSubtask>, IStud
             .Where(st => st.ExamId == examId)
             .Select(st => new StudentSubtask()
             {
-                Result = null,
+                Result        = null,
                 StudentExamId = studentExamId,
-                SubtaskId = st.Id,
-                Subtask = st
-
+                SubtaskId     = st.Id,
+                Subtask       = st
             })
             .ToListAsync();
 

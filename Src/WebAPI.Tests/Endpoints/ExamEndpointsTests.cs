@@ -1,12 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
 
-using Base.Core.Contracts;
-
-using Core.Contracts;
-using Core.Entities;
-using Core.QueryResult;
-
 using FluentAssertions;
 
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -17,13 +11,20 @@ using WebAPI.Endpoints;
 
 namespace WebAPI.Tests.Endpoints;
 
+using Base.Persistence.Contracts;
+
+using Persistence;
+using Persistence.Model;
+using Persistence.QueryResult;
+using Persistence.Repositories;
+
 public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 {
-    private readonly HttpClient              _client;
-    private readonly IUnitOfWork             _uow;
-    private readonly IExamRepository         _examRepo;
-    private readonly IStudentRepository      _studentRepo;
-    private readonly IStudentExamRepository  _studentExamRepo;
+    private readonly HttpClient             _client;
+    private readonly IUnitOfWork            _uow;
+    private readonly IExamRepository        _examRepo;
+    private readonly IStudentRepository     _studentRepo;
+    private readonly IStudentExamRepository _studentExamRepo;
 
     public ExamEndpointsTests(CustomWebApplicationFactory factory)
     {
@@ -214,9 +215,9 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task RegisterForExam_ValidRegistration_ReturnsCreated()
     {
-        var exam         = new Exam { Id = 1, Description = "Test", CourseId = 1, Pin = 12345, Date = new DateOnly(2026, 1, 1), ExamType = ExamType.Standard };
-        var student      = new Student { Id = 1, FirstName = "Alice", LastName = "Smith" };
-        var registration = new StudentExam { Id = 1, StudentId = 1, ExamId = 1, LoginName = "alice", RegistrationCode = "ABC12", Student = student, Exam = exam };
+        var exam         = new Exam { Id        = 1, Description = "Test", CourseId  = 1, Pin = 12345, Date = new DateOnly(2026, 1, 1), ExamType = ExamType.Standard };
+        var student      = new Student { Id     = 1, FirstName   = "Alice", LastName = "Smith" };
+        var registration = new StudentExam { Id = 1, StudentId   = 1, ExamId         = 1, LoginName = "alice", RegistrationCode = "ABC12", Student = student, Exam = exam };
         var trans        = Substitute.For<ITransaction>();
         var dto          = new ExamRegistrationDto("Alice", "Smith", "alice", 12345);
 

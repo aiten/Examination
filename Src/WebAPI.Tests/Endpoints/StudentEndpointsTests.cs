@@ -1,11 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
 
-using Base.Core.Contracts;
-
-using Core.Contracts;
-using Core.Entities;
-
 using FluentAssertions;
 
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -16,6 +11,12 @@ using WebAPI.Endpoints;
 
 namespace WebAPI.Tests.Endpoints;
 
+using Base.Persistence.Contracts;
+
+using Persistence;
+using Persistence.Model;
+using Persistence.Repositories;
+
 public class StudentEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly HttpClient         _client;
@@ -25,8 +26,8 @@ public class StudentEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 
     public StudentEndpointsTests(CustomWebApplicationFactory factory)
     {
-        _client      = factory.CreateClient();
-        _uow         = factory.UnitOfWork;
+        _client = factory.CreateClient();
+        _uow    = factory.UnitOfWork;
         _uow.ClearReceivedCalls();
         _studentRepo = Substitute.For<IStudentRepository>();
         _classRepo   = Substitute.For<IClassRepository>();
@@ -40,7 +41,7 @@ public class StudentEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         var students = new List<Student>
         {
             new() { Id = 1, FirstName = "Alice", LastName = "Smith", Classes = new List<Class>() },
-            new() { Id = 2, FirstName = "Bob",   LastName = "Jones", Classes = new List<Class>() }
+            new() { Id = 2, FirstName = "Bob", LastName   = "Jones", Classes = new List<Class>() }
         };
         _studentRepo.GetNoTrackingAsync().ReturnsForAnyArgs(students);
 
@@ -116,8 +117,8 @@ public class StudentEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task PutStudent_ValidUpdate_ReturnsNoContent()
     {
-        var cls      = new Class { Id = 1, Description = "4AHIF", Year = 2024 };
-        var existing = new Student { Id = 1, FirstName = "OldFirst", LastName = "OldLast", Classes = new List<Class>() };
+        var cls      = new Class { Id   = 1, Description = "4AHIF", Year        = 2024 };
+        var existing = new Student { Id = 1, FirstName   = "OldFirst", LastName = "OldLast", Classes = new List<Class>() };
         var dto      = new StudentDto(1, "NewFirst", "NewLast", new[] { 1 });
         var trans    = Substitute.For<ITransaction>();
 
@@ -137,9 +138,9 @@ public class StudentEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task PutStudent_ClearsOldClasses_AndAssignsNew()
     {
-        var oldClass = new Class { Id = 2, Description = "3AHIF", Year = 2023 };
-        var newClass = new Class { Id = 3, Description = "4AHIF", Year = 2024 };
-        var existing = new Student { Id = 1, FirstName = "Alice", LastName = "Smith", Classes = new List<Class> { oldClass } };
+        var oldClass = new Class { Id   = 2, Description = "3AHIF", Year     = 2023 };
+        var newClass = new Class { Id   = 3, Description = "4AHIF", Year     = 2024 };
+        var existing = new Student { Id = 1, FirstName   = "Alice", LastName = "Smith", Classes = new List<Class> { oldClass } };
         var dto      = new StudentDto(1, "Alice", "Smith", new[] { 3 });
 
         _studentRepo.GetByIdAsync(1).ReturnsForAnyArgs(existing);

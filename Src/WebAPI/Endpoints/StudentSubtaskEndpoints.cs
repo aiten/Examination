@@ -1,7 +1,7 @@
 namespace WebAPI.Endpoints;
 
-using Core.Contracts;
-using Core.Entities;
+using Persistence;
+using Persistence.Model;
 
 public record StudentSubtaskDto(int Id, int SubtaskId, string Description, int Points, bool Bonus, int SeqNo, decimal? Result, string? Comment, string? CommentPrivate);
 
@@ -183,6 +183,7 @@ public static class StudentSubtaskEndpoints
                             title: "Subtask not found",
                             detail: $"Subtask {update.SubtaskId} is not part of this student exam");
                     }
+
                     ss.Result         = update.Result.HasValue ? update.Result / 100 : null;
                     ss.Comment        = update.Comment;
                     ss.CommentPrivate = update.CommentPrivate;
@@ -196,6 +197,5 @@ public static class StudentSubtaskEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status204NoContent);
-
     }
 }

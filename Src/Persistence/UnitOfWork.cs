@@ -1,8 +1,22 @@
-﻿using Core.Contracts;
-
-namespace Persistence;
+﻿namespace Persistence;
 
 using Base.Persistence;
+using Base.Persistence.Contracts;
+
+using Persistence.Repositories;
+
+public interface IUnitOfWork : IBaseUnitOfWork
+{
+    IExamRepository           Exams           { get; }
+    ITeacherRepository        Teachers        { get; }
+    IClassRepository          Classes         { get; }
+    ISubtaskRepository        Subtasks        { get; }
+    IStudentRepository        Students        { get; }
+    IStudentExamRepository    StudentExams    { get; }
+    IStudentSubtaskRepository StudentSubtasks { get; }
+    ISubjectRepository        Subjects        { get; }
+    ICourseRepository         Courses         { get; }
+}
 
 public class UnitOfWork : BaseUnitOfWork, IUnitOfWork
 {

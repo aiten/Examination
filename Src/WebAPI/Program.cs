@@ -1,7 +1,3 @@
-using Base.Core;
-
-using Core.Contracts;
-
 using Serilog;
 
 using FluentValidation;
@@ -17,9 +13,13 @@ using Scalar.AspNetCore;
 
 using Persistence;
 
+using Service;
+
 using WebAPI;
 using WebAPI.Endpoints;
 using WebAPI.Services;
+
+using Base.Tools;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,7 +56,7 @@ builder.Services
             .RequireResourceRoles(Settings.KeycloakUserRoleName, Settings.KeycloakAdminRoleName);
     });
 
-    builder.Services.AddHttpContextAccessor();
+builder.Services.AddHttpContextAccessor();
 var kcOptions       = builder.Configuration.GetKeycloakOptions<KeycloakAuthenticationOptions>()!;
 var keycloakBaseUrl = $"{kcOptions.AuthServerUrl!.TrimEnd('/')}/realms/{kcOptions.Realm}/protocol/openid-connect";
 
@@ -117,7 +117,7 @@ builder.Services.AddCors(options => { options.AddDefaultPolicy(policy => { polic
 builder.Services
     .AddScoped<IUnitOfWork, UnitOfWork>()
     .AddAssemblyIncludingInternals(name => name.EndsWith("Repository"), ServiceLifetime.Transient, typeof(ApplicationDbContext).Assembly)
-    .AddAssemblyIncludingInternals(name => name.EndsWith("Service"), ServiceLifetime.Transient, typeof(ExamService).Assembly);
+    .AddAssemblyIncludingInternals(name => name.EndsWith("Service"),    ServiceLifetime.Transient, typeof(ExamService).Assembly);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 

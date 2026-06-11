@@ -2,8 +2,6 @@ namespace WebAPI.Services;
 
 using System.Security.Claims;
 
-using Core.Contracts;
-
 using Microsoft.EntityFrameworkCore;
 
 using Persistence;
