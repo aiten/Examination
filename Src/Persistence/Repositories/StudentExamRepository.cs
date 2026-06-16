@@ -94,8 +94,8 @@ public class StudentExamRepository : GenericRepository<StudentExam>, IStudentExa
             r.RegistrationCode,
             r.CountRated,
             r.CountRated == countRatable ? r.Points : null,
-            r.CountRated == countRatable ? Math.Round(r.Points / totalMaxPoints * 100m, 2) : null,
-            r.CountRated == countRatable ? ExamRepository.CalculateGrade(r.Points / totalMaxPoints) : null
+            totalMaxPoints != 0 && r.CountRated == countRatable ? Math.Round(r.Points / totalMaxPoints * 100m, 2) : null,
+            totalMaxPoints != 0 && r.CountRated == countRatable ? ExamRepository.CalculateGrade(r.Points / totalMaxPoints) : null
         )).ToList();
     }
 

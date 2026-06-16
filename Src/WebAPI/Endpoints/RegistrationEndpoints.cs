@@ -4,6 +4,8 @@ using Base.Persistence.Contracts;
 
 using Service;
 
+using Shared.Exceptions;
+
 using WebAPI.Filters;
 
 public record ExamRegistrationDto(string FirstName, string LastName, string LoginName, int Pin);
@@ -45,7 +47,7 @@ public static class RegistrationEndpoints
                             registration.Exam.Date,
                             registration.RegistrationCode));
                 }
-                catch (InvalidOperationException ex)
+                catch (IllegalValuesException ex)
                 {
                     logger.LogWarning("Registration failed: '{LastName}, {FirstName}' Pin={Pin} Error={Error}",
                         dto.LastName, dto.FirstName, dto.Pin, ex.Message);

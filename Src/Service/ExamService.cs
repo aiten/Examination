@@ -29,8 +29,6 @@ public interface IExamService
     Task<IList<ExamOverview>> GetExamOverviewsAsync(int?  teacherId, int?   courseId);
 
     Task<StudentExam>         RegisterStudentAsync(string firstName, string lastName, string loginName, int pin);
-
-    Task<int> CalculateGrade(int id, decimal percent);
 }
 
 public class ExamService : IExamService
@@ -64,16 +62,16 @@ public class ExamService : IExamService
             throw new NotFoundException($"Exam {id} not found");
         }
 
-        entity.Description    = entity.Description;
-        entity.ExamType       = entity.ExamType;
-        entity.CourseId       = entity.CourseId;
-        entity.TeacherId      = entity.TeacherId;
-        entity.Pin            = entity.Pin;
-        entity.Date           = entity.Date;
-        entity.From           = entity.From;
-        entity.To             = entity.To;
-        entity.CanRegister    = entity.CanRegister;
-        entity.CanShowResults = entity.CanShowResults;
+        entity.Description    = exam.Description;
+        entity.ExamType       = exam.ExamType;
+        entity.CourseId       = exam.CourseId;
+        entity.TeacherId      = exam.TeacherId;
+        entity.Pin            = exam.Pin;
+        entity.Date           = exam.Date;
+        entity.From           = exam.From;
+        entity.To             = exam.To;
+        entity.CanRegister    = exam.CanRegister;
+        entity.CanShowResults = exam.CanShowResults;
         entity.Modified       = DateTime.Now;
 
         await _uow.SaveChangesAsync();
@@ -83,7 +81,7 @@ public class ExamService : IExamService
     {
         if (exam.Id != 0)
         {
-            throw new NotFoundException($"Exam must not have id = 0");
+            throw new IllegalValuesException("Id must be 0 for new entities");
         }
 
         exam.Created  = DateTime.Now;
@@ -121,15 +119,15 @@ public class ExamService : IExamService
 
         var student = await _uow.Students.GetStudentByNameAsync(lastName, firstName);
         if (student is null)
-            throw new InvalidOperationException($"No student found with name '{lastName}, {firstName}'");
+            throw new IllegalValuesException($"No student found with name '{lastName}, {firstName}'");
 
         var course = exam.Course;
         if (course is null || !course.Classes.Any(c => student.Classes.Any(sc => sc.Id == c.Id)))
-            throw new InvalidOperationException($"Student '{lastName}, {firstName} ' is not enrolled in any class of this exam's course");
+            throw new IllegalValuesException($"Student '{lastName}, {firstName} ' is not enrolled in any class of this exam's course");
 
         bool alreadyRegistered = await _uow.StudentExams.AnyAsync(exam.Id, student.Id);
         if (alreadyRegistered)
-            throw new InvalidOperationException($"Student '{lastName}, {firstName}' is already registered for this exam");
+            throw new IllegalValuesException($"Student '{lastName}, {firstName}' is already registered for this exam");
 
         var registration = new StudentExam
         {
@@ -142,6 +140,8 @@ public class ExamService : IExamService
         };
 
         await _uow.StudentExams.AddAsync(registration);
+        await _uow.SaveChangesAsync();
+
         return registration;
     }
 
@@ -155,10 +155,5 @@ public class ExamService : IExamService
         } while (await _uow.StudentExams.AnyAsync(examId, code));
 
         return code;
-    }
-
-    public Task<int> CalculateGrade(int id, decimal percent)
-    {
-        throw new NotImplementedException();
     }
 }
