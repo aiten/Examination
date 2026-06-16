@@ -39,6 +39,8 @@ span.action-item:hover {
 
 .dropdown {
   position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .dropdown-toggle {
