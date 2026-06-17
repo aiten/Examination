@@ -103,6 +103,11 @@ public class GenericRepository<TEntity> : IGenericRepository<TEntity> where TEnt
         _dbSet.Remove(entity);
     }
 
+    public void RemoveRange(IEnumerable<TEntity> entities)
+    {
+        _dbSet.RemoveRange(entities);
+    }
+
     public EntityEntry<TEntity> Attach(TEntity entity)
     {
         return _dbSet.Attach(entity);

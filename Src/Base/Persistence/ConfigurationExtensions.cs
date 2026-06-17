@@ -9,7 +9,7 @@ public static class ConfigurationExtensions
 {
     #region text
 
-    public static PropertyBuilder<string> AsText(this PropertyBuilder<string> builder, int maxLength)
+    public static PropertyBuilder<string?> AsText(this PropertyBuilder<string?> builder, int maxLength)
     {
         return builder.IsUnicode().HasMaxLength(maxLength);
     }

@@ -8,6 +8,8 @@ using Persistence.QueryResult;
 
 using Service;
 
+using Shared.Exceptions;
+
 using WebAPI.Filters;
 
 public record ExamDto(
@@ -120,10 +122,7 @@ public static class ExamEndpoints
             {
                 if (id != dto.Id)
                 {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status400BadRequest,
-                        title: "Invalid request",
-                        detail: "The ID in the URL does not match the ID in the request body");
+                    throw new IllegalValuesException("The ID in the URL does not match the ID in the request body");
                 }
 
                 using (var trans = await transactionProvider.BeginTransactionAsync())
@@ -145,10 +144,7 @@ public static class ExamEndpoints
             {
                 if (dto.Id != 0)
                 {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status400BadRequest,
-                        title: "Invalid request",
-                        detail: "The ID in the request body must be 0");
+                    throw new IllegalValuesException("The ID in the request body must be 0");
                 }
 
                 using (var trans = await transactionProvider.BeginTransactionAsync())
