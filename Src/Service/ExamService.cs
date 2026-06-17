@@ -33,13 +33,15 @@ public interface IExamService
 
 public class ExamService : IExamService
 {
-    private readonly IUnitOfWork          _uow;
-    private readonly ILogger<ExamService> _logger;
+    private readonly IUnitOfWork              _uow;
+    private readonly ILogger<ExamService>     _logger;
+    private readonly IHubNotificationService  _hub;
 
-    public ExamService(IUnitOfWork uow, ILogger<ExamService> logger)
+    public ExamService(IUnitOfWork uow, ILogger<ExamService> logger, IHubNotificationService hub)
     {
         _uow    = uow;
         _logger = logger;
+        _hub    = hub;
     }
 
     public async Task<IList<Exam>> GetAllAsync()
@@ -75,6 +77,7 @@ public class ExamService : IExamService
         entity.Modified       = DateTime.Now;
 
         await _uow.SaveChangesAsync();
+        await _hub.NotifyExamUpdatedAsync(id);
     }
 
     public async Task<Exam> AddExamAsync(Exam exam)
@@ -89,6 +92,7 @@ public class ExamService : IExamService
 
         await _uow.Exams.AddAsync(exam);
         await _uow.SaveChangesAsync();
+        await _hub.NotifyExamUpdatedAsync(exam.Id);
 
         return exam;
     }
@@ -104,6 +108,7 @@ public class ExamService : IExamService
 
         _uow.Exams.Remove(entity);
         await _uow.SaveChangesAsync();
+        await _hub.NotifyExamUpdatedAsync(id);
     }
 
     public async Task<IList<ExamOverview>> GetExamOverviewsAsync(int? teacherId, int? courseId)

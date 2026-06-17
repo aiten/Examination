@@ -1,12 +1,14 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { Exam } from '../models/exam.model';
 import { ExamService } from '../services/exam.service';
 import { Teacher } from '../models/teacher.model';
 import { TeacherService } from '../services/teacher.service';
 import { Course } from '../models/course.model';
 import { CourseService } from '../services/course.service';
+import { SignalRService } from '../services/signalr.service';
 
 @Component({
   selector: 'app-exam-form',
@@ -15,6 +17,13 @@ import { CourseService } from '../services/course.service';
   template: `
     <div class="page">
       <h2>{{ isNew ? 'New Exam' : 'Edit Exam' }}</h2>
+      @if (reloadPending()) {
+        <div class="reload-banner">
+          This exam was updated by someone else.
+          <button type="button" class="btn btn-primary" (click)="reloadExam()">Reload</button>
+          <button type="button" class="btn" (click)="reloadPending.set(false)">Dismiss</button>
+        </div>
+      }
       <form (ngSubmit)="save()" #form="ngForm" class="form">
         <div class="form-group">
           <label>Description *</label>
@@ -89,19 +98,24 @@ import { CourseService } from '../services/course.service';
     </div>
   `
 })
-export class ExamFormComponent implements OnInit {
+export class ExamFormComponent implements OnInit, OnDestroy {
   exam = signal<Exam>({ id: 0, description: '', examType: 0, teacherId: 0, courseId: 0, date: '2026-05-07', from: '08:00', to: '09:00', pin: null, canRegister: true, canShowResults: false });
   teachers = signal<Teacher[]>([]);
   courses = signal<Course[]>([]);
   isNew = true;
   error = signal('');
+  reloadPending = signal(false);
+
+  private examId = 0;
+  private signalRSub?: Subscription;
 
   constructor(
     private service: ExamService,
     private teacherService: TeacherService,
     private courseService: CourseService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private signalR: SignalRService
   ) {}
 
   ngOnInit(): void {
@@ -115,12 +129,35 @@ export class ExamFormComponent implements OnInit {
     const id = this.route.snapshot.paramMap.get('id');
     if (id && id !== 'new') {
       this.isNew = false;
-      this.service.getById(+id).subscribe(e => this.exam.set({
+      this.examId = +id;
+      this.service.getById(this.examId).subscribe(e => this.exam.set({
         ...e,
         from: e.from.slice(0, 5),
         to: e.to.slice(0, 5),
       }));
+      this.signalR.joinExamGroup(this.examId);
+      this.signalRSub = this.signalR.examUpdated$.subscribe(msg => {
+        if (msg.examId === this.examId) {
+          this.reloadPending.set(true);
+        }
+      });
     }
+  }
+
+  reloadExam(): void {
+    this.reloadPending.set(false);
+    this.service.getById(this.examId).subscribe(e => this.exam.set({
+      ...e,
+      from: e.from.slice(0, 5),
+      to: e.to.slice(0, 5),
+    }));
+  }
+
+  ngOnDestroy(): void {
+    if (this.examId) {
+      this.signalR.leaveExamGroup(this.examId);
+    }
+    this.signalRSub?.unsubscribe();
   }
 
   save(): void {

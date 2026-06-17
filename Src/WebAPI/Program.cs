@@ -8,6 +8,7 @@ using Keycloak.AuthServices.Authentication;
 using Keycloak.AuthServices.Authorization;
 using Keycloak.AuthServices.Common;
 
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 
@@ -20,6 +21,7 @@ using Service;
 using WebAPI;
 using WebAPI.Endpoints;
 using WebAPI.ExceptionHandlers;
+using WebAPI.Hubs;
 using WebAPI.Services;
 
 using Base.Tools;
@@ -30,6 +32,30 @@ builder.Host.UseSerilog((ctx, lc) => lc
     .ReadFrom.Configuration(ctx.Configuration));
 
 builder.Services.AddKeycloakWebApiAuthentication(builder.Configuration);
+
+// Allow SignalR clients to pass the bearer token via query string (?access_token=...)
+// because WebSocket connections cannot send custom headers
+builder.Services.Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
+{
+    var originalOnMessageReceived = options.Events?.OnMessageReceived;
+    options.Events ??= new JwtBearerEvents();
+    options.Events.OnMessageReceived = async context =>
+    {
+        if (originalOnMessageReceived != null)
+            await originalOnMessageReceived(context);
+
+        if (string.IsNullOrEmpty(context.Token))
+        {
+            var accessToken = context.Request.Query["access_token"];
+            if (!string.IsNullOrEmpty(accessToken) &&
+                context.HttpContext.Request.Path.StartsWithSegments("/hubs"))
+            {
+                context.Token = accessToken;
+            }
+        }
+    };
+});
+
 builder.Services.AddCors();
 
 builder.Services
@@ -113,10 +139,20 @@ builder.Services.AddOpenApi(options =>
 builder.Services.AddExceptionHandler<DomainExceptionHandler>();
 builder.Services.AddProblemDetails();
 
-builder.Services.AddCors(options => { options.AddDefaultPolicy(policy => { policy.AllowAnyHeader().AllowAnyOrigin().AllowAnyMethod(); }); });
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy => policy.AllowAnyHeader().AllowAnyOrigin().AllowAnyMethod());
+    // SignalR requires AllowCredentials; AllowAnyOrigin is incompatible with it,
+    // so SetIsOriginAllowed is used as the equivalent open policy.
+    options.AddPolicy("SignalRCors", policy =>
+        policy.SetIsOriginAllowed(_ => true).AllowAnyHeader().AllowAnyMethod().AllowCredentials());
+});
+
+builder.Services.AddSignalR();
 
 
 //builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddSingleton<IHubNotificationService, HubNotificationService>();
 
 builder.Services
     .AddScoped<UnitOfWork>()
@@ -174,6 +210,8 @@ app.MapSubtaskStudentEndpoints("/api/exam");
 app.MapStudentEndpoints("/api/student");
 app.MapRegistrationEndpoints("/api/registration");
 app.MapResultEndpoints("/api/result");
+
+app.MapHub<ExaminationHub>("/hubs/examination").RequireCors("SignalRCors");
 
 app.MapFallbackToFile("index.html");
 
