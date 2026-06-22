@@ -1,6 +1,6 @@
 namespace Persistence.Model;
 
-using Base.Persistence.Entities;
+using Base.Persistence.Model;
 
 public class StudentSubtask : EntityObject
 {

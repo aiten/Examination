@@ -120,16 +120,12 @@ public static class ExamEndpoints
 
         route.MapPut("/{id:int}", async (int id, ExamDto dto, IExamService examService, ITransactionProvider transactionProvider) =>
             {
-                if (id != dto.Id)
-                {
-                    throw new IllegalValuesException("The ID in the URL does not match the ID in the request body");
-                }
+                EndpointTools.CheckId(id, dto.Id);
 
-                using (var trans = await transactionProvider.BeginTransactionAsync())
-                {
-                    await examService.UpdateExamAsync(id, ToEntity(dto));
-                    await trans.CommitTransactionAsync();
-                }
+                using var trans = await transactionProvider.BeginTransactionAsync();
+
+                await examService.UpdateExamAsync(id, ToEntity(dto));
+                await trans.CommitTransactionAsync();
 
                 return Results.NoContent();
             })
@@ -142,20 +138,16 @@ public static class ExamEndpoints
 
         route.MapPost("", async (ExamDto dto, IExamService examService, ITransactionProvider transactionProvider) =>
             {
-                if (dto.Id != 0)
-                {
-                    throw new IllegalValuesException("The ID in the request body must be 0");
-                }
+                EndpointTools.CheckIdMustBe0(dto.Id);
 
-                using (var trans = await transactionProvider.BeginTransactionAsync())
-                {
-                    var entity  = ToEntity(dto);
-                    var created = await examService.AddExamAsync(entity);
+                using var trans = await transactionProvider.BeginTransactionAsync();
 
-                    await trans.CommitTransactionAsync();
+                var entity  = ToEntity(dto);
+                var created = await examService.AddExamAsync(entity);
 
-                    return Results.Created($"{baseRoute}/{created.Id}", ToDto(created));
-                }
+                await trans.CommitTransactionAsync();
+
+                return Results.Created($"{baseRoute}/{created.Id}", ToDto(created));
             })
             .WithValidation<ExamDto>()
             .WithName("AddExam")
@@ -164,11 +156,10 @@ public static class ExamEndpoints
 
         route.MapDelete("/{id:int}", async (int id, IExamService examService, ITransactionProvider transactionProvider) =>
             {
-                using (var trans = await transactionProvider.BeginTransactionAsync())
-                {
-                    await examService.DeleteExamAsync(id);
-                    await trans.CommitTransactionAsync();
-                }
+                using var trans = await transactionProvider.BeginTransactionAsync();
+
+                await examService.DeleteExamAsync(id);
+                await trans.CommitTransactionAsync();
 
                 return Results.NoContent();
             })

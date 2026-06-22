@@ -2,7 +2,7 @@
 
 using System.Collections.Generic;
 
-using Base.Persistence.Entities;
+using Base.Persistence.Model;
 
 public class Class : EntityObject
 {

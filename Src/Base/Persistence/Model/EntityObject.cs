@@ -1,4 +1,4 @@
-﻿namespace Base.Persistence.Entities;
+﻿namespace Base.Persistence.Model;
 
 using System.ComponentModel.DataAnnotations;
 

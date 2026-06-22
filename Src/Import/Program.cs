@@ -13,9 +13,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
+using Base.Persistence.Contracts;
+
 using Persistence.Model;
 
 using Base.Tools;
+
+using Import;
+
+using Service;
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -27,9 +33,15 @@ var connectionString = configuration.GetConnectionString("DefaultConnection") ??
 builder.Services
     .AddDbContext<ApplicationDbContext>(options =>
         options.UseSqlServer(connectionString))
-    .AddScoped<IUnitOfWork, UnitOfWork>()
+    .AddScoped<UnitOfWork>()
+    .AddScoped<ITransactionProvider>(sp => sp.GetRequiredService<UnitOfWork>())
+    .AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<UnitOfWork>())
     .AddAssemblyIncludingInternals(name => name.EndsWith("Repository"), ServiceLifetime.Transient, typeof(ApplicationDbContext).Assembly)
-    ;
+    .AddAssemblyIncludingInternals(name => name.EndsWith("Service"),    ServiceLifetime.Transient, typeof(ExamService).Assembly);
+;
+
+builder.Services.AddScoped<ICurrentUserService, DummyCurrentUserService>();
+builder.Services.AddSingleton<IHubNotificationService, DummyHubNotificationService>();
 
 var host = builder.Build();
 

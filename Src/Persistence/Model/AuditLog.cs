@@ -2,7 +2,7 @@ namespace Persistence.Model;
 
 using System;
 
-using Base.Persistence.Entities;
+using Base.Persistence.Model;
 
 public class AuditLog : EntityObject
 {
