@@ -1,7 +1,11 @@
 namespace WebAPI.Endpoints;
 
+using Base.Persistence.Contracts;
+
 using Persistence;
 using Persistence.Model;
+
+using Service;
 
 using WebAPI.Filters;
 
@@ -57,60 +61,35 @@ public static class SubjectEndpoints
         var routeAdmin = app
             .MapGroup(baseRoute)
             .WithTags("Subject")
-            .RequireAuthorization(Settings.AdminPolicyName);
+            .RequireAuthorization(Settings.AdminPolicyName)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden);
 
-        route.MapGet("", async (IUnitOfWork uow) =>
+        route.MapGet("", async (ISubjectService subjectService, ITransactionProvider transactionProvider) =>
             {
-                var dtos = ToDto(await uow.Subjects.GetNoTrackingAsync());
+                var dtos = ToDto(await subjectService.GetSubjectsAsync());
                 return Results.Ok(dtos);
             })
             .WithName("GetSubjects")
             .Produces<List<SubjectDto>>(StatusCodes.Status200OK);
 
-        route.MapGet("/{id:int}", async (int id, IUnitOfWork uow) =>
+        route.MapGet("/{id:int}", async (int id, ISubjectService subjectService, ITransactionProvider transactionProvider) =>
             {
-                var dto = ToDto(await uow.Subjects.GetByIdAsync(id));
-
-                if (dto is null)
-                {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status404NotFound,
-                        title: "Subject not found",
-                        detail: $"No Subject found with ID {id}");
-                }
-
+                var dto = ToDto(await subjectService.SingleSubjectAsync(id));
                 return Results.Ok(dto);
             })
             .WithName("GetSubject")
             .Produces<SubjectDto>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-        routeAdmin.MapPut("/{id:int}", async (int id, SubjectDto dto, IUnitOfWork uow) =>
+        routeAdmin.MapPut("/{id:int}", async (int id, SubjectDto dto, ISubjectService subjectService, ITransactionProvider transactionProvider) =>
             {
-                if (id != dto.Id)
-                {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status400BadRequest,
-                        title: "Invalid request",
-                        detail: "The ID in the URL does not match the ID in the request body");
-                }
+                EndpointTools.CheckId(id, dto.Id);
 
-                using (var trans = await uow.BeginTransactionAsync())
-                {
-                    var entity = await uow.Subjects.GetByIdAsync(id);
+                using var trans = await transactionProvider.BeginTransactionAsync();
 
-                    if (entity is null)
-                    {
-                        return Results.Problem(
-                            statusCode: StatusCodes.Status400BadRequest,
-                            title: "Subject not found",
-                            detail: $"No Subject found with ID {id}");
-                    }
-
-                    entity.Name = dto.Name;
-
-                    await trans.CommitTransactionAsync();
-                }
+                await subjectService.UpdateSubjectAsync(id, ToEntity(dto));
+                await trans.CommitTransactionAsync();
 
                 return Results.NoContent();
             })
@@ -119,46 +98,31 @@ public static class SubjectEndpoints
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-        routeAdmin.MapPost("", async (SubjectDto dto, IUnitOfWork uow) =>
+        routeAdmin.MapPost("", async (SubjectDto dto, ISubjectService subjectService, ITransactionProvider transactionProvider) =>
             {
-                if (dto.Id != 0)
-                {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status400BadRequest,
-                        title: "Invalid request",
-                        detail: "The ID in the request body must be 0");
-                }
+                EndpointTools.CheckIdMustBe0(dto.Id);
 
-                using var trans  = await uow.BeginTransactionAsync();
-                var       entity = ToEntity(dto);
+                using var trans = await transactionProvider.BeginTransactionAsync();
 
-                await uow.Subjects.AddAsync(entity);
+                var entity = ToEntity(dto);
 
+                await subjectService.AddSubjectAsync(entity);
                 await trans.CommitTransactionAsync();
 
                 int id = entity.Id;
 
-                return Results.Created($"{baseRoute}/{id}", ToDto(await uow.Subjects.GetByIdAsync(id)));
+                return Results.Created($"{baseRoute}/{id}", ToDto(await subjectService.GetSubjectByIdAsync(id)));
             })
             .WithName("AddSubject")
             .Produces(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest);
 
-        routeAdmin.MapDelete("/{id:int}", async (int id, IUnitOfWork uow) =>
+        routeAdmin.MapDelete("/{id:int}", async (int id, ISubjectService subjectService, ITransactionProvider transactionProvider) =>
             {
-                var entity = await uow.Subjects.GetByIdAsync(id);
+                using var trans  = await transactionProvider.BeginTransactionAsync();
 
-                if (entity is null)
-                {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status400BadRequest,
-                        title: "Subject not found",
-                        detail: $"No Subject found with ID {id}");
-                }
-
-                uow.Subjects.Remove(entity);
-
-                await uow.SaveChangesAsync();
+                await subjectService.DeleteSubjectAsync(id);
+                await trans.CommitTransactionAsync();
 
                 return Results.NoContent();
             })
