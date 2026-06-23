@@ -1,7 +1,11 @@
 namespace WebAPI.Endpoints;
 
+using Base.Persistence.Contracts;
+
 using Persistence;
 using Persistence.Model;
+
+using Service;
 
 using WebAPI.Filters;
 
@@ -73,61 +77,33 @@ public static class TeacherEndpoints
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden);
 
-        route.MapGet("", async (IUnitOfWork uow) =>
+        route.MapGet("", async (ITeacherService teacherService, ITransactionProvider transactionProvider) =>
             {
-                var dtos = ToDto(await uow.Teachers.GetNoTrackingAsync());
+                var dtos = ToDto(await teacherService.GetTeachersAsync());
                 return Results.Ok(dtos);
             })
             .WithName("GetTeachers")
             .Produces<List<TeacherDto>>(StatusCodes.Status200OK);
 
-        route.MapGet("/{id:int}", async (int id, IUnitOfWork uow) =>
+        route.MapGet("/{id:int}", async (int id, ITeacherService teacherService, ITransactionProvider transactionProvider) =>
             {
-                var dto = ToDto(await uow.Teachers.GetByIdAsync(id));
-
-                if (dto is null)
-                {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status404NotFound,
-                        title: "Teacher not found",
-                        detail: $"No Teacher found with ID {id}");
-                }
-
+                var dto = ToDto(await teacherService.SingleTeacherAsync(id));
                 return Results.Ok(dto);
             })
             .WithName("GetTeacher")
             .Produces<TeacherDto>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-        routeAdmin.MapPut("/{id:int}", async (int id, TeacherDto dto, IUnitOfWork uow) =>
+        routeAdmin.MapPut("/{id:int}", async (int id, TeacherDto dto, ITeacherService teacherService, ITransactionProvider transactionProvider) =>
             {
-                if (id != dto.Id)
-                {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status400BadRequest,
-                        title: "Invalid request",
-                        detail: "The ID in the URL does not match the ID in the request body");
-                }
+                EndpointTools.CheckId(id, dto.Id);
 
-                using (var trans = await uow.BeginTransactionAsync())
-                {
-                    var entity = await uow.Teachers.GetByIdAsync(id);
+                using var trans  = await transactionProvider.BeginTransactionAsync();
 
-                    if (entity is null)
-                    {
-                        return Results.Problem(
-                            statusCode: StatusCodes.Status400BadRequest,
-                            title: "Teacher not found",
-                            detail: $"No Teacher found with ID {id}");
-                    }
+                var entity = ToEntity(dto);
 
-                    entity.FirstName    = dto.FirstName;
-                    entity.LastName     = dto.LastName;
-                    entity.NickName     = dto.NickName;
-                    entity.Abbreviation = dto.Abbreviation;
-
-                    await trans.CommitTransactionAsync();
-                }
+                await teacherService.UpdateTeacherAsync(id, entity);
+                await trans.CommitTransactionAsync();
 
                 return Results.NoContent();
             })
@@ -138,47 +114,33 @@ public static class TeacherEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound);
 
 
-        routeAdmin.MapPost("", async (TeacherDto dto, IUnitOfWork uow) =>
+        routeAdmin.MapPost("", async (TeacherDto dto, ITeacherService teacherService, ITransactionProvider transactionProvider) =>
             {
-                if (dto.Id != 0)
-                {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status400BadRequest,
-                        title: "Invalid request",
-                        detail: "The ID in the request body must be 0");
-                }
+                EndpointTools.CheckIdMustBe0(dto.Id);
 
-                using var trans  = await uow.BeginTransactionAsync();
+                using var trans  = await transactionProvider.BeginTransactionAsync();
                 var       entity = ToEntity(dto);
 
-                await uow.Teachers.AddAsync(entity);
+                await teacherService.AddTeacherAsync(entity);
 
                 await trans.CommitTransactionAsync();
 
                 int id = entity.Id;
 
-                return Results.Created($"{baseRoute}/{id}", ToDto(await uow.Teachers.GetByIdAsync(id)));
+                return Results.Created($"{baseRoute}/{id}", ToDto(await teacherService.GetTeacherByIdAsync(id)));
             })
             .WithValidation<TeacherDto>()
             .WithName("AddTeacher")
             .Produces(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest);
 
-        routeAdmin.MapDelete("/{id:int}", async (int id, IUnitOfWork uow) =>
+        routeAdmin.MapDelete("/{id:int}", async (int id, ITeacherService teacherService, ITransactionProvider transactionProvider) =>
             {
-                var entity = await uow.Teachers.GetByIdAsync(id);
+                using var trans  = await transactionProvider.BeginTransactionAsync();
 
-                if (entity is null)
-                {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status400BadRequest,
-                        title: "Teacher not found",
-                        detail: $"No Teacher found with ID {id}");
-                }
+                await teacherService.DeleteTeacherAsync(id);
 
-                uow.Teachers.Remove(entity);
-
-                await uow.SaveChangesAsync();
+                await trans.SaveChangesAsync();
 
                 return Results.NoContent();
             })
