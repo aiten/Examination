@@ -1,7 +1,13 @@
 namespace WebAPI.Endpoints;
 
+using Base.Persistence.Contracts;
+
 using Persistence;
 using Persistence.Model;
+
+using Service;
+
+using Shared.Exceptions;
 
 public record SubtaskStudentDto(int Id, int StudentExamId, string LastName, string FirstName, decimal? Result, string? Comment, string? CommentPrivate);
 
@@ -36,19 +42,10 @@ public static class SubtaskStudentEndpoints
             .ProducesProblem(StatusCodes.Status403Forbidden);
 
 
-        route.MapGet("", async (int examId, int subtaskId, IUnitOfWork uow) =>
+        route.MapGet("", async (int examId, int subtaskId, IStudentSubtaskService studentSubtaskService, ITransactionProvider transactionProvider) =>
             {
-                var subtask = await uow.Subtasks.GetByIdAsync(subtaskId);
-
-                if (subtask is null || subtask.ExamId != examId)
-                {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status404NotFound,
-                        title: "Subtask not found",
-                        detail: $"No Subtask found with ID {subtaskId} for exam {examId}");
-                }
-
-                var list = await uow.StudentSubtasks.GetAllForSubtaskAsync(examId, subtaskId);
+                await studentSubtaskService.CheckValidSubtask(examId, subtaskId);
+                var list = await studentSubtaskService.GetAllForSubtaskAsync(examId, subtaskId);
 
                 return Results.Ok(ToDto(list));
             })
@@ -56,17 +53,11 @@ public static class SubtaskStudentEndpoints
             .Produces<List<SubtaskStudentDto>>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-        route.MapGet("/{id:int}", async (int examId, int subtaskId, int id, IUnitOfWork uow) =>
+        route.MapGet("/{id:int}", async (int examId, int subtaskId, int id, IStudentSubtaskService studentSubtaskService, ITransactionProvider transactionProvider) =>
             {
-                var entity = await uow.StudentSubtasks.GetByIdAsync(id, "StudentExam");
-
-                if (entity is null || entity.SubtaskId != subtaskId)
-                {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status404NotFound,
-                        title: "StudentSubtask not found",
-                        detail: $"No StudentSubtask found with ID {id} for subtask {subtaskId}");
-                }
+                await studentSubtaskService.CheckValid(id, examId, subtaskId);
+                
+                var entity = await studentSubtaskService.SingleStudentSubtaskAsync(id, nameof(StudentSubtask.StudentExam));
 
                 return Results.Ok(ToDto(entity));
             })
@@ -74,37 +65,12 @@ public static class SubtaskStudentEndpoints
             .Produces<SubtaskStudentDto>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-        route.MapPost("", async (int examId, int subtaskId, SubtaskStudentCreateDto dto, IUnitOfWork uow) =>
+        route.MapPost("", async (int examId, int subtaskId, SubtaskStudentCreateDto dto, IStudentSubtaskService studentSubtaskService, ITransactionProvider transactionProvider) =>
             {
-                var subtask = await uow.Subtasks.GetByIdAsync(subtaskId);
+                using var trans = await transactionProvider.BeginTransactionAsync();
 
-                if (subtask is null || subtask.ExamId != examId)
-                {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status404NotFound,
-                        title: "Subtask not found",
-                        detail: $"No Subtask found with ID {subtaskId} for exam {examId}");
-                }
-
-                var studentExam = await uow.StudentExams.GetByIdAsync(dto.StudentExamId);
-
-                if (studentExam is null || studentExam.ExamId != examId)
-                {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status400BadRequest,
-                        title: "StudentExam not found",
-                        detail: $"No StudentExam found with ID {dto.StudentExamId} for exam {examId}");
-                }
-
-                var existing = await uow.StudentSubtasks.GetNoTrackingAsync(ss => ss.SubtaskId == subtaskId && ss.StudentExamId == dto.StudentExamId);
-
-                if (existing.Count > 0)
-                {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status409Conflict,
-                        title: "Duplicate entry",
-                        detail: $"A result for student exam {dto.StudentExamId} already exists for subtask {subtaskId}");
-                }
+                await studentSubtaskService.CheckValidSubtask(examId, subtaskId);
+                await studentSubtaskService.CheckValidStudentExam(examId, dto.StudentExamId);
 
                 var entity = new StudentSubtask
                 {
@@ -115,10 +81,11 @@ public static class SubtaskStudentEndpoints
                     CommentPrivate = dto.CommentPrivate
                 };
 
-                await uow.StudentSubtasks.AddAsync(entity);
-                await uow.SaveChangesAsync();
+                await studentSubtaskService.AddStudentSubtaskAsync(entity);
 
-                var created = await uow.StudentSubtasks.GetByIdAsync(entity.Id, "StudentExam", "StudentExam.Student");
+                await trans.CommitTransactionAsync();
+
+                var created = await studentSubtaskService.GetStudentSubtaskByIdAsync(entity.Id, "StudentExam", "StudentExam.Student");
                 return Results.Created($"{examId}/subtasks/{subtaskId}/students/{entity.Id}", ToDto(created!));
             })
             .WithName("AddSubtaskStudent")
@@ -127,30 +94,24 @@ public static class SubtaskStudentEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
 
-        route.MapPut("/{id:int}", async (int examId, int subtaskId, int id, SubtaskStudentDto dto, IUnitOfWork uow) =>
+        route.MapPut("/{id:int}", async (int examId, int subtaskId, int id, SubtaskStudentDto dto, IStudentSubtaskService studentSubtaskService, ITransactionProvider transactionProvider) =>
             {
-                if (id != dto.Id)
+                EndpointTools.CheckId(id, dto.Id);
+
+                using var trans = await transactionProvider.BeginTransactionAsync();
+
+                await studentSubtaskService.CheckValid(id, examId, subtaskId);
+
+                var entity = new StudentSubtask()
                 {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status400BadRequest,
-                        title: "Invalid request",
-                        detail: "The ID in the URL does not match the ID in the request body");
-                }
+                    Result         = dto.Result.HasValue ? dto.Result / 100M : null,
+                    Comment        = dto.Comment,
+                    CommentPrivate = dto.CommentPrivate
+                };
 
-                var entity = await uow.StudentSubtasks.GetByIdAsync(id);
+                await studentSubtaskService.UpdateStudentSubtaskAsync(id, entity);
 
-                if (entity is null || entity.SubtaskId != subtaskId)
-                {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status404NotFound,
-                        title: "StudentSubtask not found",
-                        detail: $"No StudentSubtask found with ID {id} for subtask {subtaskId}");
-                }
-
-                entity.Result         = dto.Result.HasValue ? dto.Result / 100M : null;
-                entity.Comment        = dto.Comment;
-                entity.CommentPrivate = dto.CommentPrivate;
-                await uow.SaveChangesAsync();
+                await trans.CommitTransactionAsync();
 
                 return Results.NoContent();
             })

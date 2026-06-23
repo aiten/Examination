@@ -20,11 +20,11 @@ public static class EndpointTools
         }
     }
 
-    public static void CheckTournamentId(int tournamentId, int dtoTournamentId)
+    public static void CheckExamId(int examId, int dtoExamId)
     {
-        if (tournamentId != dtoTournamentId)
+        if (examId != dtoExamId)
         {
-            throw new IllegalValuesException("The TournamentId in the body does not match the URL");
+            throw new IllegalValuesException("The ExamId in the body does not match the URL");
         }
     }
 }

@@ -16,6 +16,7 @@ public class DomainExceptionHandler : IExceptionHandler
             NotFoundException e      => (StatusCodes.Status404NotFound, e.Message),
             BusinessRuleException e  => (StatusCodes.Status422UnprocessableEntity, e.Message),
             IllegalValuesException e => (StatusCodes.Status400BadRequest, e.Message),
+            ConflictException e      => (StatusCodes.Status409Conflict, e.Message),
             _                        => (0, null)
         };
 
