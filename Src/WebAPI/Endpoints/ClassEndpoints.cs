@@ -58,7 +58,6 @@ public static class ClassEndpoints
 
     #endregion
 
-
     public static void MapClassEndpoints(this IEndpointRouteBuilder app, string baseRoute)
     {
         var route = app
@@ -71,7 +70,9 @@ public static class ClassEndpoints
         var routeAdmin = app
             .MapGroup(baseRoute)
             .WithTags("Class")
-            .RequireAuthorization(Settings.AdminPolicyName);
+            .RequireAuthorization(Settings.AdminPolicyName)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden);  
 
         route.MapGet("", async (IClassService classService, ITransactionProvider transactionProvider) =>
             {
@@ -80,7 +81,6 @@ public static class ClassEndpoints
             })
             .WithName("GetClasses")
             .Produces<List<ClassDto>>(StatusCodes.Status200OK);
-
 
         route.MapGet("/{id:int}", async (int id, IClassService classService, ITransactionProvider transactionProvider) =>
             {

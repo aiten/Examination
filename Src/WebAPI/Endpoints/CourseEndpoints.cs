@@ -63,7 +63,9 @@ public static class CourseEndpoints
         var routeAdmin = app
             .MapGroup(baseRoute)
             .WithTags("Course")
-            .RequireAuthorization(Settings.AdminPolicyName);
+            .RequireAuthorization(Settings.AdminPolicyName)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden);
 
         route.MapGet("", async (ICourseService courseService, ITransactionProvider transactionProvider) =>
             {
