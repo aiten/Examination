@@ -148,18 +148,16 @@ public static class TeacherEndpoints
                         detail: "The ID in the request body must be 0");
                 }
 
-                using (var trans = await uow.BeginTransactionAsync())
-                {
-                    var entity = ToEntity(dto);
+                using var trans  = await uow.BeginTransactionAsync();
+                var       entity = ToEntity(dto);
 
-                    await uow.Teachers.AddAsync(entity);
+                await uow.Teachers.AddAsync(entity);
 
-                    await trans.CommitTransactionAsync();
+                await trans.CommitTransactionAsync();
 
-                    int id = entity.Id;
+                int id = entity.Id;
 
-                    return Results.Created($"{baseRoute}/{id}", ToDto(await uow.Teachers.GetByIdAsync(id)));
-                }
+                return Results.Created($"{baseRoute}/{id}", ToDto(await uow.Teachers.GetByIdAsync(id)));
             })
             .WithValidation<TeacherDto>()
             .WithName("AddTeacher")

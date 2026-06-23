@@ -99,24 +99,22 @@ public static class StudentEndpoints
                         detail: "The ID in the request body must be 0");
                 }
 
-                using (var trans = await uow.BeginTransactionAsync())
+                using var trans   = await uow.BeginTransactionAsync();
+                var       classes = await uow.Classes.GetAsync(c => dto.ClassIds.Contains(c.Id));
+
+                var entity = new Student
                 {
-                    var classes = await uow.Classes.GetAsync(c => dto.ClassIds.Contains(c.Id));
+                    FirstName = dto.FirstName,
+                    LastName  = dto.LastName,
+                    Classes   = classes
+                };
 
-                    var entity = new Student
-                    {
-                        FirstName = dto.FirstName,
-                        LastName  = dto.LastName,
-                        Classes   = classes
-                    };
+                await uow.Students.AddAsync(entity);
+                await trans.CommitTransactionAsync();
 
-                    await uow.Students.AddAsync(entity);
-                    await trans.CommitTransactionAsync();
+                int id = entity.Id;
 
-                    int id = entity.Id;
-
-                    return Results.Created($"{baseRoute}/{id}", ToDto(await uow.Students.GetByIdAsync(id, "Classes")));
-                }
+                return Results.Created($"{baseRoute}/{id}", ToDto(await uow.Students.GetByIdAsync(id, "Classes")));
             })
             .WithValidation<StudentDto>()
             .WithName("AddStudent")
@@ -133,32 +131,30 @@ public static class StudentEndpoints
                         detail: "The ID in the URL does not match the ID in the request body");
                 }
 
-                using (var trans = await uow.BeginTransactionAsync())
+                using var trans  = await uow.BeginTransactionAsync();
+                var       entity = await uow.Students.GetByIdAsync(id, "Classes");
+
+                if (entity is null)
                 {
-                    var entity = await uow.Students.GetByIdAsync(id, "Classes");
-
-                    if (entity is null)
-                    {
-                        return Results.Problem(
-                            statusCode: StatusCodes.Status400BadRequest,
-                            title: "Student not found",
-                            detail: $"No Student found with ID {id}");
-                    }
-
-                    entity.FirstName = dto.FirstName;
-                    entity.LastName  = dto.LastName;
-
-                    var newClasses = await uow.Classes.GetAsync(c => dto.ClassIds.Contains(c.Id));
-                    entity.Classes.Clear();
-                    foreach (var cls in newClasses)
-                    {
-                        entity.Classes.Add(cls);
-                    }
-
-                    await trans.CommitTransactionAsync();
-
-                    return Results.NoContent();
+                    return Results.Problem(
+                        statusCode: StatusCodes.Status400BadRequest,
+                        title: "Student not found",
+                        detail: $"No Student found with ID {id}");
                 }
+
+                entity.FirstName = dto.FirstName;
+                entity.LastName  = dto.LastName;
+
+                var newClasses = await uow.Classes.GetAsync(c => dto.ClassIds.Contains(c.Id));
+                entity.Classes.Clear();
+                foreach (var cls in newClasses)
+                {
+                    entity.Classes.Add(cls);
+                }
+
+                await trans.CommitTransactionAsync();
+
+                return Results.NoContent();
             })
             .WithValidation<StudentDto>()
             .WithName("UpdateStudent")

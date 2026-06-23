@@ -129,18 +129,16 @@ public static class SubjectEndpoints
                         detail: "The ID in the request body must be 0");
                 }
 
-                using (var trans = await uow.BeginTransactionAsync())
-                {
-                    var entity = ToEntity(dto);
+                using var trans  = await uow.BeginTransactionAsync();
+                var       entity = ToEntity(dto);
 
-                    await uow.Subjects.AddAsync(entity);
+                await uow.Subjects.AddAsync(entity);
 
-                    await trans.CommitTransactionAsync();
+                await trans.CommitTransactionAsync();
 
-                    int id = entity.Id;
+                int id = entity.Id;
 
-                    return Results.Created($"{baseRoute}/{id}", ToDto(await uow.Subjects.GetByIdAsync(id)));
-                }
+                return Results.Created($"{baseRoute}/{id}", ToDto(await uow.Subjects.GetByIdAsync(id)));
             })
             .WithName("AddSubject")
             .Produces(StatusCodes.Status201Created)

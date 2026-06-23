@@ -1,7 +1,11 @@
 namespace WebAPI.Endpoints;
 
+using Base.Persistence.Contracts;
+
 using Persistence;
 using Persistence.Model;
+
+using Service;
 
 using WebAPI.Filters;
 
@@ -61,70 +65,33 @@ public static class CourseEndpoints
             .WithTags("Course")
             .RequireAuthorization(Settings.AdminPolicyName);
 
-        route.MapGet("", async (IUnitOfWork uow) =>
+        route.MapGet("", async (ICourseService courseService, ITransactionProvider transactionProvider) =>
             {
-                var entities = await uow.Courses.GetNoTrackingAsync(
-                    null, null, nameof(Course.Classes), nameof(Course.Teachers));
+                var entities = await courseService.GetCoursesAsync(nameof(Course.Classes), nameof(Course.Teachers));
                 var dtos = ToDto(entities);
                 return Results.Ok(dtos);
             })
             .WithName("GetCourses")
             .Produces<List<CourseDto>>(StatusCodes.Status200OK);
 
-        route.MapGet("/{id:int}", async (int id, IUnitOfWork uow) =>
+        route.MapGet("/{id:int}", async (int id, ICourseService courseService, ITransactionProvider transactionProvider) =>
             {
-                var dto = ToDto(await uow.Courses.GetByIdAsync(
-                    id, nameof(Course.Classes), nameof(Course.Teachers)));
-
-                if (dto is null)
-                {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status404NotFound,
-                        title: "Course not found",
-                        detail: $"No Course found with ID {id}");
-                }
-
+                var dto = ToDto(await courseService.SingleCourseAsync(id, nameof(Course.Classes), nameof(Course.Teachers)));
                 return Results.Ok(dto);
             })
             .WithName("GetCourse")
             .Produces<CourseDto>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-        routeAdmin.MapPut("/{id:int}", async (int id, CourseDto dto, IUnitOfWork uow) =>
+        routeAdmin.MapPut("/{id:int}", async (int id, CourseDto dto, ICourseService courseService, ITransactionProvider transactionProvider) =>
             {
-                if (id != dto.Id)
-                {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status400BadRequest,
-                        title: "Invalid request",
-                        detail: "The ID in the URL does not match the ID in the request body");
-                }
+                EndpointTools.CheckId(id,dto.Id);
 
-                using (var trans = await uow.BeginTransactionAsync())
-                {
-                    var entity = await uow.Courses.GetByIdAsync(
-                        id, nameof(Course.Classes), nameof(Course.Teachers));
+                using var trans = await transactionProvider.BeginTransactionAsync();
 
-                    if (entity is null)
-                    {
-                        return Results.Problem(
-                            statusCode: StatusCodes.Status400BadRequest,
-                            title: "Course not found",
-                            detail: $"No Course found with ID {id}");
-                    }
+                await courseService.UpdateCourseAsync(id, dto.Name, dto.Year, dto.SubjectId, dto.ClassIds, dto.TeacherIds);
 
-                    entity.Name      = dto.Name;
-                    entity.Year      = dto.Year;
-                    entity.SubjectId = dto.SubjectId;
-
-                    var classes  = await uow.Classes.GetAsync(c => dto.ClassIds.Contains(c.Id));
-                    var teachers = await uow.Teachers.GetAsync(t => dto.TeacherIds.Contains(t.Id));
-
-                    entity.Classes  = classes.ToList();
-                    entity.Teachers = teachers.ToList();
-
-                    await trans.CommitTransactionAsync();
-                }
+                await trans.CommitTransactionAsync();
 
                 return Results.NoContent();
             })
@@ -133,59 +100,28 @@ public static class CourseEndpoints
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-        routeAdmin.MapPost("", async (CourseDto dto, IUnitOfWork uow) =>
+        routeAdmin.MapPost("", async (CourseDto dto, ICourseService courseService, ITransactionProvider transactionProvider) =>
             {
-                if (dto.Id != 0)
-                {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status400BadRequest,
-                        title: "Invalid request",
-                        detail: "The ID in the request body must be 0");
-                }
+                EndpointTools.CheckIdMustBe0(dto.Id);
 
-                using (var trans = await uow.BeginTransactionAsync())
-                {
-                    var classes  = await uow.Classes.GetAsync(c => dto.ClassIds.Contains(c.Id));
-                    var teachers = await uow.Teachers.GetAsync(t => dto.TeacherIds.Contains(t.Id));
+                using var trans    = await transactionProvider.BeginTransactionAsync();
 
-                    var entity = new Course
-                    {
-                        Name      = dto.Name,
-                        Year      = dto.Year,
-                        SubjectId = dto.SubjectId,
-                        Classes   = classes.ToList(),
-                        Teachers  = teachers.ToList()
-                    };
+                var entity = await courseService.AddCourseAsync(dto.Name, dto.Year, dto.SubjectId, dto.ClassIds, dto.TeacherIds);
 
-                    await uow.Courses.AddAsync(entity);
+                await trans.CommitTransactionAsync();
 
-                    await trans.CommitTransactionAsync();
-
-                    int newId = entity.Id;
-
-                    return Results.Created($"{baseRoute}/{newId}",
-                        ToDto(await uow.Courses.GetByIdAsync(newId, nameof(Course.Classes), nameof(Course.Teachers))));
-                }
+                return Results.Created($"{baseRoute}/{entity.Id}", ToDto(entity));
             })
             .WithName("AddCourse")
             .Produces(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest);
 
-        routeAdmin.MapDelete("/{id:int}", async (int id, IUnitOfWork uow) =>
+        routeAdmin.MapDelete("/{id:int}", async (int id, ICourseService courseService, ITransactionProvider transactionProvider) =>
             {
-                var entity = await uow.Courses.GetByIdAsync(id);
+                using var trans  = await transactionProvider.BeginTransactionAsync();
 
-                if (entity is null)
-                {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status400BadRequest,
-                        title: "Course not found",
-                        detail: $"No Course found with ID {id}");
-                }
-
-                uow.Courses.Remove(entity);
-
-                await uow.SaveChangesAsync();
+                await courseService.DeleteCourseAsync(id);
+                await trans.CommitTransactionAsync();
 
                 return Results.NoContent();
             })

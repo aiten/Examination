@@ -21,9 +21,9 @@ public interface IClassService
 
     Task<Class> SingleClassAsync(int id, params string[] includeProperties);
 
-    Task UpdateClassAsync(int id, Class exam);
+    Task UpdateClassAsync(int id, Class value);
 
-    Task<Class> AddClassAsync(Class exam);
+    Task<Class> AddClassAsync(Class value);
 
     Task DeleteClassAsync(int id);
 }
@@ -56,33 +56,33 @@ public class ClassService : IClassService
         return (await GetClassByIdAsync(id, includeProperties)) ?? throw new NotFoundException($"Class {id} not found");
     }
 
-    public async Task UpdateClassAsync(int id, Class exam)
+    public async Task UpdateClassAsync(int id, Class value)
     {
         var entity = await SingleClassAsync(id);
 
-        entity.Description = exam.Description;
-        entity.Year        = exam.Year;
-        entity.TeacherId   = exam.TeacherId;
+        entity.Description = value.Description;
+        entity.Year        = value.Year;
+        entity.TeacherId   = value.TeacherId;
 
         await _uow.SaveChangesAsync();
         //await _hub.NotifyClassUpdatedAsync(id);
     }
 
-    public async Task<Class> AddClassAsync(Class exam)
+    public async Task<Class> AddClassAsync(Class value)
     {
-        if (exam.Id != 0)
+        if (value.Id != 0)
         {
             throw new IllegalValuesException("Id must be 0 for new entities");
         }
 
-        //exam.Created  = DateTime.Now;
-        //exam.Modified = null;
+        //value.Created  = DateTime.Now;
+        //value.Modified = null;
 
-        await _uow.Classes.AddAsync(exam);
+        await _uow.Classes.AddAsync(value);
         await _uow.SaveChangesAsync();
-        //await _hub.NotifyClassUpdatedAsync(exam.Id);
+        //await _hub.NotifyClassUpdatedAsync(value.Id);
 
-        return exam;
+        return value;
     }
 
     public async Task DeleteClassAsync(int id)

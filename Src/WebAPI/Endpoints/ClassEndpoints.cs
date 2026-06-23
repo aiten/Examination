@@ -99,7 +99,6 @@ public static class ClassEndpoints
                 var       entity = await classService.SingleClassAsync(id);
 
                 await classService.UpdateClassAsync(id, ToEntity(dto));
-
                 await trans.CommitTransactionAsync();
 
                 return Results.NoContent();
@@ -119,7 +118,6 @@ public static class ClassEndpoints
                 var       entity = ToEntity(dto);
 
                 await classService.AddClassAsync(entity);
-
                 await trans.CommitTransactionAsync();
 
                 int id = entity.Id;
@@ -136,7 +134,6 @@ public static class ClassEndpoints
                 using var trans = await transactionProvider.BeginTransactionAsync();
 
                 await classService.DeleteClassAsync(id);
-
                 await trans.CommitTransactionAsync();
 
                 return Results.NoContent();

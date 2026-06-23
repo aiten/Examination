@@ -65,25 +65,23 @@ public static class SubtaskEndpoints
                         detail: "The ID in the request body must be 0");
                 }
 
-                using (var trans = await uow.BeginTransactionAsync())
+                using var trans = await uow.BeginTransactionAsync();
+                var entity = new Subtask
                 {
-                    var entity = new Subtask
-                    {
-                        ExamId      = examId,
-                        SeqNo       = dto.SeqNo,
-                        Description = dto.Description,
-                        Points      = dto.Points,
-                        Bonus       = dto.Bonus
-                    };
+                    ExamId      = examId,
+                    SeqNo       = dto.SeqNo,
+                    Description = dto.Description,
+                    Points      = dto.Points,
+                    Bonus       = dto.Bonus
+                };
 
-                    await uow.Subtasks.AddAsync(entity);
-                    await trans.CommitTransactionAsync();
+                await uow.Subtasks.AddAsync(entity);
+                await trans.CommitTransactionAsync();
 
-                    int id = entity.Id;
+                int id = entity.Id;
 
-                    return Results.Created($"{baseRoute}/{examId}/subtask/{id}",
-                        ToDto((await uow.Subtasks.GetByIdAsync(id))!));
-                }
+                return Results.Created($"{baseRoute}/{examId}/subtask/{id}",
+                    ToDto((await uow.Subtasks.GetByIdAsync(id))!));
             })
             .WithValidation<SubtaskDto>()
             .WithName("AddSubtask")
