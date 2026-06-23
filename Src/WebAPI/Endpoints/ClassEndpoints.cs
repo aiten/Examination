@@ -1,7 +1,11 @@
 namespace WebAPI.Endpoints;
 
+using Base.Persistence.Contracts;
+
 using Persistence;
 using Persistence.Model;
+
+using Service;
 
 using WebAPI.Filters;
 
@@ -69,61 +73,34 @@ public static class ClassEndpoints
             .WithTags("Class")
             .RequireAuthorization(Settings.AdminPolicyName);
 
-        route.MapGet("", async (IUnitOfWork uow) =>
+        route.MapGet("", async (IClassService classService, ITransactionProvider transactionProvider) =>
             {
-                var dtos = ToDto(await uow.Classes.GetNoTrackingAsync());
+                var dtos = ToDto(await classService.GetClassesAsync());
                 return Results.Ok(dtos);
             })
             .WithName("GetClasses")
             .Produces<List<ClassDto>>(StatusCodes.Status200OK);
 
 
-        route.MapGet("/{id:int}", async (int id, IUnitOfWork uow) =>
+        route.MapGet("/{id:int}", async (int id, IClassService classService, ITransactionProvider transactionProvider) =>
             {
-                var dto = ToDto(await uow.Classes.GetByIdAsync(id));
-
-                if (dto is null)
-                {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status404NotFound,
-                        title: "Class not found",
-                        detail: $"No Class found with ID {id}");
-                }
-
+                var dto = ToDto(await classService.SingleClassAsync(id));
                 return Results.Ok(dto);
             })
             .WithName("GetClass")
             .Produces<ClassDto>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-        routeAdmin.MapPut("/{id:int}", async (int id, ClassDto dto, IUnitOfWork uow) =>
+        routeAdmin.MapPut("/{id:int}", async (int id, ClassDto dto, IClassService classService, ITransactionProvider transactionProvider) =>
             {
-                if (id != dto.Id)
-                {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status400BadRequest,
-                        title: "Invalid request",
-                        detail: "The ID in the URL does not match the ID in the request body");
-                }
+                EndpointTools.CheckId(id, dto.Id);
 
-                using (var trans = await uow.BeginTransactionAsync())
-                {
-                    var entity = await uow.Classes.GetByIdAsync(id);
+                using var trans  = await transactionProvider.BeginTransactionAsync();
+                var       entity = await classService.SingleClassAsync(id);
 
-                    if (entity is null)
-                    {
-                        return Results.Problem(
-                            statusCode: StatusCodes.Status400BadRequest,
-                            title: "Class not found",
-                            detail: $"No Class found with ID {id}");
-                    }
+                await classService.UpdateClassAsync(id, ToEntity(dto));
 
-                    entity.Description = dto.Description;
-                    entity.Year        = dto.Year;
-                    entity.TeacherId   = dto.TeacherId;
-
-                    await trans.CommitTransactionAsync();
-                }
+                await trans.CommitTransactionAsync();
 
                 return Results.NoContent();
             })
@@ -134,49 +111,33 @@ public static class ClassEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound);
 
 
-        routeAdmin.MapPost("", async (ClassDto dto, IUnitOfWork uow) =>
+        routeAdmin.MapPost("", async (ClassDto dto, IClassService classService, ITransactionProvider transactionProvider) =>
             {
-                if (dto.Id != 0)
-                {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status400BadRequest,
-                        title: "Invalid request",
-                        detail: "The ID in the request body must be 0");
-                }
+                EndpointTools.CheckIdMustBe0(dto.Id);
 
-                using (var trans = await uow.BeginTransactionAsync())
-                {
-                    var entity = ToEntity(dto);
+                using var trans  = await transactionProvider.BeginTransactionAsync();
+                var       entity = ToEntity(dto);
 
-                    await uow.Classes.AddAsync(entity);
+                await classService.AddClassAsync(entity);
 
-                    await trans.CommitTransactionAsync();
+                await trans.CommitTransactionAsync();
 
-                    int id = entity.Id;
+                int id = entity.Id;
 
-                    return Results.Created($"{baseRoute}/{id}", ToDto(await uow.Classes.GetByIdAsync(id)));
-                }
+                return Results.Created($"{baseRoute}/{id}", ToDto(await classService.GetClassByIdAsync(id)));
             })
             .WithValidation<ClassDto>()
             .WithName("AddClass")
             .Produces(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest);
 
-        routeAdmin.MapDelete("/{id:int}", async (int id, IUnitOfWork uow) =>
+        routeAdmin.MapDelete("/{id:int}", async (int id, IClassService classService, ITransactionProvider transactionProvider) =>
             {
-                var entity = await uow.Classes.GetByIdAsync(id);
+                using var trans = await transactionProvider.BeginTransactionAsync();
 
-                if (entity is null)
-                {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status400BadRequest,
-                        title: "Class not found",
-                        detail: $"No Class found with ID {id}");
-                }
+                await classService.DeleteClassAsync(id);
 
-                uow.Classes.Remove(entity);
-
-                await uow.SaveChangesAsync();
+                await trans.CommitTransactionAsync();
 
                 return Results.NoContent();
             })

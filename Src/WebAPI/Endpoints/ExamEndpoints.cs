@@ -94,7 +94,7 @@ public static class ExamEndpoints
 
         route.MapGet("", async (IExamService examService) =>
             {
-                var dtos = ToDto(await examService.GetAllAsync());
+                var dtos = ToDto(await examService.GetExamsAsync());
                 return Results.Ok(dtos);
             })
             .WithName("GetExams")
@@ -111,7 +111,7 @@ public static class ExamEndpoints
 
         route.MapGet("/{id:int}", async (int id, IExamService examService) =>
             {
-                var dto = ToDto(await examService.GetByIdAsync(id, nameof(Exam.Teacher), nameof(Exam.Course)));
+                var dto = ToDto(await examService.SingleExamAsync(id, nameof(Exam.Teacher), nameof(Exam.Course)));
                 return Results.Ok(dto);
             })
             .WithName("GetExam")

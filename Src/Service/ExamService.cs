@@ -16,9 +16,11 @@ using Persistence.QueryResult;
 
 public interface IExamService
 {
-    Task<IList<Exam>> GetAllAsync();
+    Task<IList<Exam>> GetExamsAsync();
 
-    Task<Exam> GetByIdAsync(int id, params string[] includeProperties);
+    Task<Exam?>  GetExamByIdAsync(int     id, params string[] includeProperties);
+    
+    Task<Exam> SingleExamAsync(int id, params string[] includeProperties);
 
     Task UpdateExamAsync(int id, Exam exam);
 
@@ -44,25 +46,23 @@ public class ExamService : IExamService
         _hub    = hub;
     }
 
-    public async Task<IList<Exam>> GetAllAsync()
+    public async Task<IList<Exam>> GetExamsAsync()
     {
         return await _uow.Exams.GetAsync(null, null, nameof(Exam.Teacher), nameof(Exam.Course));
     }
 
-    public async Task<Exam> GetByIdAsync(int id, params string[] includeProperties)
+    public async Task<Exam?> GetExamByIdAsync(int id, params string[] includeProperties)
     {
-        var entity = await _uow.Exams.GetByIdAsync(id, includeProperties);
-        return entity ?? throw new NotFoundException($"Exam {id} not found");
+        return await _uow.Exams.GetByIdAsync(id, includeProperties);
+    }
+    public async Task<Exam> SingleExamAsync(int id, params string[] includeProperties)
+    {
+        return await GetExamByIdAsync(id, includeProperties) ?? throw new NotFoundException($"Exam {id} not found"); 
     }
 
     public async Task UpdateExamAsync(int id, Exam exam)
     {
-        var entity = await _uow.Exams.GetByIdAsync(id);
-
-        if (entity == null)
-        {
-            throw new NotFoundException($"Exam {id} not found");
-        }
+        var entity = await SingleExamAsync(id);
 
         entity.Description    = exam.Description;
         entity.ExamType       = exam.ExamType;
@@ -99,12 +99,7 @@ public class ExamService : IExamService
 
     public async Task DeleteExamAsync(int id)
     {
-        var entity = await _uow.Exams.GetByIdAsync(id);
-
-        if (entity == null)
-        {
-            throw new NotFoundException($"Exam {id} not found");
-        }
+        var entity = await SingleExamAsync(id);
 
         _uow.Exams.Remove(entity);
         await _uow.SaveChangesAsync();
