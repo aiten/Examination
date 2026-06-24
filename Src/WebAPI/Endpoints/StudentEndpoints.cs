@@ -1,7 +1,11 @@
 namespace WebAPI.Endpoints;
 
+using Base.Persistence.Contracts;
+
 using Persistence;
 using Persistence.Model;
+
+using Service;
 
 using WebAPI.Filters;
 
@@ -63,95 +67,49 @@ public static class StudentEndpoints
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden);
 
-        route.MapGet("", async (IUnitOfWork uow) =>
+        route.MapGet("", async (IStudentService studentService, ITransactionProvider transactionProvider) =>
             {
-                var students = await uow.Students.GetNoTrackingAsync(includeProperties: "Classes");
+                var students = await studentService.GetStudentsAsync(nameof(Student.Classes));
                 return Results.Ok(ToDto(students));
             })
             .WithName("GetStudents")
             .Produces<List<StudentDto>>(StatusCodes.Status200OK);
 
-        route.MapGet("/{id:int}", async (int id, IUnitOfWork uow) =>
+        route.MapGet("/{id:int}", async (int id, IStudentService studentService, ITransactionProvider transactionProvider) =>
             {
-                var dto = ToDto(await uow.Students.GetByIdAsync(id, "Classes"));
-
-                if (dto is null)
-                {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status404NotFound,
-                        title: "Student not found",
-                        detail: $"No Student found with ID {id}");
-                }
-
+                var dto = ToDto(await studentService.SingleStudentAsync(id, nameof(Student.Classes)));
                 return Results.Ok(dto);
             })
             .WithName("GetStudent")
             .Produces<StudentDto>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-        routeAdmin.MapPost("", async (StudentDto dto, IUnitOfWork uow) =>
+        routeAdmin.MapPost("", async (StudentDto dto, IStudentService studentService, ITransactionProvider transactionProvider) =>
             {
-                if (dto.Id != 0)
-                {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status400BadRequest,
-                        title: "Invalid request",
-                        detail: "The ID in the request body must be 0");
-                }
+                EndpointTools.CheckIdMustBe0(dto.Id);
 
-                using var trans   = await uow.BeginTransactionAsync();
-                var       classes = await uow.Classes.GetAsync(c => dto.ClassIds.Contains(c.Id));
+                using var trans   = await transactionProvider.BeginTransactionAsync();
 
-                var entity = new Student
-                {
-                    FirstName = dto.FirstName,
-                    LastName  = dto.LastName,
-                    Classes   = classes
-                };
-
-                await uow.Students.AddAsync(entity);
+                var entity = await studentService.AddStudentAsync(dto.FirstName, dto.LastName, dto.ClassIds);
                 await trans.CommitTransactionAsync();
 
                 int id = entity.Id;
 
-                return Results.Created($"{baseRoute}/{id}", ToDto(await uow.Students.GetByIdAsync(id, "Classes")));
+                return Results.Created($"{baseRoute}/{id}", ToDto(entity));
             })
             .WithValidation<StudentDto>()
             .WithName("AddStudent")
             .Produces(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest);
 
-        routeAdmin.MapPut("/{id:int}", async (int id, StudentDto dto, IUnitOfWork uow) =>
+        routeAdmin.MapPut("/{id:int}", async (int id, StudentDto dto, IStudentService studentService, ITransactionProvider transactionProvider) =>
             {
-                if (id != dto.Id)
-                {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status400BadRequest,
-                        title: "Invalid request",
-                        detail: "The ID in the URL does not match the ID in the request body");
-                }
+                EndpointTools.CheckId(id, dto.Id);
 
-                using var trans  = await uow.BeginTransactionAsync();
-                var       entity = await uow.Students.GetByIdAsync(id, "Classes");
+                using var trans  = await transactionProvider.BeginTransactionAsync();
+                var       entity = await studentService.SingleStudentAsync(id, nameof(Student.Classes));
 
-                if (entity is null)
-                {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status400BadRequest,
-                        title: "Student not found",
-                        detail: $"No Student found with ID {id}");
-                }
-
-                entity.FirstName = dto.FirstName;
-                entity.LastName  = dto.LastName;
-
-                var newClasses = await uow.Classes.GetAsync(c => dto.ClassIds.Contains(c.Id));
-                entity.Classes.Clear();
-                foreach (var cls in newClasses)
-                {
-                    entity.Classes.Add(cls);
-                }
-
+                await studentService.UpdateStudentAsync(id, dto.FirstName, dto.LastName, dto.ClassIds);
                 await trans.CommitTransactionAsync();
 
                 return Results.NoContent();
@@ -162,13 +120,11 @@ public static class StudentEndpoints
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-        routeAdmin.MapPost("/import", async (ImportStudentsDto dto, IUnitOfWork uow) =>
+        routeAdmin.MapPost("/import", async (ImportStudentsDto dto, IStudentService studentService, ITransactionProvider transactionProvider) =>
             {
-                using (var trans = await uow.BeginTransactionAsync())
-                {
-                    await uow.Students.ImportStudentsAsync(dto.Students);
-                    await trans.CommitTransactionAsync();
-                }
+                using var trans = await transactionProvider.BeginTransactionAsync();
+                await studentService.ImportStudentsAsync(dto.Students);
+                await trans.CommitTransactionAsync();
 
                 return Results.NoContent();
             })
@@ -176,20 +132,12 @@ public static class StudentEndpoints
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status400BadRequest);
 
-        routeAdmin.MapDelete("/{id:int}", async (int id, IUnitOfWork uow) =>
+        routeAdmin.MapDelete("/{id:int}", async (int id, IStudentService studentService, ITransactionProvider transactionProvider) =>
             {
-                var entity = await uow.Students.GetByIdAsync(id);
+                using var trans = await transactionProvider.BeginTransactionAsync();
 
-                if (entity is null)
-                {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status400BadRequest,
-                        title: "Student not found",
-                        detail: $"No Student found with ID {id}");
-                }
-
-                uow.Students.Remove(entity);
-                await uow.SaveChangesAsync();
+                await studentService.DeleteStudentAsync(id);
+                await trans.CommitTransactionAsync();
 
                 return Results.NoContent();
             })
