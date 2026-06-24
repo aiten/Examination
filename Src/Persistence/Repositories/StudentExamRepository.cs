@@ -8,13 +8,15 @@ using Microsoft.EntityFrameworkCore;
 using Persistence.Model;
 using Persistence.QueryResult;
 
+using Shared.Exceptions;
+
 public interface IStudentExamRepository : IGenericRepository<StudentExam>
 {
     Task<IList<StudentExamOverview>> GetStudentExamOverviewsAsync(int examId);
     Task<IList<StudentExamSummary>>  GetStudentExamSummaryAsync(int   examId);
     Task<StudentExamResult>          GetStudentResultAsync(string     firstName, string lastName, int pin, string registrationCode);
 
-    Task DeleteAsync(int studentExamId);
+    Task DeleteAsync(StudentExam entity);
 
     Task<bool> AnyAsync(int examId, int    studentId);
     Task<bool> AnyAsync(int examId, string registrationCode);
@@ -43,19 +45,8 @@ public class StudentExamRepository : GenericRepository<StudentExam>, IStudentExa
             .AnyAsync(se => se.ExamId == examId && se.RegistrationCode == registrationCode);
     }
 
-    public async Task DeleteAsync(int studentExamId)
+    public async Task DeleteAsync(StudentExam entity)
     {
-        var entity = await GetByIdAsync(studentExamId, nameof(StudentExam.StudentSubtasks));
-        if (entity is null)
-        {
-            throw new InvalidOperationException("StudentExam not found.");
-        }
-
-        if (entity.StudentSubtasks.Count(s => s.Result is not null) > 0)
-        {
-            throw new InvalidOperationException("StudentExam has results and cannot be deleted.");
-        }
-
         _dbContext.StudentSubtasks.RemoveRange(entity.StudentSubtasks);
         Remove(entity);
     }
@@ -112,10 +103,10 @@ public class StudentExamRepository : GenericRepository<StudentExam>, IStudentExa
     {
         var exam = await _dbContext.Exams.FirstOrDefaultAsync(e => e.Pin == pin);
         if (exam is null)
-            throw new InvalidOperationException("No result found for the given data.");
+            throw new NotFoundException("No result found for the given data.");
 
         if (!exam.CanShowResults)
-            throw new InvalidOperationException("Results are not yet available for this exam.");
+            throw new NotFoundException("Results are not yet available for this exam.");
 
         var studentExam = await _dbContext.StudentExams
             .Include(se => se.Student)
@@ -128,7 +119,7 @@ public class StudentExamRepository : GenericRepository<StudentExam>, IStudentExa
                 se.Student.LastName == lastName);
 
         if (studentExam is null)
-            throw new InvalidOperationException("No result found for the given data.");
+            throw new NotFoundException("No result found for the given data.");
 
         var subtasks = await _dbContext.Subtasks
             .Where(s => s.ExamId == exam.Id)
@@ -150,7 +141,7 @@ public class StudentExamRepository : GenericRepository<StudentExam>, IStudentExa
         var allRated   = countRated == countRatable;
 
         if (!allRated)
-            throw new InvalidOperationException("Results are not yet available for this exam.");
+            throw new NotFoundException("Results are not yet available for this exam.");
 
         var totalPoints = (decimal?)studentExam.StudentSubtasks.Sum(ss => (ss.Result ?? 0m) * ss.Subtask.Points);
         var percent     = totalMaxPoints > 0 ? Math.Round(totalPoints!.Value / totalMaxPoints * 100m, 2) : (decimal?)null;

@@ -1,5 +1,6 @@
 ﻿namespace Service;
 
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using Persistence;
@@ -117,9 +118,15 @@ public class StudentExamService : IStudentExamService
 
     public async Task DeleteStudentExamAsync(int id)
     {
-        var entity = await SingleStudentExamAsync(id);
+        var entity = await SingleStudentExamAsync(id, nameof(StudentExam.StudentSubtasks));
 
-        _uow.StudentExams.Remove(entity);
+        if (entity.StudentSubtasks.Count(s => s.Result is not null) > 0)
+        {
+            throw new BusinessRuleException("StudentExam has results and cannot be deleted.");
+        }
+
+        await _uow.StudentExams.DeleteAsync(entity);
+
         await _uow.SaveChangesAsync();
         // await _hub.NotifyStudentExamUpdatedAsync(id);
     }

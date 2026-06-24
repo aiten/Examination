@@ -26,7 +26,7 @@ public class DomainExceptionHandler : IExceptionHandler
         }
 
         httpContext.Response.StatusCode = status;
-        await Results.Problem(statusCode: status, title: title)
+        await Results.Problem(statusCode: status, detail: title, title: title)
             .ExecuteAsync(httpContext);
         return true;
     }
