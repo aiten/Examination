@@ -107,7 +107,6 @@ public static class StudentEndpoints
                 EndpointTools.CheckId(id, dto.Id);
 
                 using var trans  = await transactionProvider.BeginTransactionAsync();
-                var       entity = await studentService.SingleStudentAsync(id, nameof(Student.Classes));
 
                 await studentService.UpdateStudentAsync(id, dto.FirstName, dto.LastName, dto.ClassIds);
                 await trans.CommitTransactionAsync();
