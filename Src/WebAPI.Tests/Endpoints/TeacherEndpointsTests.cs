@@ -3,9 +3,8 @@ using System.Net.Http.Json;
 
 using FluentAssertions;
 
-using Microsoft.EntityFrameworkCore.ChangeTracking;
-
 using NSubstitute;
+using NSubstitute.ClearExtensions;
 
 using WebAPI.Endpoints;
 
@@ -15,21 +14,24 @@ using Base.Persistence.Contracts;
 
 using Persistence;
 using Persistence.Model;
-using Persistence.Repositories;
+
+using Service;
+
+using Shared.Exceptions;
 
 public class TeacherEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 {
-    private readonly HttpClient         _client;
-    private readonly IUnitOfWork        _uow;
-    private readonly ITeacherRepository _teacherRepo;
+    private readonly HttpClient      _client;
+    private readonly IUnitOfWork     _uow;
+    private readonly ITeacherService _teacherService;
 
     public TeacherEndpointsTests(CustomWebApplicationFactory factory)
     {
-        _client = factory.CreateClient();
-        _uow    = factory.UnitOfWork;
+        _client         = factory.CreateClient();
+        _uow            = factory.UnitOfWork;
+        _teacherService = factory.TeacherService;
         _uow.ClearReceivedCalls();
-        _teacherRepo = Substitute.For<ITeacherRepository>();
-        _uow.Teachers.Returns(_teacherRepo);
+        _teacherService.ClearSubstitute();
     }
 
     [Fact]
@@ -40,7 +42,7 @@ public class TeacherEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             new() { Id = 1, LastName = "Mustermann", FirstName = "Max" },
             new() { Id = 2, LastName = "Schmidt", FirstName    = "Anna" }
         };
-        _teacherRepo.GetNoTrackingAsync().ReturnsForAnyArgs(teachers);
+        _teacherService.GetTeachersAsync(null!).ReturnsForAnyArgs(teachers);
 
         var response = await _client.GetAsync("/api/teacher");
         var result   = await response.Content.ReadFromJsonAsync<List<TeacherDto>>();
@@ -55,7 +57,7 @@ public class TeacherEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     public async Task GetTeacher_ExistingId_ReturnsOk()
     {
         var teacher = new Teacher { Id = 1, LastName = "Mustermann", FirstName = "Max" };
-        _teacherRepo.GetByIdAsync(1).ReturnsForAnyArgs(teacher);
+        _teacherService.SingleTeacherAsync(default, null!).ReturnsForAnyArgs(teacher);
 
         var response = await _client.GetAsync("/api/teacher/1");
         var result   = await response.Content.ReadFromJsonAsync<TeacherDto>();
@@ -68,7 +70,8 @@ public class TeacherEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task GetTeacher_NonExistingId_Returns404()
     {
-        _teacherRepo.GetByIdAsync(99).ReturnsForAnyArgs((Teacher?)null);
+        _teacherService.SingleTeacherAsync(default, null!)
+            .ReturnsForAnyArgs(Task.FromException<Teacher>(new NotFoundException("Teacher 99 not found")));
 
         var response = await _client.GetAsync("/api/teacher/99");
 
@@ -80,10 +83,7 @@ public class TeacherEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     {
         var dto     = new TeacherDto(0, "Max", "Mustermann", null, "MUS");
         var created = new Teacher { Id = 1, LastName = "Mustermann", FirstName = "Max", Abbreviation = "MUS" };
-
-        _teacherRepo.AddAsync(Arg.Any<Teacher>())
-            .Returns(Task.FromResult<EntityEntry<Teacher>>(null!));
-        _teacherRepo.GetByIdAsync(Arg.Any<int>()).ReturnsForAnyArgs(created);
+        _teacherService.AddTeacherAsync(Arg.Any<Teacher>()).Returns(created);
 
         var response = await _client.PostAsJsonAsync("/api/teacher", dto);
 
@@ -103,7 +103,7 @@ public class TeacherEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task PostTeacher_InvalidLastName_ReturnsValidationProblem()
     {
-        var dto = new TeacherDto(0, "Max", "X", null, null); // LastName too short
+        var dto = new TeacherDto(0, "Max", "X", null, null);
 
         var response = await _client.PostAsJsonAsync("/api/teacher", dto);
 
@@ -113,10 +113,8 @@ public class TeacherEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task PutTeacher_ValidUpdate_ReturnsNoContent()
     {
-        var existing = new Teacher { Id = 1, LastName = "Alt", FirstName = "Max" };
-        var dto      = new TeacherDto(1, "Max", "Mustermann", "Muster", "MUS");
-        var trans    = Substitute.For<ITransaction>();
-        _teacherRepo.GetByIdAsync(1).ReturnsForAnyArgs(existing);
+        var dto   = new TeacherDto(1, "Max", "Mustermann", "Muster", "MUS");
+        var trans = Substitute.For<ITransaction>();
         _uow.BeginTransactionAsync().Returns(trans);
 
         var response = await _client.PutAsJsonAsync("/api/teacher/1", dto);
@@ -136,36 +134,36 @@ public class TeacherEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
-    public async Task PutTeacher_NotFound_ReturnsBadRequest()
+    public async Task PutTeacher_NotFound_ReturnsNotFound()
     {
-        var dto = new TeacherDto(99, "Max", "Mustermann", null, null);
-        _teacherRepo.GetByIdAsync(99).ReturnsForAnyArgs((Teacher?)null);
+        var dto   = new TeacherDto(99, "Max", "Mustermann", null, null);
+        var trans = Substitute.For<ITransaction>();
+        _uow.BeginTransactionAsync().Returns(trans);
+        _teacherService.When(s => s.UpdateTeacherAsync(99, Arg.Any<Teacher>()))
+            .Throw(new NotFoundException("Teacher 99 not found"));
 
         var response = await _client.PutAsJsonAsync("/api/teacher/99", dto);
 
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]
     public async Task DeleteTeacher_Existing_ReturnsNoContent()
     {
-        var existing = new Teacher { Id = 1, LastName = "Mustermann" };
-        _teacherRepo.GetByIdAsync(1).ReturnsForAnyArgs(existing);
-
         var response = await _client.DeleteAsync("/api/teacher/1");
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
-        _teacherRepo.Received(1).Remove(existing);
-        await _uow.Received(1).SaveChangesAsync();
+        await _teacherService.Received(1).DeleteTeacherAsync(1);
     }
 
     [Fact]
-    public async Task DeleteTeacher_NotFound_ReturnsBadRequest()
+    public async Task DeleteTeacher_NotFound_ReturnsNotFound()
     {
-        _teacherRepo.GetByIdAsync(99).ReturnsForAnyArgs((Teacher?)null);
+        _teacherService.When(s => s.DeleteTeacherAsync(99))
+            .Throw(new NotFoundException("Teacher 99 not found"));
 
         var response = await _client.DeleteAsync("/api/teacher/99");
 
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 }

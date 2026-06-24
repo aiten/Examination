@@ -56,7 +56,7 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             new() { Id = 1, Description = "Kinder, lernt!", TeacherId          = 1, Teacher = teacher, Created = DateTime.Today, ExamType = ExamType.Standard },
             new() { Id = 2, Description = "Habt ihr nichts zu tun?", TeacherId = 1, Teacher = teacher, Created = DateTime.Today, ExamType = ExamType.Standard }
         };
-        _examRepo.GetNoTrackingAsync().ReturnsForAnyArgs(exams);
+        _examService.GetExamsAsync().Returns(exams);
 
         var response = await _client.GetAsync("/api/exam");
         var result   = await response.Content.ReadFromJsonAsync<List<ExamDto>>();
@@ -73,7 +73,7 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         {
             new(1, "Kinder, lernt!", 12345, "Mustermann", "2AHIF", new DateOnly(2026, 5, 7), new TimeOnly(8, 0), new TimeOnly(10, 0), ["X", "Y"], ["S1", "S2"])
         };
-        _examRepo.GetExamOverviewsAsync(null, null).ReturnsForAnyArgs(overviews);
+        _examService.GetExamOverviewsAsync(null, null).ReturnsForAnyArgs(overviews);
 
         var response = await _client.GetAsync("/api/exam/overview");
         var result   = await response.Content.ReadFromJsonAsync<List<ExamOverview>>();
@@ -88,7 +88,7 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     {
         var teacher = new Teacher { Id = 1, LastName    = "Mustermann" };
         var exam    = new Exam { Id    = 1, Description = "Kinder, lernt!", TeacherId = 1, Teacher = teacher, Created = DateTime.Today, ExamType = ExamType.Standard };
-        _examRepo.GetByIdAsync(1).ReturnsForAnyArgs(exam);
+        _examService.SingleExamAsync(default, null!).ReturnsForAnyArgs(exam);
 
         var response = await _client.GetAsync("/api/exam/1");
         var result   = await response.Content.ReadFromJsonAsync<ExamDto>();
@@ -101,7 +101,8 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task GetExam_NonExistingId_Returns404()
     {
-        _examRepo.GetByIdAsync(99).ReturnsForAnyArgs((Exam?)null);
+        _examService.SingleExamAsync(default, null!)
+            .ReturnsForAnyArgs(Task.FromException<Exam>(new NotFoundException("Exam 99 not found")));
 
         var response = await _client.GetAsync("/api/exam/99");
 
@@ -115,9 +116,7 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         var teacher = new Teacher { Id = 1, LastName    = "Mustermann" };
         var created = new Exam { Id    = 1, Description = "Kinder, lernt!", TeacherId = 1, Teacher = teacher, Created = DateTime.Today, ExamType = ExamType.Standard, From = new TimeOnly(8, 0), To = new TimeOnly(10, 0) };
 
-        _examRepo.AddAsync(Arg.Any<Exam>())
-            .Returns(Task.FromResult<EntityEntry<Exam>>(null!));
-        _examRepo.GetByIdAsync(Arg.Any<int>()).ReturnsForAnyArgs(created);
+        _examService.AddExamAsync(Arg.Any<Exam>()).Returns(created);
 
         var response = await _client.PostAsJsonAsync("/api/exam", dto);
 
@@ -137,11 +136,8 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task PutExam_ValidUpdate_ReturnsNoContent()
     {
-        var teacher  = new Teacher { Id = 1, LastName    = "Mustermann" };
-        var existing = new Exam { Id    = 1, Description = "Old", TeacherId = 1, Teacher = teacher, Created = DateTime.Today, ExamType = ExamType.Standard };
-        var dto      = new ExamDto(1, "Kinder, lernt!", (int)ExamType.Standard, 1, 1, new DateOnly(2026, 1, 1), new TimeOnly(8, 0), new TimeOnly(10, 0), null, false, false);
-        var trans    = Substitute.For<ITransaction>();
-        _examRepo.GetByIdAsync(1).ReturnsForAnyArgs(existing);
+        var dto   = new ExamDto(1, "Kinder, lernt!", (int)ExamType.Standard, 1, 1, new DateOnly(2026, 1, 1), new TimeOnly(8, 0), new TimeOnly(10, 0), null, false, false);
+        var trans = Substitute.For<ITransaction>();
         _uow.BeginTransactionAsync().Returns(trans);
 
         var response = await _client.PutAsJsonAsync("/api/exam/1", dto);
@@ -161,38 +157,40 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
-    public async Task PutExam_NotFound_ReturnsBadRequest()
+    public async Task PutExam_NotFound_ReturnsNotFound()
     {
-        var dto = new ExamDto(99, "Kinder, lernt!", (int)ExamType.Standard, 1, 1, new DateOnly(2026, 1, 1), new TimeOnly(8, 0), new TimeOnly(10, 0), null, false, false);
-        _examRepo.GetByIdAsync(99).ReturnsForAnyArgs((Exam?)null);
+        var dto   = new ExamDto(99, "Kinder, lernt!", (int)ExamType.Standard, 1, 1, new DateOnly(2026, 1, 1), new TimeOnly(8, 0), new TimeOnly(10, 0), null, false, false);
+        var trans = Substitute.For<ITransaction>();
+        _uow.BeginTransactionAsync().Returns(trans);
+        _examService.When(s => s.UpdateExamAsync(99, Arg.Any<Exam>()))
+            .Throw(new NotFoundException("Exam 99 not found"));
 
         var response = await _client.PutAsJsonAsync("/api/exam/99", dto);
 
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]
     public async Task DeleteExam_Existing_ReturnsNoContent()
     {
-        var teacher  = new Teacher { Id = 1, LastName    = "Mustermann" };
-        var existing = new Exam { Id    = 1, Description = "Kinder, lernt!", TeacherId = 1, Teacher = teacher, Created = DateTime.Today, ExamType = ExamType.Standard };
-        _examRepo.GetByIdAsync(1).ReturnsForAnyArgs(existing);
+        var trans = Substitute.For<ITransaction>();
+        _uow.BeginTransactionAsync().Returns(trans);
 
         var response = await _client.DeleteAsync("/api/exam/1");
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
-        _examRepo.Received(1).Remove(existing);
-        await _uow.Received(1).SaveChangesAsync();
+        await _examService.Received(1).DeleteExamAsync(1);
     }
 
     [Fact]
-    public async Task DeleteExam_NotFound_ReturnsBadRequest()
+    public async Task DeleteExam_NotFound_ReturnsNotFound()
     {
-        _examRepo.GetByIdAsync(99).ReturnsForAnyArgs((Exam?)null);
+        _examService.When(s => s.DeleteExamAsync(99))
+            .Throw(new NotFoundException("Exam 99 not found"));
 
         var response = await _client.DeleteAsync("/api/exam/99");
 
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]
@@ -212,8 +210,7 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         var teacher = new Teacher { Id = 1, LastName    = "Mustermann" };
         var created = new Exam { Id    = 1, Description = "Test", TeacherId = 1, Teacher = teacher, Created = DateTime.Today, ExamType = ExamType.Standard, Pin = 12345, From = new TimeOnly(8, 0), To = new TimeOnly(10, 0) };
 
-        _examRepo.AddAsync(Arg.Any<Exam>()).Returns(Task.FromResult<EntityEntry<Exam>>(null!));
-        _examRepo.GetByIdAsync(Arg.Any<int>()).ReturnsForAnyArgs(created);
+        _examService.AddExamAsync(Arg.Any<Exam>()).Returns(created);
 
         var response = await _client.PostAsJsonAsync("/api/exam", dto);
 

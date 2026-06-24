@@ -3,9 +3,8 @@ using System.Net.Http.Json;
 
 using FluentAssertions;
 
-using Microsoft.EntityFrameworkCore.ChangeTracking;
-
 using NSubstitute;
+using NSubstitute.ClearExtensions;
 
 using WebAPI.Endpoints;
 
@@ -15,21 +14,24 @@ using Base.Persistence.Contracts;
 
 using Persistence;
 using Persistence.Model;
-using Persistence.Repositories;
+
+using Service;
+
+using Shared.Exceptions;
 
 public class ClassEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 {
-    private readonly HttpClient       _client;
-    private readonly IUnitOfWork      _uow;
-    private readonly IClassRepository _classRepo;
+    private readonly HttpClient    _client;
+    private readonly IUnitOfWork   _uow;
+    private readonly IClassService _classService;
 
     public ClassEndpointsTests(CustomWebApplicationFactory factory)
     {
-        _client = factory.CreateClient();
-        _uow    = factory.UnitOfWork;
+        _client       = factory.CreateClient();
+        _uow          = factory.UnitOfWork;
+        _classService = factory.ClassService;
         _uow.ClearReceivedCalls();
-        _classRepo = Substitute.For<IClassRepository>();
-        _uow.Classes.Returns(_classRepo);
+        _classService.ClearSubstitute();
     }
 
     [Fact]
@@ -40,7 +42,7 @@ public class ClassEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             new() { Id = 1, Description = "4AHITM", Year = 2024 },
             new() { Id = 2, Description = "3BHITM", Year = 2023 }
         };
-        _classRepo.GetNoTrackingAsync().ReturnsForAnyArgs(classes);
+        _classService.GetClassesAsync(null!).ReturnsForAnyArgs(classes);
 
         var response = await _client.GetAsync("/api/class");
         var result   = await response.Content.ReadFromJsonAsync<List<ClassDto>>();
@@ -54,7 +56,7 @@ public class ClassEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     public async Task GetClass_ExistingId_ReturnsOk()
     {
         var cls = new Class { Id = 1, Description = "4AHITM", Year = 2024 };
-        _classRepo.GetByIdAsync(1).ReturnsForAnyArgs(cls);
+        _classService.SingleClassAsync(default, null!).ReturnsForAnyArgs(cls);
 
         var response = await _client.GetAsync("/api/class/1");
         var result   = await response.Content.ReadFromJsonAsync<ClassDto>();
@@ -67,7 +69,8 @@ public class ClassEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task GetClass_NonExistingId_Returns404()
     {
-        _classRepo.GetByIdAsync(99).ReturnsForAnyArgs((Class?)null);
+        _classService.SingleClassAsync(default, null!)
+            .ReturnsForAnyArgs(Task.FromException<Class>(new NotFoundException("Class 99 not found")));
 
         var response = await _client.GetAsync("/api/class/99");
 
@@ -79,10 +82,7 @@ public class ClassEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     {
         var dto     = new ClassDto(0, "4AHITM", 2024, null);
         var created = new Class { Id = 1, Description = "4AHITM", Year = 2024 };
-
-        _classRepo.AddAsync(Arg.Any<Class>())
-            .Returns(Task.FromResult<EntityEntry<Class>>(null!));
-        _classRepo.GetByIdAsync(Arg.Any<int>()).ReturnsForAnyArgs(created);
+        _classService.AddClassAsync(Arg.Any<Class>()).Returns(created);
 
         var response = await _client.PostAsJsonAsync("/api/class", dto);
 
@@ -102,10 +102,8 @@ public class ClassEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task PutClass_ValidUpdate_ReturnsNoContent()
     {
-        var existing = new Class { Id = 1, Description = "Old", Year = 2023 };
-        var dto      = new ClassDto(1, "4AHITM", 2024, null);
-        var trans    = Substitute.For<ITransaction>();
-        _classRepo.GetByIdAsync(1).ReturnsForAnyArgs(existing);
+        var dto   = new ClassDto(1, "4AHITM", 2024, null);
+        var trans = Substitute.For<ITransaction>();
         _uow.BeginTransactionAsync().Returns(trans);
 
         var response = await _client.PutAsJsonAsync("/api/class/1", dto);
@@ -125,36 +123,36 @@ public class ClassEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
-    public async Task PutClass_NotFound_ReturnsBadRequest()
+    public async Task PutClass_NotFound_ReturnsNotFound()
     {
-        var dto = new ClassDto(99, "4AHITM", 2024, null);
-        _classRepo.GetByIdAsync(99).ReturnsForAnyArgs((Class?)null);
+        var dto   = new ClassDto(99, "4AHITM", 2024, null);
+        var trans = Substitute.For<ITransaction>();
+        _uow.BeginTransactionAsync().Returns(trans);
+        _classService.SingleClassAsync(default, null!)
+            .ReturnsForAnyArgs(Task.FromException<Class>(new NotFoundException("Class 99 not found")));
 
         var response = await _client.PutAsJsonAsync("/api/class/99", dto);
 
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]
     public async Task DeleteClass_Existing_ReturnsNoContent()
     {
-        var existing = new Class { Id = 1, Description = "4AHITM", Year = 2024 };
-        _classRepo.GetByIdAsync(1).ReturnsForAnyArgs(existing);
-
         var response = await _client.DeleteAsync("/api/class/1");
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
-        _classRepo.Received(1).Remove(existing);
-        await _uow.Received(1).SaveChangesAsync();
+        await _classService.Received(1).DeleteClassAsync(1);
     }
 
     [Fact]
-    public async Task DeleteClass_NotFound_ReturnsBadRequest()
+    public async Task DeleteClass_NotFound_ReturnsNotFound()
     {
-        _classRepo.GetByIdAsync(99).ReturnsForAnyArgs((Class?)null);
+        _classService.When(s => s.DeleteClassAsync(99))
+            .Throw(new NotFoundException("Class 99 not found"));
 
         var response = await _client.DeleteAsync("/api/class/99");
 
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 }

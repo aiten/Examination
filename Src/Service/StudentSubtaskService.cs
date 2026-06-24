@@ -140,6 +140,11 @@ public class StudentSubtaskService : IStudentSubtaskService
 
         var entity = await SingleStudentSubtaskAsync(id);
 
+        if (entity.StudentExamId != value.StudentExamId)
+        {
+            throw new ConflictException($"StudentSubtask {id} does not belong to studentexam {value.StudentExamId}");
+        }
+
         entity.Result         = value.Result;
         entity.Comment        = value.Comment;
         entity.CommentPrivate = value.CommentPrivate;

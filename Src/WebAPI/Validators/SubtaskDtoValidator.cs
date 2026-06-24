@@ -14,8 +14,8 @@ public class SubtaskDtoValidator : AbstractValidator<SubtaskDto>
             .WithMessage("Description must not be empty and at most 256 characters.");
 
         RuleFor(x => x.Points)
-            .GreaterThanOrEqualTo(0)
+            .GreaterThan(0)
             .Unless(x => x.Bonus == true)
-            .WithMessage("Points must be greater or equal than 0.");
+            .WithMessage("Points must be greater than 0.");
     }
 }

@@ -3,9 +3,8 @@ using System.Net.Http.Json;
 
 using FluentAssertions;
 
-using Microsoft.EntityFrameworkCore.ChangeTracking;
-
 using NSubstitute;
+using NSubstitute.ClearExtensions;
 
 using WebAPI.Endpoints;
 
@@ -15,21 +14,24 @@ using Base.Persistence.Contracts;
 
 using Persistence;
 using Persistence.Model;
-using Persistence.Repositories;
+
+using Service;
+
+using Shared.Exceptions;
 
 public class SubtaskEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 {
-    private readonly HttpClient         _client;
-    private readonly IUnitOfWork        _uow;
-    private readonly ISubtaskRepository _subtaskRepo;
+    private readonly HttpClient       _client;
+    private readonly IUnitOfWork      _uow;
+    private readonly ISubtaskService  _subtaskService;
 
     public SubtaskEndpointsTests(CustomWebApplicationFactory factory)
     {
-        _client = factory.CreateClient();
-        _uow    = factory.UnitOfWork;
+        _client         = factory.CreateClient();
+        _uow            = factory.UnitOfWork;
+        _subtaskService = factory.SubtaskService;
         _uow.ClearReceivedCalls();
-        _subtaskRepo = Substitute.For<ISubtaskRepository>();
-        _uow.Subtasks.Returns(_subtaskRepo);
+        _subtaskService.ClearSubstitute();
     }
 
     [Fact]
@@ -40,7 +42,7 @@ public class SubtaskEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             new() { Id = 1, ExamId = 1, Description = "Task A", Points = 10 },
             new() { Id = 2, ExamId = 1, Description = "Task B", Points = 20 }
         };
-        _subtaskRepo.GetNoTrackingAsync().ReturnsForAnyArgs(subtasks);
+        _subtaskService.GetSubtasksForExamAsync(default).ReturnsForAnyArgs(subtasks);
 
         var response = await _client.GetAsync("/api/exam/1/subtask");
         var result   = await response.Content.ReadFromJsonAsync<List<SubtaskDto>>();
@@ -54,7 +56,7 @@ public class SubtaskEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     public async Task GetSubtask_ExistingId_ReturnsOk()
     {
         var subtask = new Subtask { Id = 1, ExamId = 1, Description = "Task A", Points = 10 };
-        _subtaskRepo.GetByIdAsync(1).ReturnsForAnyArgs(subtask);
+        _subtaskService.SingleSubtaskAsync(default, null!).ReturnsForAnyArgs(subtask);
 
         var response = await _client.GetAsync("/api/exam/1/subtask/1");
         var result   = await response.Content.ReadFromJsonAsync<SubtaskDto>();
@@ -68,7 +70,8 @@ public class SubtaskEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task GetSubtask_NonExistingId_Returns404()
     {
-        _subtaskRepo.GetByIdAsync(99).ReturnsForAnyArgs((Subtask?)null);
+        _subtaskService.SingleSubtaskAsync(default, null!)
+            .ReturnsForAnyArgs(Task.FromException<Subtask>(new NotFoundException("Subtask 99 not found")));
 
         var response = await _client.GetAsync("/api/exam/1/subtask/99");
 
@@ -76,14 +79,14 @@ public class SubtaskEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
-    public async Task GetSubtask_WrongExamId_Returns404()
+    public async Task GetSubtask_WrongExamId_Returns400()
     {
         var subtask = new Subtask { Id = 1, ExamId = 2, Description = "Task A", Points = 10 };
-        _subtaskRepo.GetByIdAsync(1).ReturnsForAnyArgs(subtask);
+        _subtaskService.SingleSubtaskAsync(default, null!).ReturnsForAnyArgs(subtask);
 
         var response = await _client.GetAsync("/api/exam/1/subtask/1");
 
-        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]
@@ -91,9 +94,8 @@ public class SubtaskEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     {
         var dto     = new SubtaskDto(0, 1, "Task A", 10, false);
         var created = new Subtask { Id = 1, ExamId = 1, Description = "Task A", Points = 10 };
-
-        _subtaskRepo.AddAsync(Arg.Any<Subtask>()).Returns(Task.FromResult<EntityEntry<Subtask>>(null!));
-        _subtaskRepo.GetByIdAsync(Arg.Any<int>()).ReturnsForAnyArgs(created);
+        _subtaskService.AddSubtaskAsync(Arg.Any<Subtask>()).Returns(created);
+        _subtaskService.GetSubtaskByIdAsync(default, null!).ReturnsForAnyArgs(created);
 
         var response = await _client.PostAsJsonAsync("/api/exam/1/subtask", dto);
 
@@ -133,18 +135,14 @@ public class SubtaskEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task PutSubtask_ValidUpdate_ReturnsNoContent()
     {
-        var existing = new Subtask { Id = 1, ExamId = 1, Description = "Old", Points = 5 };
-        var dto      = new SubtaskDto(1, 3, "Updated", 20, false);
-        var trans    = Substitute.For<ITransaction>();
-
-        _subtaskRepo.GetByIdAsync(1).ReturnsForAnyArgs(existing);
+        var dto   = new SubtaskDto(1, 3, "Updated", 20, false);
+        var trans = Substitute.For<ITransaction>();
         _uow.BeginTransactionAsync().Returns(trans);
 
         var response = await _client.PutAsJsonAsync("/api/exam/1/subtask/1", dto);
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
-        existing.Description.Should().Be("Updated");
-        existing.Points.Should().Be(20);
+        await _subtaskService.Received(1).UpdateSubtaskAsync(1, Arg.Any<Subtask>());
         await trans.Received(1).CommitTransactionAsync();
     }
 
@@ -159,61 +157,64 @@ public class SubtaskEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
-    public async Task PutSubtask_NotFound_ReturnsBadRequest()
+    public async Task PutSubtask_NotFound_ReturnsNotFound()
     {
         var dto = new SubtaskDto(99, 12, "Task A", 10, false);
-        _subtaskRepo.GetByIdAsync(99).ReturnsForAnyArgs((Subtask?)null);
+        _subtaskService.When(s => s.UpdateSubtaskAsync(99, Arg.Any<Subtask>()))
+            .Throw(new NotFoundException("Subtask 99 not found"));
 
         var response = await _client.PutAsJsonAsync("/api/exam/1/subtask/99", dto);
 
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]
-    public async Task PutSubtask_WrongExam_ReturnsBadRequest()
+    public async Task PutSubtask_WrongExam_ReturnsConflict()
     {
-        var existing = new Subtask { Id = 1, ExamId = 2, Description = "Task A", Points = 10, Bonus = false };
-        var dto      = new SubtaskDto(1, 9, "Updated", 20, false);
-
-        _subtaskRepo.GetByIdAsync(1).ReturnsForAnyArgs(existing);
+        var dto = new SubtaskDto(1, 9, "Updated", 20, false);
+        _subtaskService.When(s => s.UpdateSubtaskAsync(1, Arg.Any<Subtask>()))
+            .Throw(new ConflictException("ExamId mismatch"));
 
         var response = await _client.PutAsJsonAsync("/api/exam/1/subtask/1", dto);
 
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
     }
 
     [Fact]
     public async Task DeleteSubtask_Existing_ReturnsNoContent()
     {
-        var existing = new Subtask { Id = 1, ExamId = 1, Description = "Task A", Points = 10, Bonus = false };
-        _subtaskRepo.GetByIdAsync(1).ReturnsForAnyArgs(existing);
+        var subtask = new Subtask { Id = 1, ExamId = 1, Description = "Task A", Points = 10 };
+        var trans   = Substitute.For<ITransaction>();
+        _subtaskService.SingleSubtaskAsync(default, null!).ReturnsForAnyArgs(subtask);
+        _uow.BeginTransactionAsync().Returns(trans);
 
         var response = await _client.DeleteAsync("/api/exam/1/subtask/1");
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
-        _subtaskRepo.Received(1).Remove(existing);
-        await _uow.Received(1).SaveChangesAsync();
+        await _subtaskService.Received(1).DeleteSubtaskAsync(1);
+        await trans.Received(1).CommitTransactionAsync();
     }
 
     [Fact]
-    public async Task DeleteSubtask_NotFound_ReturnsBadRequest()
+    public async Task DeleteSubtask_NotFound_ReturnsNotFound()
     {
-        _subtaskRepo.GetByIdAsync(99).ReturnsForAnyArgs((Subtask?)null);
+        _subtaskService.SingleSubtaskAsync(default, null!)
+            .ReturnsForAnyArgs(Task.FromException<Subtask>(new NotFoundException("Subtask 99 not found")));
 
         var response = await _client.DeleteAsync("/api/exam/1/subtask/99");
 
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]
     public async Task DeleteSubtask_WrongExam_ReturnsBadRequest()
     {
-        var existing = new Subtask { Id = 1, ExamId = 2, Description = "Task A", Points = 10, Bonus = false };
-        _subtaskRepo.GetByIdAsync(1).ReturnsForAnyArgs(existing);
+        var subtask = new Subtask { Id = 1, ExamId = 2, Description = "Task A", Points = 10 };
+        _subtaskService.SingleSubtaskAsync(default, null!).ReturnsForAnyArgs(subtask);
 
         var response = await _client.DeleteAsync("/api/exam/1/subtask/1");
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        _subtaskRepo.DidNotReceive().Remove(Arg.Any<Subtask>());
+        await _subtaskService.DidNotReceive().DeleteSubtaskAsync(Arg.Any<int>());
     }
 }
