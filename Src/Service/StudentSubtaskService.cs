@@ -16,7 +16,8 @@ using Persistence.Model;
 
 public interface IStudentSubtaskService
 {
-    Task CheckValid(int id, int expectedExamId, int expectedSubtaskId);
+    Task CheckValidSubtask(int id, int expectedExamId, int expectedSubtaskId);
+    Task CheckValidStudentExam(int id, int expectedExamId, int expectedStudentExamId);
 
     Task CheckSubtaskBelongsToExam(int expectedExamId, int subtaskId);
     Task CheckStudentExamBelongsToExam(int expectedExamId, int studentExamId);
@@ -51,7 +52,7 @@ public class StudentSubtaskService : IStudentSubtaskService
         _hub    = hub;
     }
 
-    public async Task CheckValid(int id, int expectedExamId, int expectedSubtaskId)
+    public async Task CheckValidSubtask(int id, int expectedExamId, int expectedSubtaskId)
     {
         var entity = await _uow.StudentSubtasks.GetByIdAsync(id, nameof(StudentSubtask.StudentExam), nameof(StudentSubtask.Subtask));
         if (entity is null)
@@ -67,6 +68,24 @@ public class StudentSubtaskService : IStudentSubtaskService
         if (entity.SubtaskId != expectedSubtaskId)
         {
             throw new ConflictException($"StudentSubtask {id} does not belong to subtask {expectedSubtaskId}");
+        }
+    }
+    public async Task CheckValidStudentExam(int id, int expectedExamId, int expectedStudentExamId)
+    {
+        var entity = await _uow.StudentSubtasks.GetByIdAsync(id, nameof(StudentSubtask.StudentExam), nameof(StudentSubtask.Subtask));
+        if (entity is null)
+        {
+            throw new NotFoundException($"No StudentSubtask found with ID {id}");
+        }
+
+        if (entity.Subtask.ExamId != expectedExamId)
+        {
+            throw new ConflictException($"StudentSubtask {id} does not belong to exam {expectedExamId}");
+        }
+
+        if (entity.StudentExamId != expectedStudentExamId)
+        {
+            throw new ConflictException($"StudentSubtask {id} does not belong to studentexam {expectedStudentExamId}");
         }
     }
 
@@ -90,6 +109,7 @@ public class StudentSubtaskService : IStudentSubtaskService
 
     public async Task<IList<StudentSubtask>> GetAllForStudentAsync(int examId, int studentExamId)
     {
+        await CheckStudentExamBelongsToExam(examId, studentExamId);
         return await _uow.StudentSubtasks.GetAllForStudentAsync(examId, studentExamId);
     }
 
@@ -116,7 +136,7 @@ public class StudentSubtaskService : IStudentSubtaskService
 
     public async Task UpdateStudentSubtaskAsync(int id, int examId, StudentSubtask value)
     {
-        await CheckValid(id, examId, value.SubtaskId);
+        await CheckValidSubtask(id, examId, value.SubtaskId);
 
         var entity = await SingleStudentSubtaskAsync(id);
 

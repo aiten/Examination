@@ -54,7 +54,7 @@ public static class SubtaskStudentEndpoints
 
         route.MapGet("/{id:int}", async (int examId, int subtaskId, int id, IStudentSubtaskService studentSubtaskService, ITransactionProvider transactionProvider) =>
             {
-                await studentSubtaskService.CheckValid(id, examId, subtaskId);
+                await studentSubtaskService.CheckValidSubtask(id, examId, subtaskId);
                 var entity = await studentSubtaskService.SingleStudentSubtaskAsync(id, nameof(StudentSubtask.StudentExam));
 
                 return Results.Ok(ToDto(entity));
