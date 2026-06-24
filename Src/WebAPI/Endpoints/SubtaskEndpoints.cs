@@ -92,6 +92,8 @@ public static class SubtaskEndpoints
                     ExamId      = examId
                 };
 
+                await subtaskService.UpdateSubtaskAsync(id, entity);
+
                 await trans.CommitTransactionAsync();
 
                 return Results.NoContent();

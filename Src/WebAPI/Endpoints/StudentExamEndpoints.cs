@@ -1,8 +1,12 @@
 namespace WebAPI.Endpoints;
 
+using Base.Persistence.Contracts;
+
 using Persistence;
 using Persistence.Model;
 using Persistence.QueryResult;
+
+using Service;
 
 public record StudentSubtaskResultDto(int SubtaskId, string Description, int Points, decimal? Result, string? Comment, string? CommentPrivate);
 
@@ -55,36 +59,30 @@ public static class StudentExamEndpoints
             .ProducesProblem(StatusCodes.Status403Forbidden);
 
 
-        route.MapGet("", async (int examId, IUnitOfWork uow) =>
+        route.MapGet("", async (int examId, IStudentExamService studentExamService, ITransactionProvider transactionProvider) =>
             {
-                var overviews = await uow.StudentExams.GetStudentExamOverviewsAsync(examId);
+                var overviews = await studentExamService.GetStudentExamOverviewsAsync(examId);
                 return Results.Ok(overviews);
             })
             .WithName("GetStudentExams")
             .Produces<List<StudentExamOverview>>(StatusCodes.Status200OK);
 
-        route.MapGet("summary", async (int examId, IUnitOfWork uow) =>
+        route.MapGet("summary", async (int examId, IStudentExamService studentExamService, ITransactionProvider transactionProvider) =>
             {
-                var summary = await uow.StudentExams.GetStudentExamSummaryAsync(examId);
+                var summary = await studentExamService.GetStudentExamSummaryAsync(examId);
                 return Results.Ok(summary);
             })
             .WithName("GetStudentExamsSummary")
             .Produces<List<StudentExamSummary>>(StatusCodes.Status200OK);
 
-        route.MapGet("/{id:int}", async (int examId, int id, IUnitOfWork uow) =>
+        route.MapGet("/{id:int}", async (int examId, int id, IStudentExamService studentExamService, ITransactionProvider transactionProvider) =>
             {
-                var entity = await uow.StudentExams.GetByIdAsync(id,
-                    "Student",
-                    "StudentSubtasks",
-                    "StudentSubtasks.Subtask");
+                var entity = await studentExamService.SingleStudentExamAsync(id,
+                    nameof(StudentExam.Student),
+                    nameof(StudentExam.StudentSubtasks),
+                    $"{nameof(StudentExam.StudentSubtasks)}.{nameof(StudentSubtask.Subtask)}");
 
-                if (entity is null || entity.ExamId != examId)
-                {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status404NotFound,
-                        title: "StudentExam not found",
-                        detail: $"No StudentExam found with ID {id} for exam {examId}");
-                }
+                EndpointTools.CheckExamId(examId, entity.ExamId);
 
                 return Results.Ok(ToDto(entity));
             })
@@ -92,29 +90,21 @@ public static class StudentExamEndpoints
             .Produces<StudentExamDto>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-        route.MapPut("/{id:int}", async (int examId, int id, StudentExamDto dto, IUnitOfWork uow) =>
+        route.MapPut("/{id:int}", async (int examId, int id, StudentExamDto dto, IStudentExamService studentExamService, ITransactionProvider transactionProvider) =>
             {
-                if (id != dto.Id)
+                EndpointTools.CheckId(id, dto.Id);
+
+                using var trans = await transactionProvider.BeginTransactionAsync();
+
+                var entity = new StudentExam()
                 {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status400BadRequest,
-                        title: "Invalid request",
-                        detail: "The ID in the URL does not match the ID in the request body");
-                }
+                    LoginName        = dto.LoginName,
+                    RegistrationCode = dto.RegistrationCode,
+                    ExamId           = examId
+                };
 
-                var entity = await uow.StudentExams.GetByIdAsync(id);
-
-                if (entity is null || entity.ExamId != examId)
-                {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status404NotFound,
-                        title: "StudentExam not found",
-                        detail: $"No StudentExam found with ID {id} for exam {examId}");
-                }
-
-                entity.LoginName        = dto.LoginName;
-                entity.RegistrationCode = dto.RegistrationCode;
-                await uow.SaveChangesAsync();
+                await studentExamService.UpdateStudentExamAsync(id, entity);
+                await trans.CommitTransactionAsync();
 
                 return Results.NoContent();
             })
@@ -123,33 +113,17 @@ public static class StudentExamEndpoints
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-        route.MapDelete("/{id:int}", async (int examId, int id, IUnitOfWork uow) =>
+        route.MapDelete("/{id:int}", async (int examId, int id, IStudentExamService studentExamService, ITransactionProvider transactionProvider) =>
             {
-                using var trans = await uow.BeginTransactionAsync();
+                using var trans = await transactionProvider.BeginTransactionAsync();
 
-                var entity = await uow.StudentExams.GetByIdAsync(id);
+                var entity = await studentExamService.SingleStudentExamAsync(id);
 
-                if (entity is null || entity.ExamId != examId)
-                {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status400BadRequest,
-                        title: "StudentExam not found",
-                        detail: $"No StudentExam found with ID {id} for exam {examId}");
-                }
+                EndpointTools.CheckExamId(examId, entity.ExamId);
 
-                try
-                {
-                    await uow.StudentExams.DeleteAsync(entity.Id);
-                    await trans.CommitTransactionAsync();
-                }
-                catch (InvalidOperationException ex)
-                {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status400BadRequest,
-                        title: "Delete failed",
-                        detail: ex.Message);
-                }
+                await studentExamService.DeleteStudentExamAsync(id);
 
+                await trans.CommitTransactionAsync();
 
                 return Results.NoContent();
             })

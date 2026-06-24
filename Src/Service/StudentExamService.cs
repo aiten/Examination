@@ -15,7 +15,9 @@ using System.Threading.Tasks;
 
 public interface IStudentExamService
 {
-    Task<StudentExamResult> GetStudentResultAsync(string firstName, string lastName, int pin, string registrationCode);
+    Task<StudentExamResult>          GetStudentResultAsync(string     firstName, string lastName, int pin, string registrationCode);
+    Task<IList<StudentExamOverview>> GetStudentExamOverviewsAsync(int examId);
+    Task<IList<StudentExamSummary>>  GetStudentExamSummaryAsync(int   examId);
 
     Task<IList<StudentExam>> GetStudentExamsForExamAsync(int examId, params string[] includeProperties);
 
@@ -50,6 +52,16 @@ public class StudentExamService : IStudentExamService
         return await _uow.StudentExams.GetStudentResultAsync(firstName, lastName, pin, registrationCode);
     }
 
+    public async Task<IList<StudentExamOverview>> GetStudentExamOverviewsAsync(int examId)
+    {
+        return await _uow.StudentExams.GetStudentExamOverviewsAsync(examId);
+    }
+
+    public async Task<IList<StudentExamSummary>> GetStudentExamSummaryAsync(int examId)
+    {
+        return await _uow.StudentExams.GetStudentExamSummaryAsync(examId);
+    }
+
     public async Task<IList<StudentExam>> GetStudentExamsForExamAsync(int examId, params string[] includeProperties)
     {
         return await _uow.StudentExams.GetNoTrackingAsync(s => s.ExamId == examId);
@@ -78,6 +90,9 @@ public class StudentExamService : IStudentExamService
         {
             throw new ConflictException($"Must not change ExamId ({entity.ExamId}) for StudentExam with ID {id}");
         }
+
+        entity.LoginName        = value.LoginName;
+        entity.RegistrationCode = value.RegistrationCode;
 
         await _uow.SaveChangesAsync();
         //await _hub.NotifyStudentExamUpdatedAsync(id);
