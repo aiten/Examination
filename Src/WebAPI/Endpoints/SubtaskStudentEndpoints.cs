@@ -44,19 +44,17 @@ public static class SubtaskStudentEndpoints
 
         route.MapGet("", async (int examId, int subtaskId, IStudentSubtaskService studentSubtaskService, ITransactionProvider transactionProvider) =>
             {
-                await studentSubtaskService.CheckValidSubtask(examId, subtaskId);
                 var list = await studentSubtaskService.GetAllForSubtaskAsync(examId, subtaskId);
-
                 return Results.Ok(ToDto(list));
             })
             .WithName("GetSubtaskStudents")
             .Produces<List<SubtaskStudentDto>>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status409Conflict)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
         route.MapGet("/{id:int}", async (int examId, int subtaskId, int id, IStudentSubtaskService studentSubtaskService, ITransactionProvider transactionProvider) =>
             {
                 await studentSubtaskService.CheckValid(id, examId, subtaskId);
-                
                 var entity = await studentSubtaskService.SingleStudentSubtaskAsync(id, nameof(StudentSubtask.StudentExam));
 
                 return Results.Ok(ToDto(entity));
@@ -69,9 +67,6 @@ public static class SubtaskStudentEndpoints
             {
                 using var trans = await transactionProvider.BeginTransactionAsync();
 
-                await studentSubtaskService.CheckValidSubtask(examId, subtaskId);
-                await studentSubtaskService.CheckValidStudentExam(examId, dto.StudentExamId);
-
                 var entity = new StudentSubtask
                 {
                     SubtaskId      = subtaskId,
@@ -81,7 +76,7 @@ public static class SubtaskStudentEndpoints
                     CommentPrivate = dto.CommentPrivate
                 };
 
-                await studentSubtaskService.AddStudentSubtaskAsync(entity);
+                await studentSubtaskService.AddStudentSubtaskAsync(examId, entity);
 
                 await trans.CommitTransactionAsync();
 
@@ -100,16 +95,16 @@ public static class SubtaskStudentEndpoints
 
                 using var trans = await transactionProvider.BeginTransactionAsync();
 
-                await studentSubtaskService.CheckValid(id, examId, subtaskId);
-
                 var entity = new StudentSubtask()
                 {
+                    SubtaskId      = subtaskId,
+                    StudentExamId  = dto.StudentExamId,
                     Result         = dto.Result.HasValue ? dto.Result / 100M : null,
                     Comment        = dto.Comment,
                     CommentPrivate = dto.CommentPrivate
                 };
 
-                await studentSubtaskService.UpdateStudentSubtaskAsync(id, entity);
+                await studentSubtaskService.UpdateStudentSubtaskAsync(id, examId, entity);
 
                 await trans.CommitTransactionAsync();
 
@@ -118,6 +113,7 @@ public static class SubtaskStudentEndpoints
             .WithName("UpdateSubtaskStudent")
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status400BadRequest)
-            .ProducesProblem(StatusCodes.Status404NotFound);
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
     }
 }

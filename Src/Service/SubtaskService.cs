@@ -15,6 +15,8 @@ using Persistence.Model;
 
 public interface ISubtaskService
 {
+    Task<IList<Subtask>> GetSubtasksForExamAsync(int examId, params string[] includeProperties);
+
     Task<IList<Subtask>> GetSubtasksAsync(params string[] includeProperties);
 
     Task<Subtask?> GetSubtaskByIdAsync(int id, params string[] includeProperties);
@@ -41,6 +43,11 @@ public class SubtaskService : ISubtaskService
         _hub    = hub;
     }
 
+    public async Task<IList<Subtask>> GetSubtasksForExamAsync(int examId, params string[] includeProperties)
+    {
+        return await _uow.Subtasks.GetNoTrackingAsync(s => s.ExamId == examId);
+    }
+
     public async Task<IList<Subtask>> GetSubtasksAsync(params string[] includeProperties)
     {
         return await _uow.Subtasks.GetAsync(null, null, includeProperties);
@@ -60,11 +67,15 @@ public class SubtaskService : ISubtaskService
     {
         var entity = await SingleSubtaskAsync(id);
 
+        if (entity.ExamId != value.ExamId)
+        {
+            throw new ConflictException($"Must not change ExamId ({entity.ExamId}) for Subtask with ID {id}");
+        }
+
         entity.Description = value.Description;
         entity.SeqNo       = value.SeqNo;
         entity.Points      = value.Points;
         entity.Bonus       = value.Bonus;
-        entity.ExamId      = value.ExamId;
 
         await _uow.SaveChangesAsync();
         //await _hub.NotifySubtaskUpdatedAsync(id);

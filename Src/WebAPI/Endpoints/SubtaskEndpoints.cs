@@ -1,7 +1,11 @@
 namespace WebAPI.Endpoints;
 
+using Base.Persistence.Contracts;
+
 using Persistence;
 using Persistence.Model;
+
+using Service;
 
 using WebAPI.Filters;
 
@@ -29,43 +33,29 @@ public static class SubtaskEndpoints
             .ProducesProblem(StatusCodes.Status403Forbidden);
 
 
-        route.MapGet("", async (int examId, IUnitOfWork uow) =>
+        route.MapGet("", async (int examId, ISubtaskService subtaskService, ITransactionProvider transactionProvider) =>
             {
-                var subtasks = await uow.Subtasks.GetNoTrackingAsync(s => s.ExamId == examId);
+                var subtasks = await subtaskService.GetSubtasksForExamAsync(examId);
                 return Results.Ok(ToDto(subtasks));
             })
             .WithName("GetSubtasks")
             .Produces<List<SubtaskDto>>(StatusCodes.Status200OK);
 
-        route.MapGet("/{id:int}", async (int examId, int id, IUnitOfWork uow) =>
+        route.MapGet("/{id:int}", async (int examId, int id, ISubtaskService subtaskService, ITransactionProvider transactionProvider) =>
             {
-                var entity = await uow.Subtasks.GetByIdAsync(id);
-
-                if (entity is null || entity.ExamId != examId)
-                {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status404NotFound,
-                        title: "Subtask not found",
-                        detail: $"No Subtask found with ID {id} for exam {examId}");
-                }
-
+                var entity = await subtaskService.SingleSubtaskAsync(id);
+                EndpointTools.CheckExamId(examId, entity.ExamId);
                 return Results.Ok(ToDto(entity));
             })
             .WithName("GetSubtask")
             .Produces<SubtaskDto>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-        route.MapPost("", async (int examId, SubtaskDto dto, IUnitOfWork uow) =>
+        route.MapPost("", async (int examId, SubtaskDto dto, ISubtaskService subtaskService, ITransactionProvider transactionProvider) =>
             {
-                if (dto.Id != 0)
-                {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status400BadRequest,
-                        title: "Invalid request",
-                        detail: "The ID in the request body must be 0");
-                }
+                EndpointTools.CheckIdMustBe0(dto.Id);
 
-                using var trans = await uow.BeginTransactionAsync();
+                using var trans = await transactionProvider.BeginTransactionAsync();
                 var entity = new Subtask
                 {
                     ExamId      = examId,
@@ -75,48 +65,34 @@ public static class SubtaskEndpoints
                     Bonus       = dto.Bonus
                 };
 
-                await uow.Subtasks.AddAsync(entity);
+                await subtaskService.AddSubtaskAsync(entity);
                 await trans.CommitTransactionAsync();
 
                 int id = entity.Id;
 
                 return Results.Created($"{baseRoute}/{examId}/subtask/{id}",
-                    ToDto((await uow.Subtasks.GetByIdAsync(id))!));
+                    ToDto((await subtaskService.GetSubtaskByIdAsync(id))!));
             })
             .WithValidation<SubtaskDto>()
             .WithName("AddSubtask")
             .Produces<SubtaskDto>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest);
 
-        route.MapPut("/{id:int}", async (int examId, int id, SubtaskDto dto, IUnitOfWork uow) =>
+        route.MapPut("/{id:int}", async (int examId, int id, SubtaskDto dto, ISubtaskService subtaskService, ITransactionProvider transactionProvider) =>
             {
-                if (id != dto.Id)
+                EndpointTools.CheckId(id, dto.Id);
+
+                using var trans = await transactionProvider.BeginTransactionAsync();
+                
+                var entity = new Subtask()
                 {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status400BadRequest,
-                        title: "Invalid request",
-                        detail: "The ID in the URL does not match the ID in the request body");
-                }
+                    Description = dto.Description,
+                    Points      = dto.Points, SeqNo = dto.SeqNo,
+                    Bonus       = dto.Bonus,
+                    ExamId      = examId
+                };
 
-                using (var trans = await uow.BeginTransactionAsync())
-                {
-                    var entity = await uow.Subtasks.GetByIdAsync(id);
-
-                    if (entity is null || entity.ExamId != examId)
-                    {
-                        return Results.Problem(
-                            statusCode: StatusCodes.Status400BadRequest,
-                            title: "Subtask not found",
-                            detail: $"No Subtask found with ID {id} for exam {examId}");
-                    }
-
-                    entity.Description = dto.Description;
-                    entity.Points      = dto.Points;
-                    entity.SeqNo       = dto.SeqNo;
-                    entity.Bonus       = dto.Bonus;
-
-                    await trans.CommitTransactionAsync();
-                }
+                await trans.CommitTransactionAsync();
 
                 return Results.NoContent();
             })
@@ -125,20 +101,17 @@ public static class SubtaskEndpoints
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status400BadRequest);
 
-        route.MapDelete("/{id:int}", async (int examId, int id, IUnitOfWork uow) =>
+        route.MapDelete("/{id:int}", async (int examId, int id, ISubtaskService subtaskService, ITransactionProvider transactionProvider) =>
             {
-                var entity = await uow.Subtasks.GetByIdAsync(id);
+                using var trans  = await transactionProvider.BeginTransactionAsync();
 
-                if (entity is null || entity.ExamId != examId)
-                {
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status400BadRequest,
-                        title: "Subtask not found",
-                        detail: $"No Subtask found with ID {id} for exam {examId}");
-                }
+                var       entity = await subtaskService.SingleSubtaskAsync(id);
 
-                uow.Subtasks.Remove(entity);
-                await uow.SaveChangesAsync();
+                EndpointTools.CheckExamId(examId,entity.ExamId);
+
+                await subtaskService.DeleteSubtaskAsync(id);
+
+                await trans.CommitTransactionAsync();
 
                 return Results.NoContent();
             })

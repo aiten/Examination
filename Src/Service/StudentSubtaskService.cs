@@ -16,10 +16,10 @@ using Persistence.Model;
 
 public interface IStudentSubtaskService
 {
-    Task CheckValid(int id, int examId, int subtaskId);
+    Task CheckValid(int id, int expectedExamId, int expectedSubtaskId);
 
-    Task CheckValidSubtask(int examId, int subtaskId);
-    Task CheckValidStudentExam(int examId, int studentExamId);
+    Task CheckSubtaskBelongsToExam(int expectedExamId, int subtaskId);
+    Task CheckStudentExamBelongsToExam(int expectedExamId, int studentExamId);
 
     Task<IList<StudentSubtask>> GetAllForSubtaskAsync(int examId, int subtaskId);
 
@@ -31,9 +31,9 @@ public interface IStudentSubtaskService
 
     Task<StudentSubtask> SingleStudentSubtaskAsync(int id, params string[] includeProperties);
 
-    Task UpdateStudentSubtaskAsync(int id, StudentSubtask value);
+    Task UpdateStudentSubtaskAsync(int id, int examId, StudentSubtask value);
 
-    Task<StudentSubtask> AddStudentSubtaskAsync(StudentSubtask value);
+    Task<StudentSubtask> AddStudentSubtaskAsync(int examId, StudentSubtask value);
 
     Task DeleteStudentSubtaskAsync(int id);
 }
@@ -51,7 +51,7 @@ public class StudentSubtaskService : IStudentSubtaskService
         _hub    = hub;
     }
 
-    public async Task CheckValid(int id, int examId, int subtaskId)
+    public async Task CheckValid(int id, int expectedExamId, int expectedSubtaskId)
     {
         var entity = await _uow.StudentSubtasks.GetByIdAsync(id, nameof(StudentSubtask.StudentExam), nameof(StudentSubtask.Subtask));
         if (entity is null)
@@ -59,32 +59,32 @@ public class StudentSubtaskService : IStudentSubtaskService
             throw new NotFoundException($"No StudentSubtask found with ID {id}");
         }
 
-        if (entity.StudentExam.ExamId != examId)
+        if (entity.StudentExam.ExamId != expectedExamId)
         {
-            throw new NotFoundException($"StudentSubtask {id} does not belong to exam {examId}");
+            throw new ConflictException($"StudentSubtask {id} does not belong to exam {expectedExamId}");
         }
 
-        if (entity.SubtaskId != subtaskId)
+        if (entity.SubtaskId != expectedSubtaskId)
         {
-            throw new NotFoundException($"StudentSubtask {id} does not belong to subtask {subtaskId}");
+            throw new ConflictException($"StudentSubtask {id} does not belong to subtask {expectedSubtaskId}");
         }
     }
 
-    public async Task CheckValidSubtask(int examId, int subtaskId)
+    public async Task CheckSubtaskBelongsToExam(int expectedExamId, int subtaskId)
     {
         var subtask = await _uow.Subtasks.GetByIdAsync(subtaskId);
-        if (subtask is null || subtask.ExamId != examId)
+        if (subtask is null || subtask.ExamId != expectedExamId)
         {
-            throw new NotFoundException($"No Subtask found with ID {subtaskId} for exam {examId}");
+            throw new ConflictException($"No Subtask found with ID {subtaskId} for exam {expectedExamId}");
         }
     }
 
-    public async Task CheckValidStudentExam(int examId, int studentExamId)
+    public async Task CheckStudentExamBelongsToExam(int expectedExamId, int studentExamId)
     {
         var studentExam = await _uow.StudentExams.GetByIdAsync(studentExamId);
-        if (studentExam is null || studentExam.ExamId != examId)
+        if (studentExam is null || studentExam.ExamId != expectedExamId)
         {
-            throw new NotFoundException($"No StudentExam found with ID {studentExamId} for exam {examId}");
+            throw new ConflictException($"No StudentExam found with ID {studentExamId} for exam {expectedExamId}");
         }
     }
 
@@ -95,6 +95,7 @@ public class StudentSubtaskService : IStudentSubtaskService
 
     public async Task<IList<StudentSubtask>> GetAllForSubtaskAsync(int examId, int subtaskId)
     {
+        await CheckSubtaskBelongsToExam(examId, subtaskId);
         return await _uow.StudentSubtasks.GetAllForSubtaskAsync(examId, subtaskId);
     }
 
@@ -113,8 +114,10 @@ public class StudentSubtaskService : IStudentSubtaskService
         return (await GetStudentSubtaskByIdAsync(id, includeProperties)) ?? throw new NotFoundException($"StudentSubtask {id} not found");
     }
 
-    public async Task UpdateStudentSubtaskAsync(int id, StudentSubtask value)
+    public async Task UpdateStudentSubtaskAsync(int id, int examId, StudentSubtask value)
     {
+        await CheckValid(id, examId, value.SubtaskId);
+
         var entity = await SingleStudentSubtaskAsync(id);
 
         entity.Result         = value.Result;
@@ -125,12 +128,15 @@ public class StudentSubtaskService : IStudentSubtaskService
         //await _hub.NotifyStudentSubtaskUpdatedAsync(id);
     }
 
-    public async Task<StudentSubtask> AddStudentSubtaskAsync(StudentSubtask value)
+    public async Task<StudentSubtask> AddStudentSubtaskAsync(int examId, StudentSubtask value)
     {
         if (value.Id != 0)
         {
             throw new IllegalValuesException("Id must be 0 for new entities");
         }
+
+        await CheckSubtaskBelongsToExam(examId, value.SubtaskId);
+        await CheckStudentExamBelongsToExam(examId, value.StudentExamId);
 
         var existing = await _uow.StudentSubtasks.GetNoTrackingAsync(ss => ss.SubtaskId == value.SubtaskId && ss.StudentExamId == value.StudentExamId);
 
