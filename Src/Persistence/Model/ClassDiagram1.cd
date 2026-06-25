@@ -8,15 +8,8 @@
         <Point X="5" Y="5.25" />
       </Path>
     </AssociationLine>
-    <AssociationLine Name="Course" Type="Persistence.Model.Course" FixedFromPoint="true" FixedToPoint="true">
-      <Path>
-        <Point X="8.75" Y="3.875" />
-        <Point X="11.906" Y="3.875" />
-        <Point X="11.906" Y="1.925" />
-      </Path>
-    </AssociationLine>
     <TypeIdentifier>
-      <HashCode>AgEEAAAAAACgAAAAAJACCAAAAAAIIAQBAAAAAAAAAAA=</HashCode>
+      <HashCode>AgEEAAAAAACgAAAAAJACCAAAAAAIIAQhAAAAAQAAAAA=</HashCode>
       <FileName>Model\Exam.cs</FileName>
     </TypeIdentifier>
     <ShowAsAssociation>
@@ -50,7 +43,7 @@
       </Path>
     </AssociationLine>
     <TypeIdentifier>
-      <HashCode>AAAAAEBAAAAAAAAAAAAAAAAAAAAAAAEAAAAAABAgAAg=</HashCode>
+      <HashCode>AAAAAEBAAAAAAAAAAAAAAAAAAAAAEAEAAAAAABAgAAg=</HashCode>
       <FileName>Model\Teacher.cs</FileName>
     </TypeIdentifier>
     <ShowAsCollectionAssociation>
@@ -118,7 +111,7 @@
       </Path>
     </AssociationLine>
     <TypeIdentifier>
-      <HashCode>AAAAAAAEAEAAgAAAAgAAAAQAAAAAIAAAAAAAAAAAAAA=</HashCode>
+      <HashCode>AAAAAAAEAEAAgAAAAgAAAAQAAAAAIAAAAAAAQAAAAAA=</HashCode>
       <FileName>Model\StudentSubtask.cs</FileName>
     </TypeIdentifier>
     <ShowAsAssociation>
@@ -128,19 +121,6 @@
   </Class>
   <Class Name="Persistence.Model.Course">
     <Position X="10.75" Y="0.5" Width="1.5" />
-    <AssociationLine Name="Teachers" Type="Persistence.Model.Teacher" FixedToPoint="true">
-      <Path>
-        <Point X="10.75" Y="1.562" />
-        <Point X="8.75" Y="1.562" />
-      </Path>
-    </AssociationLine>
-    <AssociationLine Name="Exams" Type="Persistence.Model.Exam" ManuallyRouted="true" FixedFromPoint="true" FixedToPoint="true">
-      <Path>
-        <Point X="11.312" Y="1.925" />
-        <Point X="11.312" Y="3.543" />
-        <Point X="8.75" Y="3.543" />
-      </Path>
-    </AssociationLine>
     <AssociationLine Name="Subject" Type="Persistence.Model.Subject" FixedFromPoint="true" FixedToPoint="true">
       <Path>
         <Point X="12.25" Y="1.491" />
@@ -156,23 +136,29 @@
         <Point X="5.812" Y="1.5" />
       </Path>
     </AssociationLine>
+    <AssociationLine Name="Teachers" Type="Persistence.Model.Teacher" FixedToPoint="true">
+      <Path>
+        <Point X="10.75" Y="1.562" />
+        <Point X="8.75" Y="1.562" />
+      </Path>
+    </AssociationLine>
     <TypeIdentifier>
-      <HashCode>AAAAAAAAEAEAAAAAAIAAAAQAAAAAAAAAAAAAAgAgAAA=</HashCode>
+      <HashCode>AAAAAAAAFAEAAAAAAIAAAAQAAAAAAAAAAAAAAgAgAAA=</HashCode>
       <FileName>Model\Course.cs</FileName>
     </TypeIdentifier>
     <ShowAsAssociation>
       <Property Name="Subject" />
     </ShowAsAssociation>
     <ShowAsCollectionAssociation>
+      <Property Name="Classes" />
       <Property Name="Teachers" />
       <Property Name="Exams" />
-      <Property Name="Classes" />
     </ShowAsCollectionAssociation>
   </Class>
   <Class Name="Persistence.Model.Subject">
     <Position X="12.75" Y="3.5" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAABAAAAA=</HashCode>
+      <HashCode>AAAAAAAEAAAAAAAAAAAAAAQAAAAAAAAAAAAAABAAAAA=</HashCode>
       <FileName>Model\Subject.cs</FileName>
     </TypeIdentifier>
     <ShowAsCollectionAssociation>

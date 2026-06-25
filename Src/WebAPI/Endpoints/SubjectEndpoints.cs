@@ -10,8 +10,9 @@ using Service;
 using WebAPI.Filters;
 
 public record SubjectDto(
-    int    Id,
-    string Name
+    int     Id,
+    string  Name,
+    string? Comment
 );
 
 public static class SubjectEndpoints
@@ -22,8 +23,9 @@ public static class SubjectEndpoints
     {
         return new Subject()
         {
-            Id   = dto.Id,
-            Name = dto.Name
+            Id      = dto.Id,
+            Name    = dto.Name,
+            Comment = string.IsNullOrWhiteSpace(dto.Comment) ? null : dto.Comment
         };
     }
 
@@ -34,7 +36,7 @@ public static class SubjectEndpoints
             return null;
         }
 
-        return new SubjectDto(entity.Id, entity.Name);
+        return new SubjectDto(entity.Id, entity.Name, entity.Comment);
     }
 
     private static IList<SubjectDto>? ToDto(IList<Subject>? list)

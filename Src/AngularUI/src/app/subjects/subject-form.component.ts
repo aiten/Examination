@@ -16,6 +16,10 @@ import { SubjectService } from '../services/subject.service';
           <label>Name *</label>
           <input name="name" [(ngModel)]="subject().name" required minlength="2" class="form-control" />
         </div>
+        <div class="form-group">
+          <label>Comment</label>
+          <input name="comment" [(ngModel)]="subject().comment" maxlength="256" class="form-control" />
+        </div>
         <div class="form-actions">
           <button type="submit" class="btn btn-primary" [disabled]="form.invalid">Save</button>
           <a routerLink="/subjects" class="btn">Cancel</a>
@@ -31,7 +35,7 @@ import { SubjectService } from '../services/subject.service';
   `
 })
 export class SubjectFormComponent implements OnInit {
-  subject = signal<Subject>({ id: 0, name: '' });
+  subject = signal<Subject>({ id: 0, name: '', comment: null });
   isNew = true;
   error = signal('');
 
