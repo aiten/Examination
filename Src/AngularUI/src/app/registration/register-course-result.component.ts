@@ -1,10 +1,10 @@
 import { Component, computed, effect, ElementRef, ViewChild } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { RegistrationService } from '../services/registration.service';
+import { RegistrationCourseService } from '../services/registration-course.service';
 import QRCode from 'qrcode';
 
 @Component({
-  selector: 'app-register-result',
+  selector: 'app-register-course-result',
   standalone: true,
   imports: [RouterModule],
   template: `
@@ -17,12 +17,8 @@ import QRCode from 'qrcode';
             <p>{{ result()!.lastName }}, {{ result()!.firstName }}</p>
           </div>
           <div class="form-group">
-            <label>Exam</label>
-            <p>{{ result()!.examDescription }}</p>
-          </div>
-          <div class="form-group">
-            <label>Date</label>
-            <p>{{ result()!.examDate }}</p>
+            <label>Course</label>
+            <p>{{ result()!.courseDescription }}</p>
           </div>
           <div class="form-group">
             <label>Registration Code</label>
@@ -39,19 +35,19 @@ import QRCode from 'qrcode';
       </div>
     } @else {
       <div class="page">
-        <p class="empty">No registration result. <a routerLink="/registration">Go back</a>.</p>
+        <p class="empty">No registration result. <a routerLink="/registration/course">Go back</a>.</p>
       </div>
     }
   `
 })
-export class RegisterResultComponent {
+export class RegisterCourseResultComponent {
   @ViewChild('qrCanvas') qrCanvas!: ElementRef<HTMLCanvasElement>;
 
   result;
   resultQueryParams;
   resultUrl;
 
-  constructor(private service: RegistrationService) {
+  constructor(private service: RegistrationCourseService) {
     this.result = service.result;
     this.resultQueryParams = computed(() => {
       const r = this.result();

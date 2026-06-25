@@ -19,8 +19,10 @@ import { SubjectListComponent } from './subjects/subject-list.component';
 import { SubjectFormComponent } from './subjects/subject-form.component';
 import { CourseListComponent } from './courses/course-list.component';
 import { CourseFormComponent } from './courses/course-form.component';
-import { RegisterFormComponent } from './registration/register-form.component';
-import { RegisterResultComponent } from './registration/register-result.component';
+import { RegisterExamFormComponent } from './registration/register-exam-form.component';
+import { RegisterCourseFormComponent } from './registration/register-course-form.component';
+import { RegisterExamResultComponent } from './registration/register-exam-result.component';
+import { RegisterCourseResultComponent } from './registration/register-course-result.component';
 import { ResultQueryComponent } from './results/result-query.component';
 import { ResultDisplayComponent } from './results/result-display.component';
 import { SubtaskListComponent } from './subtasks/subtask-list.component';
@@ -50,8 +52,11 @@ export const routes: Routes = [
   { path: 'subjects/:id', component: SubjectFormComponent, canActivate: [canActivateAuthRole],   data: { role: environment.roles.admin },  },
   { path: 'courses', component: CourseListComponent, canActivate: [canActivateAuthRole],   data: { role: environment.roles.admin },  },
   { path: 'courses/:id', component: CourseFormComponent, canActivate: [canActivateAuthRole],   data: { role: environment.roles.admin },  },
-  { path: 'registration', component: RegisterFormComponent },
-  { path: 'registration/result', component: RegisterResultComponent },
+  { path: 'registration/exam', component: RegisterExamFormComponent },
+  { path: 'registration/course', component: RegisterCourseFormComponent },
+  { path: 'registration/exam/result', component: RegisterExamResultComponent },
+  { path: 'registration/exam/result', component: RegisterExamResultComponent },
+  { path: 'registration/course/result', component: RegisterCourseResultComponent },
   { path: 'result', component: ResultQueryComponent },
   { path: 'result/display', component: ResultDisplayComponent },
   { path: 'profile', component: UserProfileComponent,  canActivate: [canActivateAuthRole],    data: { role: environment.roles.viewProfile }  },
