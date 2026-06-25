@@ -30,7 +30,7 @@ public interface IExamService
 
     Task<IList<ExamOverview>> GetExamOverviewsAsync(int?  teacherId, int?   courseId);
 
-    Task<StudentExam>         RegisterStudentAsync(string firstName, string lastName, string? loginName, int pin);
+    Task<StudentExam>         RegisterStudentAsync(string firstName, string lastName, string? loginName, string pin);
 }
 
 public class ExamService : IExamService
@@ -111,7 +111,7 @@ public class ExamService : IExamService
         return await _uow.Exams.GetExamOverviewsAsync(teacherId, courseId);
     }
 
-    public async Task<StudentExam> RegisterStudentAsync(string firstName, string lastName, string? loginName, int pin)
+    public async Task<StudentExam> RegisterStudentAsync(string firstName, string lastName, string? loginName, string pin)
     {
         var exam = await _uow.Exams.GetExamWithPINAsync(pin);
         if (exam is null)

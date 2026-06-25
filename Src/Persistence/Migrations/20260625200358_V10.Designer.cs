@@ -12,8 +12,8 @@ using Persistence;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260625125146_V9")]
-    partial class V9
+    [Migration("20260625200358_V10")]
+    partial class V10
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -157,8 +157,9 @@ namespace Persistence.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("nvarchar(64)");
 
-                    b.Property<int?>("Pin")
-                        .HasColumnType("int");
+                    b.Property<string>("Pin")
+                        .HasMaxLength(5)
+                        .HasColumnType("nvarchar(5)");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
@@ -215,8 +216,9 @@ namespace Persistence.Migrations
                     b.Property<DateTime?>("Modified")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("Pin")
-                        .HasColumnType("int");
+                    b.Property<string>("Pin")
+                        .HasMaxLength(5)
+                        .HasColumnType("nvarchar(5)");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
@@ -277,12 +279,12 @@ namespace Persistence.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("RegistrationCode")
-                        .HasMaxLength(2024)
-                        .HasColumnType("nvarchar(2024)");
-
                     b.Property<int>("CourseId")
                         .HasColumnType("int");
+
+                    b.Property<string>("RegistrationCode")
+                        .HasMaxLength(5)
+                        .HasColumnType("nvarchar(5)");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
@@ -295,6 +297,10 @@ namespace Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CourseId");
+
+                    b.HasIndex("RegistrationCode", "CourseId")
+                        .IsUnique()
+                        .HasFilter("[RegistrationCode] IS NOT NULL");
 
                     b.HasIndex("StudentId", "CourseId")
                         .IsUnique();

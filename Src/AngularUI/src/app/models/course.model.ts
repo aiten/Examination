@@ -6,5 +6,5 @@ export interface Course {
   classIds: number[];
   teacherIds: number[];
   canRegister: boolean;
-  pin: number | null;
+  pin: string | null;
 }

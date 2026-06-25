@@ -7,7 +7,7 @@ using Service;
 
 using WebAPI.Filters;
 
-public record StudentExamResultQueryDto(string FirstName, string LastName, int Pin, string RegistrationCode);
+public record StudentExamResultQueryDto(string FirstName, string LastName, string Pin, string RegistrationCode);
 
 public static class ResultEndpoints
 {

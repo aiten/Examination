@@ -21,7 +21,7 @@ public record ExamDto(
     DateOnly Date,
     TimeOnly From,
     TimeOnly To,
-    int?     Pin,
+    string?  Pin,
     bool     CanRegister,
     bool     CanShowResults
 );

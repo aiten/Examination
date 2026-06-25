@@ -13,7 +13,7 @@ public interface IExamRepository : IGenericRepository<Exam>
 {
     Task<IList<ExamOverview>> GetExamOverviewsAsync(int? teacherId, int? courseId);
 
-    Task<Exam?> GetExamWithPINAsync(int pin);
+    Task<Exam?> GetExamWithPINAsync(string pin);
 
     Task<int> CalculateGrade(int id, decimal percent);
 }
@@ -29,7 +29,7 @@ public class ExamRepository : GenericRepository<Exam>, IExamRepository
         _logger    = logger;
     }
 
-    public async Task<Exam?> GetExamWithPINAsync(int pin)
+    public async Task<Exam?> GetExamWithPINAsync(string pin)
     {
         return await DbSet
             .Include(e => e.Course)

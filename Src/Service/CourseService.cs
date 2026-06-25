@@ -19,9 +19,9 @@ public interface ICourseService
 
     Task<Course> SingleCourseAsync(int id, params string[] includeProperties);
 
-    Task UpdateCourseAsync(int id, string name, int year, int subjectId, ICollection<int> classIds, ICollection<int> teacherIds, bool canRegister, int? pin);
+    Task UpdateCourseAsync(int id, string name, int year, int subjectId, ICollection<int> classIds, ICollection<int> teacherIds, bool canRegister, string? pin);
 
-    Task<Course> AddCourseAsync(string name, int year, int subjectId, ICollection<int> classIds, ICollection<int> teacherIds, bool canRegister, int? pin);
+    Task<Course> AddCourseAsync(string name, int year, int subjectId, ICollection<int> classIds, ICollection<int> teacherIds, bool canRegister, string? pin);
 
     Task DeleteCourseAsync(int id);
 }
@@ -54,7 +54,7 @@ public class CourseService : ICourseService
         return (await GetCourseByIdAsync(id, includeProperties)) ?? throw new NotFoundException($"Course {id} not found");
     }
 
-    public async Task UpdateCourseAsync(int id, string name, int year, int subjectId, ICollection<int> classIds, ICollection<int> teacherIds, bool canRegister, int? pin)
+    public async Task UpdateCourseAsync(int id, string name, int year, int subjectId, ICollection<int> classIds, ICollection<int> teacherIds, bool canRegister, string? pin)
     {
         var entity = await SingleCourseAsync(id, nameof(Course.Classes), nameof(Course.Teachers));
 
@@ -73,7 +73,7 @@ public class CourseService : ICourseService
         //await _hub.NotifyCourseUpdatedAsync(id);
     }
 
-    public async Task<Course> AddCourseAsync(string name, int year, int subjectId, ICollection<int> classIds, ICollection<int> teacherIds, bool canRegister, int? pin)
+    public async Task<Course> AddCourseAsync(string name, int year, int subjectId, ICollection<int> classIds, ICollection<int> teacherIds, bool canRegister, string? pin)
     {
         var classes  = await _uow.Classes.GetAsync(c => classIds.Contains(c.Id));
         var teachers = await _uow.Teachers.GetAsync(t => teacherIds.Contains(t.Id));

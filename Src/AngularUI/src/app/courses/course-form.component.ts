@@ -76,9 +76,9 @@ import { TeacherService } from '../services/teacher.service';
           </label>
         </div>
         <div class="form-group">
-          <label>Pin</label>
-          <input type="number" name="pin" [(ngModel)]="course().pin"
-            min="10000" max="99999" class="form-control" />
+          <label>Pin (5 digits)</label>
+          <input type="text" name="pin" [(ngModel)]="course().pin"
+            pattern="[0-9]{5}" maxlength="5" class="form-control" />
         </div>
         <div class="form-actions">
           <button type="submit" class="btn btn-primary" [disabled]="form.invalid">Save</button>

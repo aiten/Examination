@@ -17,8 +17,8 @@ public class StudentExamResultQueryDtoValidator : AbstractValidator<StudentExamR
             .WithMessage("LastName must not be empty.");
 
         RuleFor(x => x.Pin)
-            .InclusiveBetween(10000, 99999)
-            .WithMessage("Pin must be between 10000 and 99999.");
+            .Matches(@"^\d{5}$")
+            .WithMessage("Pin must be exactly 5 digits.");
 
         RuleFor(x => x.RegistrationCode)
             .MinimumLength(5)

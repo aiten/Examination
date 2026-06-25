@@ -26,8 +26,8 @@ import { ExamRegistrationRequest } from '../models/registration.model';
           <small class="form-hint">The user-name used when logging into the school computer, e.g. Test9F01.</small>
         </div>
         <div class="form-group">
-          <label>PIN *</label>
-          <input type="number" name="pin" [(ngModel)]="pin" required min="10000" max="99999" class="form-control" />
+          <label>PIN * (5 digits)</label>
+          <input type="text" name="pin" [(ngModel)]="pin" required pattern="[0-9]{5}" maxlength="5" class="form-control" />
         </div>
         <div class="form-actions">
           <button type="submit" class="btn btn-primary" [disabled]="form.invalid || loading()">
@@ -45,7 +45,7 @@ export class RegisterFormComponent {
   firstName = '';
   lastName = '';
   loginName = '';
-  pin: number | null = null;
+  pin = '';
   loading = signal(false);
   error = signal('');
 
@@ -58,7 +58,7 @@ export class RegisterFormComponent {
       firstName: this.firstName,
       lastName: this.lastName,
       loginName: this.loginName || null,
-      pin: this.pin!
+      pin: this.pin
     };
     this.service.register(req).subscribe({
       next: result => {

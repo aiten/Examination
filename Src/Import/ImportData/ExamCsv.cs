@@ -18,7 +18,7 @@ internal class ExamCsv
     [CsvImportFormat(Format = "h:mm")]
     public TimeOnly To { get; set; }
 
-    public int PIN { get; set; }
+    public required string PIN { get; set; }
 
     public required string  Teacher     { get; set; }
     public required string  Subject     { get; set; }

@@ -4,7 +4,7 @@ using Base.Persistence.Model;
 
 public class StudentCourse : EntityObject
 {
-    public string? AccessToken { get; set; }
+    public string? RegistrationCode { get; set; }
 
     public Student Student   { get; set; } = null!;
     public int     StudentId { get; set; }

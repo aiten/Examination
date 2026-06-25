@@ -16,8 +16,11 @@ public class StudentCourseConfiguration : IEntityTypeConfiguration<StudentCourse
         builder.HasIndex(sc => new { sc.StudentId, sc.CourseId })
             .IsUnique();
 
-        builder.Property(sc => sc.AccessToken)
-            .HasMaxLength(2024);
+        builder.Property(sc => sc.RegistrationCode)
+            .HasMaxLength(5);
+
+        builder.HasIndex(se => new { se.RegistrationCode, se.CourseId })
+            .IsUnique();
 
         builder.HasOne(sc => sc.Student)
             .WithMany()

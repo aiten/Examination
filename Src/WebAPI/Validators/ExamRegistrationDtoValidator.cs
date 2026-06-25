@@ -24,7 +24,8 @@ public class ExamRegistrationDtoValidator : AbstractValidator<ExamRegistrationDt
             .When(x => x.LoginName is not null);
 
         RuleFor(x => x.Pin)
-            .InclusiveBetween(10000, 99999)
-            .WithMessage("Pin must be between 10000 and 99999.");
+            .NotEmpty()
+            .Matches(@"^\d{5}$")
+            .WithMessage("Pin must be exactly 5 digits.");
     }
 }

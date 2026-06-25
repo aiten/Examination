@@ -14,7 +14,7 @@ public interface IStudentExamRepository : IGenericRepository<StudentExam>
 {
     Task<IList<StudentExamOverview>> GetStudentExamOverviewsAsync(int examId);
     Task<IList<StudentExamSummary>>  GetStudentExamSummaryAsync(int   examId);
-    Task<StudentExamResult>          GetStudentResultAsync(string     firstName, string lastName, int pin, string registrationCode);
+    Task<StudentExamResult>          GetStudentResultAsync(string     firstName, string lastName, string pin, string registrationCode);
 
     Task DeleteAsync(StudentExam entity);
 
@@ -99,7 +99,7 @@ public class StudentExamRepository : GenericRepository<StudentExam>, IStudentExa
             .ToList();
     }
 
-    public async Task<StudentExamResult> GetStudentResultAsync(string firstName, string lastName, int pin, string registrationCode)
+    public async Task<StudentExamResult> GetStudentResultAsync(string firstName, string lastName, string pin, string registrationCode)
     {
         var exam = await _dbContext.Exams.FirstOrDefaultAsync(e => e.Pin == pin);
         if (exam is null)

@@ -16,7 +16,7 @@ using System.Threading.Tasks;
 
 public interface IStudentExamService
 {
-    Task<StudentExamResult>          GetStudentResultAsync(string     firstName, string lastName, int pin, string registrationCode);
+    Task<StudentExamResult>          GetStudentResultAsync(string     firstName, string lastName, string pin, string registrationCode);
     Task<IList<StudentExamOverview>> GetStudentExamOverviewsAsync(int examId);
     Task<IList<StudentExamSummary>>  GetStudentExamSummaryAsync(int   examId);
 
@@ -40,7 +40,7 @@ public class StudentExamService : IStudentExamService
         _hub    = hub;
     }
 
-    public async Task<StudentExamResult> GetStudentResultAsync(string firstName, string lastName, int pin, string registrationCode)
+    public async Task<StudentExamResult> GetStudentResultAsync(string firstName, string lastName, string pin, string registrationCode)
     {
         return await _uow.StudentExams.GetStudentResultAsync(firstName, lastName, pin, registrationCode);
     }

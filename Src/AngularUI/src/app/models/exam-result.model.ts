@@ -1,7 +1,7 @@
 export interface StudentExamResultQuery {
   firstName: string;
   lastName: string;
-  pin: number;
+  pin: string;
   registrationCode: string;
 }
 

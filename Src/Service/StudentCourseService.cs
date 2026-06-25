@@ -22,9 +22,9 @@ public interface IStudentCourseService
 
     Task<IList<StudentCourse>> GetByCourseAsync(int courseId, params string[] includeProperties);
 
-    Task<StudentCourse> AddStudentCourseAsync(int studentId, int courseId, string? accessToken);
+    Task<StudentCourse> AddStudentCourseAsync(int studentId, int courseId, string? registrationCode);
 
-    Task UpdateStudentCourseAsync(int id, string? accessToken);
+    Task UpdateStudentCourseAsync(int id, string? registrationCode);
 
     Task DeleteStudentCourseAsync(int id);
 }
@@ -65,13 +65,13 @@ public class StudentCourseService : IStudentCourseService
         return await _uow.StudentCourses.GetAsync(sc => sc.CourseId == courseId, null, includeProperties);
     }
 
-    public async Task<StudentCourse> AddStudentCourseAsync(int studentId, int courseId, string? accessToken)
+    public async Task<StudentCourse> AddStudentCourseAsync(int studentId, int courseId, string? registrationCode)
     {
         var entity = new StudentCourse
         {
-            StudentId   = studentId,
-            CourseId    = courseId,
-            AccessToken = accessToken
+            StudentId        = studentId,
+            CourseId         = courseId,
+            RegistrationCode = registrationCode
         };
 
         await _uow.StudentCourses.AddAsync(entity);
@@ -80,11 +80,11 @@ public class StudentCourseService : IStudentCourseService
         return entity;
     }
 
-    public async Task UpdateStudentCourseAsync(int id, string? accessToken)
+    public async Task UpdateStudentCourseAsync(int id, string? registrationCode)
     {
         var entity = await SingleStudentCourseAsync(id);
 
-        entity.AccessToken = accessToken;
+        entity.RegistrationCode = registrationCode;
 
         await _uow.SaveChangesAsync();
     }

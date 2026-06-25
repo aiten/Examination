@@ -2,14 +2,14 @@ export interface ExamRegistrationRequest {
   firstName: string;
   lastName: string;
   loginName?: string | null;
-  pin: number;
+  pin: string;
 }
 
 export interface ExamRegistrationResult {
   id: number;
   firstName: string;
   lastName: string;
-  pin: number;
+  pin: string | null;
   examDescription: string;
   examDate: string;
   registrationCode: string;

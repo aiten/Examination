@@ -17,7 +17,7 @@ public record CourseDto(
     IList<int> ClassIds,
     IList<int> TeacherIds,
     bool       CanRegister,
-    int?       Pin
+    string?    Pin
 );
 
 public static class CourseEndpoints

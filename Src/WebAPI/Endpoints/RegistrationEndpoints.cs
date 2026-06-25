@@ -8,9 +8,9 @@ using Shared.Exceptions;
 
 using WebAPI.Filters;
 
-public record ExamRegistrationDto(string FirstName, string LastName, string? LoginName, int Pin);
+public record ExamRegistrationDto(string FirstName, string LastName, string? LoginName, string Pin);
 
-public record ExamRegistrationResultDto(int Id, string LastName, string FirstName, int Pin, string ExamDescription, DateOnly ExamDate, string RegistrationCode);
+public record ExamRegistrationResultDto(int Id, string LastName, string FirstName, string? Pin, string ExamDescription, DateOnly ExamDate, string RegistrationCode);
 
 public static class RegistrationEndpoints
 {
@@ -42,7 +42,7 @@ public static class RegistrationEndpoints
                             registration.Id,
                             registration.Student.LastName,
                             registration.Student.FirstName,
-                            registration.Exam.Pin ?? 0,
+                            registration.Exam.Pin,
                             registration.Exam.Description,
                             registration.Exam.Date,
                             registration.RegistrationCode));
@@ -52,10 +52,7 @@ public static class RegistrationEndpoints
                     logger.LogWarning("Registration failed: '{LastName}, {FirstName}' Pin={Pin} Error={Error}",
                         dto.LastName, dto.FirstName, dto.Pin, ex.Message);
 
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status400BadRequest,
-                        title: "Registration failed",
-                        detail: ex.Message);
+                    throw;
                 }
             })
             .WithValidation<ExamRegistrationDto>()

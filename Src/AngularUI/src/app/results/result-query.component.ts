@@ -22,7 +22,7 @@ import { StudentExamResultQuery } from '../models/exam-result.model';
         </div>
         <div class="form-group">
           <label>Exam PIN *</label>
-          <input type="number" name="pin" [(ngModel)]="pin" required min="10000" max="99999" class="form-control" />
+          <input type="text" name="pin" [(ngModel)]="pin" required maxlength="5" pattern="[0-9]{1,5}" class="form-control" />
         </div>
         <div class="form-group">
           <label>Registration Code *</label>
@@ -43,7 +43,7 @@ import { StudentExamResultQuery } from '../models/exam-result.model';
 export class ResultQueryComponent implements OnInit {
   firstName = '';
   lastName = '';
-  pin: number | null = null;
+  pin = '';
   registrationCode = '';
   loading = signal(false);
   error = signal('');
@@ -54,7 +54,7 @@ export class ResultQueryComponent implements OnInit {
     const p = this.route.snapshot.queryParamMap;
     if (p.has('firstName'))       this.firstName = p.get('firstName')!;
     if (p.has('lastName'))        this.lastName = p.get('lastName')!;
-    if (p.has('pin'))             this.pin = Number(p.get('pin'));
+    if (p.has('pin'))             this.pin = p.get('pin')!;
     if (p.has('registrationCode')) this.registrationCode = p.get('registrationCode')!;
   }
 
@@ -64,7 +64,7 @@ export class ResultQueryComponent implements OnInit {
     const query: StudentExamResultQuery = {
       firstName: this.firstName,
       lastName: this.lastName,
-      pin: this.pin!,
+      pin: this.pin,
       registrationCode: this.registrationCode
     };
     this.service.getResult(query).subscribe({

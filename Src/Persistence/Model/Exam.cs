@@ -20,8 +20,8 @@ public class Exam : EntityObject
     [ExamRange]
     public TimeOnly To { get; set; }
 
-    [Range(10000, 99999)]
-    public int? Pin { get; set; }
+    [MaxLength(5)]
+    public string? Pin { get; set; }
 
     public bool CanRegister    { get; set; } = true;
     public bool CanShowResults { get; set; } = false;

@@ -29,7 +29,7 @@ namespace Persistence.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    AccessToken = table.Column<string>(type: "nvarchar(2024)", maxLength: 2024, nullable: true),
+                    RegistrationCode = table.Column<string>(type: "nvarchar(2024)", maxLength: 2024, nullable: true),
                     StudentId = table.Column<int>(type: "int", nullable: false),
                     CourseId = table.Column<int>(type: "int", nullable: false),
                     RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: true)
