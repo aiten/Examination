@@ -19,9 +19,9 @@ public class ExamRegistrationDtoValidator : AbstractValidator<ExamRegistrationDt
             .WithMessage("LastName must not be empty and at most 64 characters.");
 
         RuleFor(x => x.LoginName)
-            .NotEmpty()
             .MaximumLength(32)
-            .WithMessage("LoginName must not be empty and at most 32 characters.");
+            .WithMessage("LoginName must be at most 32 characters.")
+            .When(x => x.LoginName is not null);
 
         RuleFor(x => x.Pin)
             .InclusiveBetween(10000, 99999)

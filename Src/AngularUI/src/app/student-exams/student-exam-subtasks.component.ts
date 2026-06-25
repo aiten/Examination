@@ -135,9 +135,10 @@ export class StudentExamSubtasksComponent implements OnInit {
   save(): void {
     this.error.set('');
     this.successMessage.set('');
-    const updates = this.subtasks().map(s =>
-      s.id ? this.subtaskService.update(this.examId, this.studentExamId, s) : this.subtaskService.create(this.examId, this.studentExamId, s)
-    );
+    const updates = this.subtasks().map(s => {
+      const normalized = { ...s, comment: s.comment || null, commentPrivate: s.commentPrivate || null };
+      return s.id ? this.subtaskService.update(this.examId, this.studentExamId, normalized) : this.subtaskService.create(this.examId, this.studentExamId, normalized);
+    });
     forkJoin(updates).subscribe({
       next: () => {
         this.successMessage.set('Saved successfully.');

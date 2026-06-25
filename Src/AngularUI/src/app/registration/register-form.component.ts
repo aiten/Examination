@@ -21,8 +21,9 @@ import { ExamRegistrationRequest } from '../models/registration.model';
           <input name="firstName" [(ngModel)]="firstName" required class="form-control" />
         </div>
         <div class="form-group">
-          <label>Login Name *</label>
-          <input name="loginName" [(ngModel)]="loginName" required maxlength="32" class="form-control" />
+          <label>Login Name</label>
+          <input name="loginName" [(ngModel)]="loginName" maxlength="32" class="form-control" />
+          <small class="form-hint">The user-name used when logging into the school computer, e.g. Test9F01.</small>
         </div>
         <div class="form-group">
           <label>PIN *</label>
@@ -56,7 +57,7 @@ export class RegisterFormComponent {
     const req: ExamRegistrationRequest = {
       firstName: this.firstName,
       lastName: this.lastName,
-      loginName: this.loginName,
+      loginName: this.loginName || null,
       pin: this.pin!
     };
     this.service.register(req).subscribe({

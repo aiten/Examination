@@ -16,7 +16,7 @@ public record StudentExamDto(
     int                            StudentId,
     string                         FirstName,
     string                         LastName,
-    string                         LoginName,
+    string?                        LoginName,
     string                         RegistrationCode,
     IList<StudentSubtaskResultDto> Subtasks
 );

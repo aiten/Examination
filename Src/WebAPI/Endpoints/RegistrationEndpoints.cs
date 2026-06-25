@@ -8,7 +8,7 @@ using Shared.Exceptions;
 
 using WebAPI.Filters;
 
-public record ExamRegistrationDto(string FirstName, string LastName, string LoginName, int Pin);
+public record ExamRegistrationDto(string FirstName, string LastName, string? LoginName, int Pin);
 
 public record ExamRegistrationResultDto(int Id, string LastName, string FirstName, int Pin, string ExamDescription, DateOnly ExamDate, string RegistrationCode);
 

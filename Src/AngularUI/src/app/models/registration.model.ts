@@ -1,7 +1,7 @@
 export interface ExamRegistrationRequest {
   firstName: string;
   lastName: string;
-  loginName: string;
+  loginName?: string | null;
   pin: number;
 }
 

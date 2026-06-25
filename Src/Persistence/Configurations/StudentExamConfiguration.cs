@@ -14,7 +14,6 @@ public class StudentExamConfiguration : IEntityTypeConfiguration<StudentExam>
         builder.HasKey(se => se.Id);
 
         builder.Property(se => se.LoginName)
-            .IsRequired()
             .HasMaxLength(32);
 
         builder.Property(se => se.RegistrationCode)
