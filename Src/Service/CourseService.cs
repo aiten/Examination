@@ -17,15 +17,11 @@ public interface ICourseService
 {
     Task<IList<Course>> GetCoursesAsync(params string[] includeProperties);
 
-    Task<Course?> GetCourseByIdAsync(int id, params string[] includeProperties);
-
     Task<Course> SingleCourseAsync(int id, params string[] includeProperties);
 
-    Task UpdateCourseAsync(int id, Course value);
-    Task UpdateCourseAsync(int id, string name, int year, int subjectId, ICollection<int> classIds, ICollection<int> teacherIds);
+    Task UpdateCourseAsync(int id, string name, int year, int subjectId, ICollection<int> classIds, ICollection<int> teacherIds, bool canRegister, int? pin);
 
-    Task<Course> AddCourseAsync(Course value);
-    Task<Course> AddCourseAsync(string name, int year, int subjectId, ICollection<int> classIds, ICollection<int> teacherIds);
+    Task<Course> AddCourseAsync(string name, int year, int subjectId, ICollection<int> classIds, ICollection<int> teacherIds, bool canRegister, int? pin);
 
     Task DeleteCourseAsync(int id);
 }
@@ -58,61 +54,39 @@ public class CourseService : ICourseService
         return (await GetCourseByIdAsync(id, includeProperties)) ?? throw new NotFoundException($"Course {id} not found");
     }
 
-    public async Task UpdateCourseAsync(int id, Course value)
-    {
-        var entity = await SingleCourseAsync(id);
-
-        entity.Name      = value.Name;
-        entity.Year      = value.Year;
-        entity.SubjectId = value.SubjectId;
-
-        await _uow.SaveChangesAsync();
-        //await _hub.NotifyCourseUpdatedAsync(id);
-    }
-
-    public async Task UpdateCourseAsync(int id, string name, int year, int subjectId, ICollection<int> classIds, ICollection<int> teacherIds)
+    public async Task UpdateCourseAsync(int id, string name, int year, int subjectId, ICollection<int> classIds, ICollection<int> teacherIds, bool canRegister, int? pin)
     {
         var entity = await SingleCourseAsync(id, nameof(Course.Classes), nameof(Course.Teachers));
 
         var classes  = await _uow.Classes.GetAsync(c => classIds.Contains(c.Id));
         var teachers = await _uow.Teachers.GetAsync(t => teacherIds.Contains(t.Id));
 
-        entity.Name      = name;
-        entity.Year      = year;
-        entity.SubjectId = subjectId;
-        entity.Classes   = classes.ToList();
-        entity.Teachers  = teachers.ToList();
+        entity.Name        = name;
+        entity.Year        = year;
+        entity.SubjectId   = subjectId;
+        entity.Classes     = classes.ToList();
+        entity.Teachers    = teachers.ToList();
+        entity.CanRegister = canRegister;
+        entity.Pin         = pin;
 
         await _uow.SaveChangesAsync();
         //await _hub.NotifyCourseUpdatedAsync(id);
     }
 
-    public async Task<Course> AddCourseAsync(Course value)
-    {
-        if (value.Id != 0)
-        {
-            throw new IllegalValuesException("Id must be 0 for new entities");
-        }
-
-        await _uow.Courses.AddAsync(value);
-        await _uow.SaveChangesAsync();
-        //await _hub.NotifyCourseUpdatedAsync(value.Id);
-
-        return value;
-    }
-
-    public async Task<Course> AddCourseAsync(string name, int year, int subjectId, ICollection<int> classIds, ICollection<int> teacherIds)
+    public async Task<Course> AddCourseAsync(string name, int year, int subjectId, ICollection<int> classIds, ICollection<int> teacherIds, bool canRegister, int? pin)
     {
         var classes  = await _uow.Classes.GetAsync(c => classIds.Contains(c.Id));
         var teachers = await _uow.Teachers.GetAsync(t => teacherIds.Contains(t.Id));
 
         var value = new Course()
         {
-            Name      = name,
-            Year      = year,
-            SubjectId = subjectId,
-            Classes   = classes.ToList(),
-            Teachers  = teachers.ToList()
+            Name        = name,
+            Year        = year,
+            SubjectId   = subjectId,
+            Classes     = classes.ToList(),
+            Teachers    = teachers.ToList(),
+            CanRegister = canRegister,
+            Pin         = pin
         };
 
         await _uow.Courses.AddAsync(value);

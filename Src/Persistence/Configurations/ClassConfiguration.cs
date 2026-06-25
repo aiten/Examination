@@ -9,7 +9,7 @@ public class ClassConfiguration : IEntityTypeConfiguration<Class>
 {
     public void Configure(EntityTypeBuilder<Class> builder)
     {
-        builder.ToTable("Class");
+        builder.ToTable(nameof(Class));
 
         builder.HasKey(c => c.Id);
 

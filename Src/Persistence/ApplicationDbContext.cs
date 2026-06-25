@@ -20,6 +20,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<StudentSubtask> StudentSubtasks { get; set; }
     public DbSet<Subject>        Subjects        { get; set; }
     public DbSet<Course>         Courses         { get; set; }
+    public DbSet<StudentCourse>  StudentCourses  { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

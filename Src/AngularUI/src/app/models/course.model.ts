@@ -5,4 +5,6 @@ export interface Course {
   subjectId: number;
   classIds: number[];
   teacherIds: number[];
+  canRegister: boolean;
+  pin: number | null;
 }

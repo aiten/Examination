@@ -25,6 +25,10 @@ export class StudentService {
     return this.http.put<void>(`${this.url}/${id}`, student);
   }
 
+  delete(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.url}/${id}`);
+  }
+
   importStudents(students: string[]): Observable<void> {
     return this.http.post<void>(`${this.url}/import`, { students });
   }

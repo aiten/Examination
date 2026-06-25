@@ -140,6 +140,21 @@ public class ExamService : IExamService
         };
 
         await _uow.StudentExams.AddAsync(registration);
+
+        // check, if a StudentCourse exists and created
+
+        var studentCourse = await _uow.StudentCourses.GetByStudentAndCourseAsync(student.Id, course.Id);
+
+        if (studentCourse is null)
+        {
+            studentCourse = new StudentCourse()
+            {
+                Course  = course,
+                Student = student,
+            };
+            await _uow.StudentCourses.AddAsync(studentCourse);
+        }
+
         await _uow.SaveChangesAsync();
 
         return registration;

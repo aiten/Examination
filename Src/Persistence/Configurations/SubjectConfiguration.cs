@@ -9,7 +9,7 @@ public class SubjectConfiguration : IEntityTypeConfiguration<Subject>
 {
     public void Configure(EntityTypeBuilder<Subject> builder)
     {
-        builder.ToTable("Subject");
+        builder.ToTable(nameof(Subject));
 
         builder.HasKey(s => s.Id);
 

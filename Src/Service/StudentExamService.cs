@@ -20,17 +20,9 @@ public interface IStudentExamService
     Task<IList<StudentExamOverview>> GetStudentExamOverviewsAsync(int examId);
     Task<IList<StudentExamSummary>>  GetStudentExamSummaryAsync(int   examId);
 
-    Task<IList<StudentExam>> GetStudentExamsForExamAsync(int examId, params string[] includeProperties);
-
-    Task<IList<StudentExam>> GetStudentExamsAsync(params string[] includeProperties);
-
-    Task<StudentExam?> GetStudentExamByIdAsync(int id, params string[] includeProperties);
-
     Task<StudentExam> SingleStudentExamAsync(int id, params string[] includeProperties);
 
     Task UpdateStudentExamAsync(int id, StudentExam value);
-
-    Task<StudentExam> AddStudentExamAsync(StudentExam value);
 
     Task DeleteStudentExamAsync(int id);
 }
@@ -63,16 +55,6 @@ public class StudentExamService : IStudentExamService
         return await _uow.StudentExams.GetStudentExamSummaryAsync(examId);
     }
 
-    public async Task<IList<StudentExam>> GetStudentExamsForExamAsync(int examId, params string[] includeProperties)
-    {
-        return await _uow.StudentExams.GetNoTrackingAsync(s => s.ExamId == examId);
-    }
-
-    public async Task<IList<StudentExam>> GetStudentExamsAsync(params string[] includeProperties)
-    {
-        return await _uow.StudentExams.GetAsync(null, null, includeProperties);
-    }
-
     public async Task<StudentExam?> GetStudentExamByIdAsync(int id, params string[] includeProperties)
     {
         return await _uow.StudentExams.GetByIdAsync(id, includeProperties);
@@ -97,23 +79,6 @@ public class StudentExamService : IStudentExamService
 
         await _uow.SaveChangesAsync();
         //await _hub.NotifyStudentExamUpdatedAsync(id);
-    }
-
-    public async Task<StudentExam> AddStudentExamAsync(StudentExam value)
-    {
-        if (value.Id != 0)
-        {
-            throw new IllegalValuesException("Id must be 0 for new entities");
-        }
-
-        //value.Created  = DateTime.Now;
-        //value.Modified = null;
-
-        await _uow.StudentExams.AddAsync(value);
-        await _uow.SaveChangesAsync();
-        //await _hub.NotifyStudentExamUpdatedAsync(value.Id);
-
-        return value;
     }
 
     public async Task DeleteStudentExamAsync(int id)

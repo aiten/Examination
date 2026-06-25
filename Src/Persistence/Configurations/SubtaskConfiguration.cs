@@ -9,7 +9,7 @@ public class SubtaskConfiguration : IEntityTypeConfiguration<Subtask>
 {
     public void Configure(EntityTypeBuilder<Subtask> builder)
     {
-        builder.ToTable("Subtask");
+        builder.ToTable(nameof(Subtask));
 
         builder.HasKey(r => r.Id);
 

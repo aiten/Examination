@@ -16,6 +16,7 @@ public interface IUnitOfWork : IBaseUnitOfWork
     IStudentSubtaskRepository StudentSubtasks { get; }
     ISubjectRepository        Subjects        { get; }
     ICourseRepository         Courses         { get; }
+    IStudentCourseRepository  StudentCourses  { get; }
 }
 
 public class UnitOfWork : BaseUnitOfWork, IUnitOfWork
@@ -29,7 +30,8 @@ public class UnitOfWork : BaseUnitOfWork, IUnitOfWork
         IStudentExamRepository             studentExams,
         IStudentSubtaskRepository          studentSubtasks,
         ISubjectRepository                 subjects,
-        ICourseRepository                  courses
+        ICourseRepository                  courses,
+        IStudentCourseRepository           studentCourses
     ) : base(dBContext)
     {
         Subtasks        = subtasks;
@@ -41,6 +43,7 @@ public class UnitOfWork : BaseUnitOfWork, IUnitOfWork
         StudentSubtasks = studentSubtasks;
         Subjects        = subjects;
         Courses         = courses;
+        StudentCourses  = studentCourses;
     }
 
     public IClassRepository          Classes         { get; }
@@ -52,4 +55,5 @@ public class UnitOfWork : BaseUnitOfWork, IUnitOfWork
     public IStudentSubtaskRepository StudentSubtasks { get; }
     public ISubjectRepository        Subjects        { get; }
     public ICourseRepository         Courses         { get; }
+    public IStudentCourseRepository  StudentCourses  { get; }
 }
