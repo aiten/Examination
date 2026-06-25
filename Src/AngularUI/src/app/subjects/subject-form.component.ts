@@ -18,7 +18,7 @@ import { SubjectService } from '../services/subject.service';
         </div>
         <div class="form-group">
           <label>Comment</label>
-          <input name="comment" [(ngModel)]="subject().comment" maxlength="256" class="form-control" />
+          <textarea name="comment" [(ngModel)]="subject().comment" maxlength="256" class="form-control" rows="3"></textarea>
         </div>
         <div class="form-actions">
           <button type="submit" class="btn btn-primary" [disabled]="form.invalid">Save</button>

@@ -61,6 +61,7 @@ public class SubjectService : ISubjectService
         var entity = await SingleSubjectAsync(id);
 
         entity.Name    = value.Name;
+        entity.Comment = value.Comment;
 
         await _uow.SaveChangesAsync();
         //await _hub.NotifySubjectUpdatedAsync(id);
