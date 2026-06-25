@@ -42,6 +42,9 @@ import { SchoolClass } from '../models/class.model';
         <div class="form-actions">
           <button type="submit" class="btn btn-primary" [disabled]="form.invalid">Save</button>
           <a routerLink="/students" class="btn">Cancel</a>
+          @if (!isNew) {
+            <button type="button" class="btn btn-danger" (click)="delete()">Delete</button>
+          }
         </div>
         @if (error()) {
           <p class="error">{{ error() }}</p>
@@ -85,6 +88,14 @@ export class StudentFormComponent implements OnInit {
     const s = new Set(this.selectedClassIds());
     if (checked) s.add(id); else s.delete(id);
     this.selectedClassIds.set(s);
+  }
+
+  delete(): void {
+    if (!confirm('Delete this student?')) return;
+    this.service.delete(this.studentId).subscribe({
+      next: () => this.router.navigate(['/students']),
+      error: (err: any) => this.error.set(err.error?.detail ?? 'Delete failed.')
+    });
   }
 
   save(): void {
