@@ -1,17 +1,18 @@
 ﻿namespace Service;
 
+using Microsoft.Extensions.Logging;
+
+using Persistence;
+using Persistence.Model;
+
+using Service.Tools;
+
+using Shared.Exceptions;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-
-using Microsoft.Extensions.Logging;
-
-using Persistence;
-
-using Shared.Exceptions;
-
-using Persistence.Model;
 
 public interface ICourseService
 {
@@ -24,6 +25,8 @@ public interface ICourseService
     Task<Course> AddCourseAsync(string name, int year, int subjectId, ICollection<int> classIds, ICollection<int> teacherIds, bool canRegister, string? pin);
 
     Task DeleteCourseAsync(int id);
+
+    Task<StudentCourse> RegisterStudentAsync(string firstName, string lastName, string pin);
 }
 
 public class CourseService : ICourseService
@@ -103,5 +106,56 @@ public class CourseService : ICourseService
         _uow.Courses.Remove(entity);
         await _uow.SaveChangesAsync();
         // await _hub.NotifyCourseUpdatedAsync(id);
+    }
+
+    public async Task<StudentCourse> RegisterStudentAsync(string firstName, string lastName, string pin)
+    {
+        var course = await _uow.Courses.GetCourseWithPINAsync(pin);
+        if (course is null)
+            throw new IllegalValuesException($"No course found with PIN {pin}");
+
+        if (!course.CanRegister)
+            throw new IllegalValuesException($"Course registration with PIN {pin} is not permitted");
+
+        var student = await _uow.Students.GetStudentByNameAsync(lastName, firstName);
+        if (student is null)
+            throw new IllegalValuesException($"No student found with name '{lastName}, {firstName}'");
+
+        if (!course.Classes.Any(c => student.Classes.Any(sc => sc.Id == c.Id)))
+            throw new IllegalValuesException($"Student '{lastName}, {firstName} ' is not enrolled in any class of course");
+
+        var registration = await _uow.StudentCourses.GetByStudentAndCourseAsync(student.Id, course.Id);
+        
+        if (registration is null)
+        {
+            registration = new StudentCourse()
+            {
+                StudentId        = student.Id,
+                CourseId         = course.Id,
+                RegistrationCode = await GenerateUniqueRegistrationCodeAsync(course.Id),
+                Student          = student,
+                Course           = course
+            };
+            await _uow.StudentCourses.AddAsync(registration);
+
+        }
+        else
+        {
+            if (registration.RegistrationCode is not null)
+            {
+                throw new IllegalValuesException($"Student '{lastName}, {firstName}' is already registered for this course");
+            }
+
+            registration.RegistrationCode = await GenerateUniqueRegistrationCodeAsync(course.Id);
+        }
+
+        await _uow.SaveChangesAsync();
+
+        return registration;
+    }
+
+    private async Task<string> GenerateUniqueRegistrationCodeAsync(int courseId)
+    {
+        return await ServiceHelper.GenerateUniqueRegistrationCodeAsync(async (code) => await _uow.StudentCourses.AnyAsync(courseId, code));
     }
 }

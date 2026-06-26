@@ -5,7 +5,7 @@ import { RegistrationExamRequest, RegistrationExamResult } from '../models/regis
 
 @Injectable({ providedIn: 'root' })
 export class RegistrationExamService {
-  private readonly url = '/api/registration';
+  private readonly url = '/api/registration/exam';
   result = signal<RegistrationExamResult | null>(null);
 
   constructor(private http: HttpClient) {}

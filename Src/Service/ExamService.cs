@@ -1,18 +1,19 @@
 ﻿namespace Service;
 
+using Microsoft.Extensions.Logging;
+
+using Persistence;
+using Persistence.Model;
+using Persistence.QueryResult;
+
+using Service.Tools;
+
+using Shared.Exceptions;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-
-using Microsoft.Extensions.Logging;
-
-using Persistence;
-
-using Shared.Exceptions;
-
-using Persistence.Model;
-using Persistence.QueryResult;
 
 public interface IExamService
 {
@@ -117,6 +118,9 @@ public class ExamService : IExamService
         if (exam is null)
             throw new IllegalValuesException($"No exam found with PIN {pin}");
 
+        if (!exam.CanRegister)
+            throw new IllegalValuesException($"Exam registration with PIN {pin} is not permitted");
+
         var student = await _uow.Students.GetStudentByNameAsync(lastName, firstName);
         if (student is null)
             throw new IllegalValuesException($"No student found with name '{lastName}, {firstName}'");
@@ -162,13 +166,6 @@ public class ExamService : IExamService
 
     private async Task<string> GenerateUniqueRegistrationCodeAsync(int examId)
     {
-        var    rng = Random.Shared;
-        string code;
-        do
-        {
-            code = rng.Next(10000, 100000).ToString();
-        } while (await _uow.StudentExams.AnyAsync(examId, code));
-
-        return code;
+        return await ServiceHelper.GenerateUniqueRegistrationCodeAsync(async (code) => await _uow.StudentExams.AnyAsync(examId, code));
     }
 }

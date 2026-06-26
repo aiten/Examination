@@ -5,7 +5,7 @@ import { RegistrationCourseRequest, RegistrationCourseResult } from '../models/r
 
 @Injectable({ providedIn: 'root' })
 export class RegistrationCourseService {
-  private readonly url = '/api/course-registration';
+  private readonly url = '/api/registration/course';
   result = signal<RegistrationCourseResult | null>(null);
 
   constructor(private http: HttpClient) {}

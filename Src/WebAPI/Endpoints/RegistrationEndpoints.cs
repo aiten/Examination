@@ -68,27 +68,24 @@ public static class RegistrationEndpoints
             try
             {
                 using var trans = await transactionProvider.BeginTransactionAsync();
-                throw new NotImplementedException();
-/*
+
                 var registration = await courseService.RegisterStudentAsync(dto.FirstName, dto.LastName, dto.Pin);
 
                 await trans.CommitTransactionAsync();
 
-                logger.LogInformation("Registration success: '{LastName}, {FirstName}' Exam={ExamDescription}",
+                logger.LogInformation("Registration success: '{LastName}, {FirstName}' Course={CourseName}",
                     registration.Student.LastName,
                     registration.Student.FirstName,
-                    registration.Exam.Description);
+                    registration.Course.Name);
 
                 return Results.Created($"/api/course/{registration.CourseId}",
-                    new RegistrationExamResultDto(
+                    new RegistrationCourseResultDto(
                         registration.Id,
                         registration.Student.LastName,
                         registration.Student.FirstName,
-                        registration.Exam.Pin,
-                        registration.Exam.Description,
-                        registration.Exam.Date,
-                        registration.RegistrationCode));
-*/
+                        registration.Course.Pin,
+                        registration.Course.Name,
+                        registration.RegistrationCode!));
             }
             catch (IllegalValuesException ex)
             {
