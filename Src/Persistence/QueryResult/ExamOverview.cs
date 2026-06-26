@@ -9,6 +9,7 @@ public record ExamOverview(
     string?             Pin,
     string              Teacher,
     string              Course,
+    int                 CourseYear,
     DateOnly            Date,
     TimeOnly            From,
     TimeOnly            To,

@@ -101,9 +101,9 @@ public static class ExamEndpoints
             .Produces<List<ExamDto>>(StatusCodes.Status200OK);
 
 
-        route.MapGet("overview", async (int? teacherId, int? courseId, IExamService examService) =>
+        route.MapGet("overview", async (int? teacherId, int? courseId, int? courseYear, IExamService examService) =>
             {
-                var dtos = await examService.GetExamOverviewsAsync(teacherId, courseId);
+                var dtos = await examService.GetExamOverviewsAsync(teacherId, courseId, courseYear);
                 return Results.Ok(dtos);
             })
             .WithName("GetExamOverview")

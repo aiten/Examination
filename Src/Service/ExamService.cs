@@ -29,7 +29,7 @@ public interface IExamService
 
     Task DeleteExamAsync(int id);
 
-    Task<IList<ExamOverview>> GetExamOverviewsAsync(int?  teacherId, int?   courseId);
+    Task<IList<ExamOverview>> GetExamOverviewsAsync(int?  teacherId, int?   courseId, int? courseYear);
 
     Task<StudentExam>         RegisterStudentAsync(string firstName, string lastName, string? loginName, string pin);
 }
@@ -107,9 +107,9 @@ public class ExamService : IExamService
         await _hub.NotifyExamUpdatedAsync(id);
     }
 
-    public async Task<IList<ExamOverview>> GetExamOverviewsAsync(int? teacherId, int? courseId)
+    public async Task<IList<ExamOverview>> GetExamOverviewsAsync(int? teacherId, int? courseId, int? courseYear)
     {
-        return await _uow.Exams.GetExamOverviewsAsync(teacherId, courseId);
+        return await _uow.Exams.GetExamOverviewsAsync(teacherId, courseId, courseYear);
     }
 
     public async Task<StudentExam> RegisterStudentAsync(string firstName, string lastName, string? loginName, string pin)

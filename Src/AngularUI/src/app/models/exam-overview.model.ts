@@ -3,6 +3,7 @@ export interface ExamOverview {
   description: string;
   teacher: string;
   course: string;
+  courseYear: number;
   date: string;
   from: string;
   to: string;

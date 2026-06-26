@@ -11,7 +11,7 @@ using Persistence.QueryResult;
 
 public interface IExamRepository : IGenericRepository<Exam>
 {
-    Task<IList<ExamOverview>> GetExamOverviewsAsync(int? teacherId, int? courseId);
+    Task<IList<ExamOverview>> GetExamOverviewsAsync(int? teacherId, int? courseId, int? courseYear);
 
     Task<Exam?> GetExamWithPINAsync(string pin);
 
@@ -37,20 +37,26 @@ public class ExamRepository : GenericRepository<Exam>, IExamRepository
             .FirstOrDefaultAsync(e => e.Pin == pin);
     }
 
-    public async Task<IList<ExamOverview>> GetExamOverviewsAsync(int? teacherId, int? courseId)
+    public async Task<IList<ExamOverview>> GetExamOverviewsAsync(int? teacherId, int? courseId, int? courseYear)
     {
         var query = _dbContext.Exams.AsNoTracking();
 
         if (teacherId is not null)
         {
             _logger.LogInformation("Query with teacher={0}", teacherId);
-            query = query.Where(j => j.TeacherId == teacherId);
+            query = query.Where(e => e.TeacherId == teacherId);
         }
 
         if (courseId is not null)
         {
             _logger.LogInformation("Query with course={0}", courseId);
-            query = query.Where(j => j.CourseId == courseId);
+            query = query.Where(e => e.CourseId == courseId);
+        }
+
+        if (courseYear is not null)
+        {
+            _logger.LogInformation("Query with courseYear={0}", courseYear);
+            query = query.Where(e => e.Course.Year == courseYear);
         }
 
         return await query.Select(e => new ExamOverview(
@@ -59,6 +65,7 @@ public class ExamRepository : GenericRepository<Exam>, IExamRepository
                 e.Pin,
                 $"{e.Teacher.LastName}, {e.Teacher.FirstName}",
                 e.Course.Name,
+                e.Course.Year,
                 e.Date,
                 e.From,
                 e.To,

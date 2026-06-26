@@ -71,9 +71,9 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     {
         var overviews = new List<ExamOverview>
         {
-            new(1, "Kinder, lernt!", "12345", "Mustermann", "2AHIF", new DateOnly(2026, 5, 7), new TimeOnly(8, 0), new TimeOnly(10, 0), ["X", "Y"], ["S1", "S2"])
+            new(1, "Kinder, lernt!", "12345", "Mustermann", "2AHIF", 2, new DateOnly(2026, 5, 7), new TimeOnly(8, 0), new TimeOnly(10, 0), ["X", "Y"], ["S1", "S2"])
         };
-        _examService.GetExamOverviewsAsync(null, null).ReturnsForAnyArgs(overviews);
+        _examService.GetExamOverviewsAsync(null, null, null).ReturnsForAnyArgs(overviews);
 
         var response = await _client.GetAsync("/api/exam/overview");
         var result   = await response.Content.ReadFromJsonAsync<List<ExamOverview>>();

@@ -16,8 +16,7 @@ using Persistence.Model;
 
 public class ServiceHelper
 {
-  
-    public static async Task<string> GenerateUniqueRegistrationCodeAsync(Func<string,Task<bool>> exists)
+    public static async Task<string> GenerateUniqueRegistrationCodeAsync(Func<string, Task<bool>> exists)
     {
         var    rng = Random.Shared;
         string code;
@@ -29,4 +28,18 @@ public class ServiceHelper
         return code;
     }
 
+    public static int GetCurrentSchoolYear()
+    {
+        // this is a school year!!!
+        // a new year (at school starts at September)
+
+        int year = DateTime.Today.Year;
+
+        if (DateTime.Today.Month < 9)
+        {
+            year--;
+        }
+
+        return year;
+    }
 }
