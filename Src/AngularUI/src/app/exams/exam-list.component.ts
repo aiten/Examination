@@ -1,7 +1,9 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { ExamOverview } from '../models/exam-overview.model';
 import { ExamService } from '../services/exam.service';
+import { ConfigService } from '../services/config.service';
 
 type SortCol = 'description' | 'teacher' | 'date';
 
@@ -13,7 +15,7 @@ interface CourseGroup {
 @Component({
   selector: 'app-exam-list',
   standalone: true,
-  imports: [RouterModule],
+  imports: [FormsModule, RouterModule],
   styles: [`
     th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
     th.sortable:hover { background: #e2e8f0; }
@@ -27,6 +29,11 @@ interface CourseGroup {
       <div class="page-header">
         <h2>Exams</h2>
         <a routerLink="/exams/new" class="btn btn-primary">+ New Exam</a>
+      </div>
+      <div class="filter-bar">
+        <input type="number" class="form-control" placeholder="School year (e.g. 2025)"
+               [ngModel]="filterYear()"
+               (ngModelChange)="onYearChange($event)" />
       </div>
       @if (loading()) {
         <p class="empty">Loading...</p>
@@ -80,6 +87,7 @@ export class ExamListComponent implements OnInit {
   exams = signal<ExamOverview[]>([]);
   loading = signal(false);
 
+  filterYear = signal<number | null>(null);
   sortCol = signal<SortCol>('date');
   sortAsc = signal(false);
 
@@ -110,14 +118,29 @@ export class ExamListComponent implements OnInit {
       .map(([course, exams]) => ({ course, exams }));
   });
 
-  constructor(private service: ExamService) {}
+  constructor(private service: ExamService, private configService: ConfigService) {}
 
   ngOnInit(): void {
+    this.configService.getConfig().subscribe({
+      next: cfg => {
+        this.filterYear.set(cfg.currentSchoolYear);
+        this.loadExams();
+      },
+      error: () => this.loadExams()
+    });
+  }
+
+  private loadExams(): void {
     this.loading.set(true);
-    this.service.getOverview().subscribe({
+    this.service.getOverview(this.filterYear()).subscribe({
       next: data => { this.exams.set(data); this.loading.set(false); },
       error: () => { this.loading.set(false); }
     });
+  }
+
+  onYearChange(value: number | null): void {
+    this.filterYear.set(value || null);
+    this.loadExams();
   }
 
   sort(col: SortCol): void {

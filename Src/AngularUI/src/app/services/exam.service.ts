@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Exam } from '../models/exam.model';
 import { ExamOverview } from '../models/exam-overview.model';
@@ -14,8 +14,12 @@ export class ExamService {
     return this.http.get<Exam[]>(this.url);
   }
 
-  getOverview(): Observable<ExamOverview[]> {
-    return this.http.get<ExamOverview[]>(`${this.url}/overview`);
+  getOverview(courseYear?: number | null): Observable<ExamOverview[]> {
+    let params = new HttpParams();
+    if (courseYear != null) {
+      params = params.set('courseYear', courseYear);
+    }
+    return this.http.get<ExamOverview[]>(`${this.url}/overview`, { params });
   }
 
   getById(id: number): Observable<Exam> {
