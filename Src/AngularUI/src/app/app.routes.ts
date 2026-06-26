@@ -23,8 +23,10 @@ import { RegisterExamFormComponent } from './registration/register-exam-form.com
 import { RegisterCourseFormComponent } from './registration/register-course-form.component';
 import { RegisterExamResultComponent } from './registration/register-exam-result.component';
 import { RegisterCourseResultComponent } from './registration/register-course-result.component';
-import { ResultQueryComponent } from './results/result-query.component';
-import { ResultDisplayComponent } from './results/result-display.component';
+import { ResultExamQueryComponent } from './results/result-exam-query.component';
+import { ResultExamDisplayComponent } from './results/result-exam-display.component';
+import { ResultCourseQueryComponent } from './results/result-course-query.component';
+import { ResultCourseDisplayComponent } from './results/result-course-display.component';
 import { SubtaskListComponent } from './subtasks/subtask-list.component';
 import { StudentExamListComponent } from './student-exams/student-exam-list.component';
 import { StudentExamFormComponent } from './student-exams/student-exam-form.component';
@@ -55,10 +57,11 @@ export const routes: Routes = [
   { path: 'registration/exam', component: RegisterExamFormComponent },
   { path: 'registration/course', component: RegisterCourseFormComponent },
   { path: 'registration/exam/result', component: RegisterExamResultComponent },
-  { path: 'registration/exam/result', component: RegisterExamResultComponent },
   { path: 'registration/course/result', component: RegisterCourseResultComponent },
-  { path: 'result', component: ResultQueryComponent },
-  { path: 'result/display', component: ResultDisplayComponent },
+  { path: 'result/exam', component: ResultExamQueryComponent },
+  { path: 'result/exam/display', component: ResultExamDisplayComponent },
+  { path: 'result/course', component: ResultCourseQueryComponent },
+  { path: 'result/course/display', component: ResultCourseDisplayComponent },
   { path: 'profile', component: UserProfileComponent,  canActivate: [canActivateAuthRole],    data: { role: environment.roles.viewProfile }  },
   { path: 'forbidden', component: ForbiddenComponent },
   { path: '**', redirectTo: '/home' } 
