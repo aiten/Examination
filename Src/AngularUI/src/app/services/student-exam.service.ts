@@ -32,4 +32,8 @@ export class StudentExamService {
   delete(examId: number, id: number): Observable<void> {
     return this.http.delete<void>(`${this.url(examId)}/${id}`);
   }
+
+  registerClassStudents(examId: number): Observable<void> {
+    return this.http.post<void>(`${this.url(examId)}/registerclassstudents`, null);
+  }
 }

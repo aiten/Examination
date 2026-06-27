@@ -17,7 +17,8 @@ public record StudentExamDto(
     string                         FirstName,
     string                         LastName,
     string?                        LoginName,
-    string                         RegistrationCode,
+    string?                        RegistrationCode,
+    string?                        Comment,
     IList<StudentSubtaskResultDto> Subtasks
 );
 
@@ -36,6 +37,7 @@ public static class StudentExamEndpoints
             entity.Student.LastName,
             entity.LoginName,
             entity.RegistrationCode,
+            entity.Comment,
             entity.StudentSubtasks
                 .Select(ss => new StudentSubtaskResultDto(
                     ss.SubtaskId,
@@ -99,7 +101,8 @@ public static class StudentExamEndpoints
                 var entity = new StudentExam()
                 {
                     LoginName        = dto.LoginName,
-                    RegistrationCode = dto.RegistrationCode,
+                    RegistrationCode = string.IsNullOrEmpty(dto.RegistrationCode) ? null : dto.RegistrationCode,
+                    Comment          = string.IsNullOrEmpty(dto.Comment) ? null : dto.Comment,
                     ExamId           = examId
                 };
 
@@ -130,5 +133,22 @@ public static class StudentExamEndpoints
             .WithName("DeleteStudentExam")
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status204NoContent);
+
+
+
+        route.MapPost("registerclassstudents", async (int examId, IExamService examService, ITransactionProvider transactionProvider) =>
+            {
+                using var trans = await transactionProvider.BeginTransactionAsync();
+
+                await examService.RegisterAllStudentsFromClassAsync(examId);
+                await trans.CommitTransactionAsync();
+
+                return Results.NoContent();
+            })
+            .WithName("RegisterAllClassStudents")
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
     }
 }

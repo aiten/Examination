@@ -6,6 +6,7 @@ using Persistence;
 using Persistence.Model;
 using Persistence.QueryResult;
 
+using Base.Persistence;
 using Service.Tools;
 
 using Shared;
@@ -16,12 +17,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
+using Azure;
+
 public interface IExamService
 {
     Task<IList<Exam>> GetExamsAsync();
 
-    Task<Exam?>  GetExamByIdAsync(int     id, params string[] includeProperties);
-    
+    Task<Exam?> GetExamByIdAsync(int id, params string[] includeProperties);
+
     Task<Exam> SingleExamAsync(int id, params string[] includeProperties);
 
     Task UpdateExamAsync(int id, Exam exam);
@@ -30,16 +33,18 @@ public interface IExamService
 
     Task DeleteExamAsync(int id);
 
-    Task<IList<ExamOverview>> GetExamOverviewsAsync(int?  teacherId, int?   courseId, int? courseYear);
+    Task<IList<ExamOverview>> GetExamOverviewsAsync(int? teacherId, int? courseId, int? courseYear);
 
-    Task<StudentExam>         RegisterStudentAsync(string firstName, string lastName, string? loginName, string pin);
+    Task<StudentExam> RegisterStudentAsync(string firstName, string lastName, string? loginName, string pin);
+
+    Task RegisterAllStudentsFromClassAsync(int examId);
 }
 
 public class ExamService : IExamService
 {
-    private readonly IUnitOfWork              _uow;
-    private readonly ILogger<ExamService>     _logger;
-    private readonly IHubNotificationService  _hub;
+    private readonly IUnitOfWork             _uow;
+    private readonly ILogger<ExamService>    _logger;
+    private readonly IHubNotificationService _hub;
 
     public ExamService(IUnitOfWork uow, ILogger<ExamService> logger, IHubNotificationService hub)
     {
@@ -57,9 +62,10 @@ public class ExamService : IExamService
     {
         return await _uow.Exams.GetByIdAsync(id, includeProperties);
     }
+
     public async Task<Exam> SingleExamAsync(int id, params string[] includeProperties)
     {
-        return await GetExamByIdAsync(id, includeProperties) ?? throw new NotFoundException($"Exam {id} not found"); 
+        return await GetExamByIdAsync(id, includeProperties) ?? throw new NotFoundException($"Exam {id} not found");
     }
 
     public async Task UpdateExamAsync(int id, Exam exam)
@@ -163,6 +169,30 @@ public class ExamService : IExamService
         await _uow.SaveChangesAsync();
 
         return registration;
+    }
+
+    public async Task RegisterAllStudentsFromClassAsync(int examId)
+    {
+        var entity = await SingleExamAsync(examId,
+            nameof(Exam.StudentExams),
+            nameof(Exam.Course),
+            $"{nameof(Exam.Course)}.{nameof(Course.Classes)}",
+            $"{nameof(Exam.Course)}.{nameof(Course.Classes)}.{nameof(Class.Students)}"
+        );
+
+        var allStudentsOfAllClasses = entity
+            .Course
+            .Classes
+            .SelectMany(c => c.Students.Select(s => new StudentExam()
+            {
+                ExamId = entity.Id,
+                StudentId = s.Id
+            }))
+            .ToList();
+
+        entity.StudentExams.Sync(allStudentsOfAllClasses,s => s.StudentId, skipDelete: true);
+
+        await _uow.SaveChangesAsync();
     }
 
     private async Task<string> GenerateUniqueRegistrationCodeAsync(int examId)

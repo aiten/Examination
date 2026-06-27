@@ -47,7 +47,7 @@ public static class RegistrationEndpoints
                             registration.Exam.Pin,
                             registration.Exam.Description,
                             registration.Exam.Date,
-                            registration.RegistrationCode));
+                            registration.RegistrationCode!));
                 }
                 catch (IllegalValuesException ex)
                 {

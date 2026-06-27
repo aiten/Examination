@@ -22,7 +22,10 @@ type SortCol = keyof Pick<StudentExamOverview, 'lastName' | 'firstName' | 'login
     <div class="page">
       <div class="page-header">
         <h2>Registered Students{{ examDescription() ? ' — ' + examDescription() : '' }}</h2>
-        <a routerLink="/exams" class="btn">Back to Exams</a>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn" (click)="registerClassStudents()">Register every student in the classes</button>
+          <a routerLink="/exams" class="btn">Back to Exams</a>
+        </div>
       </div>
 
       @if (loading()) {
@@ -146,6 +149,13 @@ export class StudentExamListComponent implements OnInit {
   sortIcon(col: SortCol): string {
     if (this.sortCol() !== col) return '↕';
     return this.sortDir() === 1 ? '▲' : '▼';
+  }
+
+  registerClassStudents(): void {
+    this.service.registerClassStudents(this.examId).subscribe({
+      next: () => this.load(),
+      error: () => this.error.set('Failed to register class students.')
+    });
   }
 
   private load(): void {

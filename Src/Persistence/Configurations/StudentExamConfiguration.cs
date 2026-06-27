@@ -17,8 +17,10 @@ public class StudentExamConfiguration : IEntityTypeConfiguration<StudentExam>
             .HasMaxLength(32);
 
         builder.Property(se => se.RegistrationCode)
-            .IsRequired()
             .HasMaxLength(5);
+
+        builder.Property(se => se.Comment)
+            .HasMaxLength(256);
 
         builder.HasIndex(se => new { se.RegistrationCode, se.ExamId })
             .IsUnique();

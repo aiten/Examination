@@ -134,7 +134,7 @@ public class StudentExamEndpointsTests : IClassFixture<CustomWebApplicationFacto
     [Fact]
     public async Task PutStudentExam_ValidUpdate_ReturnsNoContent()
     {
-        var dto   = new StudentExamDto(1, 1, 1, "Alice", "Smith", "alice", "ABC12", new List<StudentSubtaskResultDto>());
+        var dto   = new StudentExamDto(1, 1, 1, "Alice", "Smith", "alice", "ABC12", null, new List<StudentSubtaskResultDto>());
         var trans = Substitute.For<ITransaction>();
         _uow.BeginTransactionAsync().Returns(trans);
 
@@ -148,7 +148,7 @@ public class StudentExamEndpointsTests : IClassFixture<CustomWebApplicationFacto
     [Fact]
     public async Task PutStudentExam_IdMismatch_ReturnsBadRequest()
     {
-        var dto = new StudentExamDto(2, 1, 1, "Alice", "Smith", "alice", "ABC12", new List<StudentSubtaskResultDto>());
+        var dto = new StudentExamDto(2, 1, 1, "Alice", "Smith", "alice", "ABC12", null, new List<StudentSubtaskResultDto>());
 
         var response = await _client.PutAsJsonAsync("/api/exam/1/students/1", dto);
 
@@ -158,7 +158,7 @@ public class StudentExamEndpointsTests : IClassFixture<CustomWebApplicationFacto
     [Fact]
     public async Task PutStudentExam_NotFound_ReturnsNotFound()
     {
-        var dto = new StudentExamDto(99, 1, 1, "Alice", "Smith", "alice", "ABC12", new List<StudentSubtaskResultDto>());
+        var dto = new StudentExamDto(99, 1, 1, "Alice", "Smith", "alice", "ABC12", null, new List<StudentSubtaskResultDto>());
         _studentExamService.When(s => s.UpdateStudentExamAsync(99, Arg.Any<StudentExam>()))
             .Throw(new NotFoundException("StudentExam 99 not found"));
 
@@ -170,7 +170,7 @@ public class StudentExamEndpointsTests : IClassFixture<CustomWebApplicationFacto
     [Fact]
     public async Task PutStudentExam_WrongExamId_ReturnsConflict()
     {
-        var dto = new StudentExamDto(1, 1, 1, "Alice", "Smith", "alice", "ABC12", new List<StudentSubtaskResultDto>());
+        var dto = new StudentExamDto(1, 1, 1, "Alice", "Smith", "alice", "ABC12", null, new List<StudentSubtaskResultDto>());
         _studentExamService.When(s => s.UpdateStudentExamAsync(1, Arg.Any<StudentExam>()))
             .Throw(new ConflictException("ExamId mismatch"));
 

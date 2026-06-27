@@ -6,7 +6,7 @@ public record StudentExamOverview(
     string   FirstName,
     string   LastName,
     string?  LoginName,
-    string   RegistrationCode,
+    string?  RegistrationCode,
     int      CountRated,
     decimal? Points,
     decimal? Percent,

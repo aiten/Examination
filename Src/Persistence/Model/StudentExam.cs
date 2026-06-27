@@ -7,7 +7,8 @@ using Base.Persistence.Model;
 public class StudentExam : EntityObject
 {
     public string? LoginName        { get; set; }
-    public required string RegistrationCode { get; set; }
+    public string? RegistrationCode { get; set; }
+    public string? Comment          { get; set; }
 
     public Student Student   { get; set; } = null!;
     public int     StudentId { get; set; }
