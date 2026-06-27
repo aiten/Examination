@@ -25,7 +25,7 @@ export interface StudentExamResult {
 }
 
 export interface StudentCourseResult {
-  courseDescription: string;
+  courseName: string;
   studentName: string;
   studentExams: StudentExamResult[];
 }

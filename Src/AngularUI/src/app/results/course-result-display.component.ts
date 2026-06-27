@@ -15,7 +15,7 @@ type SortDir = 'asc' | 'desc';
     @if (result()) {
       <div class="page">
         <div class="page-header">
-          <h2>Course Result: {{ result()!.courseDescription }}</h2>
+          <h2>Course Result: {{ result()!.courseName }}</h2>
           <a routerLink="/result/course" class="btn">New Query</a>
         </div>
 
