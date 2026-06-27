@@ -9,6 +9,8 @@ using WebAPI.Filters;
 
 public record StudentExamResultQueryDto(string FirstName, string LastName, string Pin, string RegistrationCode);
 
+public record StudentCourseResultQueryDto(string FirstName, string LastName, string Pin, string RegistrationCode);
+
 public static class ResultEndpoints
 {
     public static void MapResultEndpoints(this IEndpointRouteBuilder app, string baseRoute)
@@ -18,12 +20,12 @@ public static class ResultEndpoints
             .WithTags("Results");
         // Anonymous — no RequireAuthorization
 
-        route.MapPost("", async (StudentExamResultQueryDto dto, IStudentExamService studentExamService, ILoggerFactory loggerFactory) =>
+        route.MapPost("exam", async (StudentExamResultQueryDto dto, IStudentExamService studentExamService, ILoggerFactory loggerFactory) =>
             {
                 var logger = loggerFactory.CreateLogger(nameof(ResultEndpoints));
                 try
                 {
-                    var result = await studentExamService.GetStudentResultAsync(
+                    var result = await studentExamService.GetStudentExamResultAsync(
                         dto.FirstName, dto.LastName, dto.Pin, dto.RegistrationCode);
 
                     logger.LogInformation("QueryResults success: '{LastName}, {FirstName}' Pin={Pin} Exam={RegistrationCode}",
@@ -39,9 +41,34 @@ public static class ResultEndpoints
                     throw;
                 }
             })
-            .WithValidation<StudentExamResultQueryDto>()
             .WithName("GetExamResult")
             .Produces<StudentExamResult>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest);
+
+        route.MapPost("course", async (StudentCourseResultQueryDto dto, IStudentExamService studentExamService, ILoggerFactory loggerFactory) =>
+            {
+                var logger = loggerFactory.CreateLogger(nameof(ResultEndpoints));
+                try
+                {
+                    var result = await studentExamService.GetStudentCourseResultAsync(
+                        dto.FirstName, dto.LastName, dto.Pin, dto.RegistrationCode);
+
+                    logger.LogInformation("QueryResults success: '{LastName}, {FirstName}' Pin={Pin} Exam={RegistrationCode}",
+                        dto.LastName, dto.FirstName, dto.Pin, dto.RegistrationCode);
+
+                    return Results.Ok(result);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    logger.LogWarning("QueryResults failed: '{LastName}, {FirstName}' Pin={Pin} Exam={RegistrationCode} Error={Error}",
+                        dto.LastName, dto.FirstName, dto.Pin, dto.RegistrationCode, ex.Message);
+
+                    throw;
+                }
+            })
+            .WithName("GetCourseResult")
+            .Produces<StudentCourseResult>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest);
+
     }
 }

@@ -1,7 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ResultService } from '../services/result.service';
+import { ExamResultService } from '../services/exam-result.service';
 import { StudentExamResultQuery } from '../models/exam-result.model';
 
 @Component({
@@ -40,7 +40,7 @@ import { StudentExamResultQuery } from '../models/exam-result.model';
     </div>
   `
 })
-export class ResultExamQueryComponent implements OnInit {
+export class ExamResultQueryComponent implements OnInit {
   firstName = '';
   lastName = '';
   pin = '';
@@ -48,7 +48,7 @@ export class ResultExamQueryComponent implements OnInit {
   loading = signal(false);
   error = signal('');
 
-  constructor(private service: ResultService, private router: Router, private route: ActivatedRoute) {}
+  constructor(private service: ExamResultService, private router: Router, private route: ActivatedRoute) {}
 
   ngOnInit(): void {
     const p = this.route.snapshot.queryParamMap;

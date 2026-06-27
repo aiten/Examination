@@ -1,21 +1,21 @@
 import { Component, computed, signal } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { CourseResultService } from '../services/course-result.service';
-import { StudentCourseResultSubtask } from '../models/course-result.model';
+import { ExamResultService } from '../services/exam-result.service';
+import { StudentExamResultSubtask } from '../models/exam-result.model';
 
 type SortColumn = 'seqNo' | 'description' | 'points' | 'percent' | 'comment';
 type SortDir = 'asc' | 'desc';
 
 @Component({
-  selector: 'app-result-course-display',
+  selector: 'app-result-exam-display',
   standalone: true,
   imports: [RouterModule],
   template: `
     @if (result()) {
       <div class="page">
         <div class="page-header">
-          <h2>Course Result: {{ result()!.courseDescription }} &nbsp;({{ result()!.courseDate }}) {{ result()!.studentName }}</h2>
-          <a routerLink="/result/course" class="btn">New Query</a>
+          <h2>Exam Result: {{ result()!.examDescription }} &nbsp;({{ result()!.examDate }}) {{ result()!.studentName }}</h2>
+          <a routerLink="/result/exam" class="btn">New Query</a>
         </div>
 
         <table class="table" style="margin-bottom: 24px;">
@@ -59,7 +59,7 @@ type SortDir = 'asc' | 'desc';
       </div>
     } @else {
       <div class="page">
-        <p class="empty">No result loaded. <a routerLink="/result/course">Go back</a>.</p>
+        <p class="empty">No result loaded. <a routerLink="/result/exam">Go back</a>.</p>
       </div>
     }
   `,
@@ -69,7 +69,7 @@ type SortDir = 'asc' | 'desc';
     .bonus-row td { color: #1a73e8; }
   `]
 })
-export class ResultCourseDisplayComponent {
+export class ExamResultDisplayComponent {
   result;
   sortCol = signal<SortColumn>('seqNo');
   sortDir = signal<SortDir>('asc');
@@ -80,7 +80,7 @@ export class ResultCourseDisplayComponent {
     return [...r.subtasks].sort((a, b) => this.compare(a, b));
   });
 
-  constructor(private service: CourseResultService) {
+  constructor(private service: ExamResultService) {
     this.result = service.result;
   }
 
@@ -98,18 +98,18 @@ export class ResultCourseDisplayComponent {
     return this.sortDir() === 'asc' ? '▲' : '▼';
   }
 
-  reachedPercent(row: StudentCourseResultSubtask): string {
+  reachedPercent(row: StudentExamResultSubtask): string {
     if (row.result == null) return '—';
     if (row.points === 0) return '—';
     return Math.round((row.result * 1000) / 10) + ' %';
   }
 
-  private compare(a: StudentCourseResultSubtask, b: StudentCourseResultSubtask): number {
+  private compare(a: StudentExamResultSubtask, b: StudentExamResultSubtask): number {
     const dir = this.sortDir() === 'asc' ? 1 : -1;
     switch (this.sortCol()) {
-      case 'seqNo':       return dir * (a.seqNo - b.seqNo);
+      case 'seqNo':      return dir * (a.seqNo - b.seqNo);
       case 'description': return dir * a.description.localeCompare(b.description);
-      case 'points':      return dir * (a.points - b.points);
+      case 'points':     return dir * (a.points - b.points);
       case 'percent': {
         const pa = a.points > 0 && a.result != null ? a.result / a.points : -1;
         const pb = b.points > 0 && b.result != null ? b.result / b.points : -1;

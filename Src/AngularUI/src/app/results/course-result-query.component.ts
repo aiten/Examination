@@ -25,8 +25,8 @@ import { StudentCourseResultQuery } from '../models/course-result.model';
           <input type="text" name="pin" [(ngModel)]="pin" required maxlength="5" pattern="[0-9]{1,5}" class="form-control" />
         </div>
         <div class="form-group">
-          <label>Registration Name *</label>
-          <input name="registrationName" [(ngModel)]="registrationName" required minlength="5" class="form-control" />
+          <label>Registration Code *</label>
+          <input name="registrationCode" [(ngModel)]="registrationCode" required minlength="5" class="form-control" />
         </div>
         <div class="form-actions">
           <button type="submit" class="btn btn-primary" [disabled]="form.invalid || loading()">
@@ -40,11 +40,11 @@ import { StudentCourseResultQuery } from '../models/course-result.model';
     </div>
   `
 })
-export class ResultCourseQueryComponent implements OnInit {
+export class CourseResultQueryComponent implements OnInit {
   firstName = '';
   lastName = '';
   pin = '';
-  registrationName = '';
+  registrationCode = '';
   loading = signal(false);
   error = signal('');
 
@@ -55,7 +55,7 @@ export class ResultCourseQueryComponent implements OnInit {
     if (p.has('firstName'))        this.firstName = p.get('firstName')!;
     if (p.has('lastName'))         this.lastName = p.get('lastName')!;
     if (p.has('pin'))              this.pin = p.get('pin')!;
-    if (p.has('registrationName')) this.registrationName = p.get('registrationName')!;
+    if (p.has('registrationCode')) this.registrationCode = p.get('registrationCode')!;
   }
 
   submit(): void {
@@ -65,7 +65,7 @@ export class ResultCourseQueryComponent implements OnInit {
       firstName: this.firstName,
       lastName: this.lastName,
       pin: this.pin,
-      registrationName: this.registrationName
+      registrationCode: this.registrationCode
     };
     this.service.getResult(query).subscribe({
       next: result => {

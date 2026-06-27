@@ -1,10 +1,10 @@
 import { Component, computed, effect, ElementRef, ViewChild } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { RegistrationCourseService } from '../services/registration-course.service';
+import { ExamRegistrationService } from '../services/exam-registration.service';
 import QRCode from 'qrcode';
 
 @Component({
-  selector: 'app-register-course-result',
+  selector: 'app-register-result',
   standalone: true,
   imports: [RouterModule],
   template: `
@@ -17,8 +17,12 @@ import QRCode from 'qrcode';
             <p>{{ result()!.lastName }}, {{ result()!.firstName }}</p>
           </div>
           <div class="form-group">
-            <label>Course</label>
-            <p>{{ result()!.courseDescription }}</p>
+            <label>Exam</label>
+            <p>{{ result()!.examDescription }}</p>
+          </div>
+          <div class="form-group">
+            <label>Date</label>
+            <p>{{ result()!.examDate }}</p>
           </div>
           <div class="form-group">
             <label>Registration Code</label>
@@ -29,25 +33,25 @@ import QRCode from 'qrcode';
             <canvas #qrCanvas></canvas>
           </div>
           <div class="form-actions">
-            <a [routerLink]="['/result']" [queryParams]="resultQueryParams()" class="btn btn-primary">View My Result</a>
+            <a [routerLink]="['/result/exam']" [queryParams]="resultQueryParams()" class="btn btn-primary">View My Result</a>
           </div>
         </div>
       </div>
     } @else {
       <div class="page">
-        <p class="empty">No registration result. <a routerLink="/registration/course">Go back</a>.</p>
+        <p class="empty">No registration result. <a routerLink="/registration/exam">Go back</a>.</p>
       </div>
     }
   `
 })
-export class RegisterCourseResultComponent {
+export class ExamRegistrationResultComponent {
   @ViewChild('qrCanvas') qrCanvas!: ElementRef<HTMLCanvasElement>;
 
   result;
   resultQueryParams;
   resultUrl;
 
-  constructor(private service: RegistrationCourseService) {
+  constructor(private service: ExamRegistrationService) {
     this.result = service.result;
     this.resultQueryParams = computed(() => {
       const r = this.result();
@@ -63,7 +67,7 @@ export class RegisterCourseResultComponent {
         pin: String(r.pin),
         registrationCode: r.registrationCode
       });
-      return `${window.location.origin}/result?${params}`;
+      return `${window.location.origin}/result/exam?${params}`;
     });
 
     effect(() => {

@@ -16,6 +16,7 @@ public record StudentExamResultSubtask(
 );
 
 public record StudentExamResult(
+    string?                         Status,
     string                          ExamDescription,
     DateOnly                        ExamDate,
     string                          StudentName,

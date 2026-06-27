@@ -19,14 +19,14 @@ import { SubjectListComponent } from './subjects/subject-list.component';
 import { SubjectFormComponent } from './subjects/subject-form.component';
 import { CourseListComponent } from './courses/course-list.component';
 import { CourseFormComponent } from './courses/course-form.component';
-import { RegisterExamFormComponent } from './registration/register-exam-form.component';
-import { RegisterCourseFormComponent } from './registration/register-course-form.component';
-import { RegisterExamResultComponent } from './registration/register-exam-result.component';
-import { RegisterCourseResultComponent } from './registration/register-course-result.component';
-import { ResultExamQueryComponent } from './results/result-exam-query.component';
-import { ResultExamDisplayComponent } from './results/result-exam-display.component';
-import { ResultCourseQueryComponent } from './results/result-course-query.component';
-import { ResultCourseDisplayComponent } from './results/result-course-display.component';
+import { ExamRegistrationFormComponent } from './registration/exam-registration-form.component';
+import { CourseRegistrationFormComponent } from './registration/course-registration-form.component';
+import { ExamRegistrationResultComponent } from './registration/exam-registration-result.component';
+import { CourseRegistrationResultComponent } from './registration/course-registration-result.component';
+import { ExamResultQueryComponent } from './results/exam-result-query.component';
+import { ExamResultDisplayComponent } from './results/exam-result-display.component';
+import { CourseResultQueryComponent } from './results/course-result-query.component';
+import { CourseResultDisplayComponent } from './results/course-result-display.component';
 import { SubtaskListComponent } from './subtasks/subtask-list.component';
 import { StudentExamListComponent } from './student-exams/student-exam-list.component';
 import { StudentExamFormComponent } from './student-exams/student-exam-form.component';
@@ -54,14 +54,14 @@ export const routes: Routes = [
   { path: 'subjects/:id', component: SubjectFormComponent, canActivate: [canActivateAuthRole],   data: { role: environment.roles.admin },  },
   { path: 'courses', component: CourseListComponent, canActivate: [canActivateAuthRole],   data: { role: environment.roles.admin },  },
   { path: 'courses/:id', component: CourseFormComponent, canActivate: [canActivateAuthRole],   data: { role: environment.roles.admin },  },
-  { path: 'registration/exam', component: RegisterExamFormComponent },
-  { path: 'registration/course', component: RegisterCourseFormComponent },
-  { path: 'registration/exam/result', component: RegisterExamResultComponent },
-  { path: 'registration/course/result', component: RegisterCourseResultComponent },
-  { path: 'result/exam', component: ResultExamQueryComponent },
-  { path: 'result/exam/display', component: ResultExamDisplayComponent },
-  { path: 'result/course', component: ResultCourseQueryComponent },
-  { path: 'result/course/display', component: ResultCourseDisplayComponent },
+  { path: 'registration/exam', component: ExamRegistrationFormComponent },
+  { path: 'registration/course', component: CourseRegistrationFormComponent },
+  { path: 'registration/exam/result', component: ExamRegistrationResultComponent },
+  { path: 'registration/course/result', component: CourseRegistrationResultComponent },
+  { path: 'result/exam', component: ExamResultQueryComponent },
+  { path: 'result/exam/display', component: ExamResultDisplayComponent },
+  { path: 'result/course', component: CourseResultQueryComponent },
+  { path: 'result/course/display', component: CourseResultDisplayComponent },
   { path: 'profile', component: UserProfileComponent,  canActivate: [canActivateAuthRole],    data: { role: environment.roles.viewProfile }  },
   { path: 'forbidden', component: ForbiddenComponent },
   { path: '**', redirectTo: '/home' } 

@@ -7,6 +7,8 @@ using Persistence;
 using Persistence.Model;
 using Persistence.QueryResult;
 
+using Service.Tools;
+
 using Shared.Exceptions;
 
 using System;
@@ -14,11 +16,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
+using Shared;
+
 public interface IStudentExamService
 {
-    Task<StudentExamResult>          GetStudentResultAsync(string     firstName, string lastName, string pin, string registrationCode);
+    Task<StudentExamResult> GetStudentExamResultAsync(string firstName, string lastName, string pin, string registrationCode);
+
+    Task<StudentCourseResult> GetStudentCourseResultAsync(string firstName, string lastName, string pin, string registrationCode);
+
     Task<IList<StudentExamOverview>> GetStudentExamOverviewsAsync(int examId);
-    Task<IList<StudentExamSummary>>  GetStudentExamSummaryAsync(int   examId);
+
+    Task<IList<StudentExamSummary>> GetStudentExamSummaryAsync(int examId);
 
     Task<StudentExam> SingleStudentExamAsync(int id, params string[] includeProperties);
 
@@ -40,9 +48,71 @@ public class StudentExamService : IStudentExamService
         _hub    = hub;
     }
 
-    public async Task<StudentExamResult> GetStudentResultAsync(string firstName, string lastName, string pin, string registrationCode)
+    public async Task<StudentExamResult> GetStudentExamResultAsync(string firstName, string lastName, string pin, string registrationCode)
     {
-        return await _uow.StudentExams.GetStudentResultAsync(firstName, lastName, pin, registrationCode);
+        var exam = await _uow.Exams.GetExamWithPINAsync(pin) ?? throw new NotFoundException($"No exam found with pin: {pin}.");
+
+        if (!exam.CanShowResults)
+            throw new NotFoundException("Results are not yet available for this exam.");
+
+        var studentExam = await _uow.StudentExams.GetStudentExamAsync(exam.Id, firstName, lastName, registrationCode) ?? throw new NotFoundException($"No exam found with student");
+
+        return await GetStudentResultAsync(studentExam, exam);
+    }
+
+    private async Task<StudentExamResult> GetStudentResultAsync(StudentExam studentExam, Exam exam)
+    {
+        var subtasks = await _uow.Subtasks.GetForExamAsync(exam.Id);
+
+        var totalMaxPoints = subtasks.Sum(s => s.Bonus ? 0 : s.Points);
+        var countRatable   = subtasks.Count(s => !s.Bonus);
+
+        var resultSubtasks = subtasks
+            .OrderBy(s => s.SeqNo)
+            .Select(s =>
+            {
+                var ss = studentExam.StudentSubtasks.FirstOrDefault(x => x.SubtaskId == s.Id);
+                return new StudentExamResultSubtask(s.SeqNo, s.Description, s.Points, ss?.Result, ss?.Comment, s.Bonus);
+            })
+            .ToList();
+
+        var countRated = studentExam.StudentSubtasks.Count(ss => ss.Result.HasValue && !ss.Subtask.Bonus);
+        var allRated   = countRated == countRatable;
+
+        if (!allRated)
+            throw new NotFoundException("Results are not yet available for this exam.");
+
+        var totalPoints = (decimal?)studentExam.StudentSubtasks.Sum(ss => (ss.Result ?? 0m) * ss.Subtask.Points);
+        var percent     = totalMaxPoints > 0 ? Math.Round(totalPoints!.Value / totalMaxPoints * 100m, 2) : (decimal?)null;
+        var grade       = totalMaxPoints > 0 ? (int?)ExamHelper.CalculateGrade(totalPoints!.Value / totalMaxPoints) : null;
+
+        return new StudentExamResult(
+            null,
+            exam.Description,
+            exam.Date,
+            $"{studentExam.Student.LastName}, {studentExam.Student.FirstName}",
+            resultSubtasks,
+            totalPoints,
+            percent,
+            grade
+        );
+    }
+
+
+    public async Task<StudentCourseResult> GetStudentCourseResultAsync(string firstName, string lastName, string pin, string registrationCode)
+    {
+        var course = await _uow.Courses.GetCourseWithPINAsync(pin) ?? throw new NotFoundException($"No course found with pin: {pin}.");
+
+        /*
+        if (!course.CanShowResults)
+            throw new NotFoundException("Results are not available for this course.");
+        */
+
+        var studentCourse = await _uow.StudentCourses.GetStudentCourseAsync(course.Id, firstName, lastName, registrationCode) ?? throw new NotFoundException($"No course found for student");
+
+        var studentExams = await _uow.StudentExams.
+
+        throw new NotImplementedException();
     }
 
     public async Task<IList<StudentExamOverview>> GetStudentExamOverviewsAsync(int examId)

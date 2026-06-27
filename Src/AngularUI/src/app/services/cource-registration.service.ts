@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { RegistrationCourseRequest, RegistrationCourseResult } from '../models/registration.model';
 
 @Injectable({ providedIn: 'root' })
-export class RegistrationCourseService {
+export class CourseRegistrationService {
   private readonly url = '/api/registration/course';
   result = signal<RegistrationCourseResult | null>(null);
 

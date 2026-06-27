@@ -14,8 +14,6 @@ public interface IExamRepository : IGenericRepository<Exam>
     Task<IList<ExamOverview>> GetExamOverviewsAsync(int? teacherId, int? courseId, int? courseYear);
 
     Task<Exam?> GetExamWithPINAsync(string pin);
-
-    Task<int> CalculateGrade(int id, decimal percent);
 }
 
 public class ExamRepository : GenericRepository<Exam>, IExamRepository
@@ -73,22 +71,5 @@ public class ExamRepository : GenericRepository<Exam>, IExamRepository
                 e.StudentExams.Select(se => $"{se.Student.LastName}, {se.Student.FirstName}").ToList()
             ))
             .ToListAsync();
-    }
-
-    public async Task<int> CalculateGrade(int id, decimal percent)
-    {
-        return CalculateGrade(percent);
-    }
-
-    public static int CalculateGrade(decimal percent)
-    {
-        return percent switch
-        {
-            >= 0.88m => 1,
-            >= 0.75m => 2,
-            >= 0.63m => 3,
-            >= 0.5m  => 4,
-            _        => 5
-        };
     }
 }

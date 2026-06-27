@@ -1,16 +1,16 @@
 import { Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { RegistrationExamService } from '../services/registration-exam.service';
-import { RegistrationExamRequest } from '../models/registration.model';
+import { CourseRegistrationService } from '../services/cource-registration.service';
+import { RegistrationCourseRequest } from '../models/registration.model';
 
 @Component({
-  selector: 'app-register-form',
+  selector: 'app-register-course-form',
   standalone: true,
   imports: [FormsModule],
   template: `
     <div class="page">
-      <h2>Register for Exam</h2>
+      <h2>Register for Course</h2>
       <form (ngSubmit)="register()" #form="ngForm" class="form">
         <div class="form-group">
           <label>Last Name *</label>
@@ -19,11 +19,6 @@ import { RegistrationExamRequest } from '../models/registration.model';
         <div class="form-group">
           <label>First Name *</label>
           <input name="firstName" [(ngModel)]="firstName" required class="form-control" />
-        </div>
-        <div class="form-group">
-          <label>Login Name</label>
-          <input name="loginName" [(ngModel)]="loginName" maxlength="32" class="form-control" />
-          <small class="form-hint">The user-name used when logging into the school computer, e.g. Test9F01.</small>
         </div>
         <div class="form-group">
           <label>PIN * (5 digits)</label>
@@ -41,29 +36,27 @@ import { RegistrationExamRequest } from '../models/registration.model';
     </div>
   `
 })
-export class RegisterExamFormComponent {
+export class CourseRegistrationFormComponent {
   firstName = '';
   lastName = '';
-  loginName = '';
   pin = '';
   loading = signal(false);
   error = signal('');
 
-  constructor(private service: RegistrationExamService, private router: Router) {}
+  constructor(private service: CourseRegistrationService, private router: Router) {}
 
   register(): void {
     this.loading.set(true);
     this.error.set('');
-    const req: RegistrationExamRequest = {
+    const req: RegistrationCourseRequest = {
       firstName: this.firstName,
       lastName: this.lastName,
-      loginName: this.loginName || null,
       pin: this.pin
     };
     this.service.register(req).subscribe({
       next: result => {
         this.service.result.set(result);
-        this.router.navigate(['/registration/exam/result']);
+        this.router.navigate(['/registration/course/result']);
       },
       error: err => {
         this.loading.set(false);

@@ -2,10 +2,10 @@ export interface StudentCourseResultQuery {
   firstName: string;
   lastName: string;
   pin: string;
-  registrationName: string;
+  registrationCode: string;
 }
 
-export interface StudentCourseResultSubtask {
+export interface StudentExamResultSubtask {
   seqNo: number;
   description: string;
   points: number;
@@ -14,12 +14,18 @@ export interface StudentCourseResultSubtask {
   bonus: boolean;
 }
 
-export interface StudentCourseResult {
-  courseDescription: string;
-  courseDate: string;
+export interface StudentExamResult {
+  examDescription: string;
+  examDate: string;
   studentName: string;
-  subtasks: StudentCourseResultSubtask[];
+  subtasks: StudentExamResultSubtask[];
   totalPoints: number | null;
   percent: number | null;
   grade: number | null;
+}
+
+export interface StudentCourseResult {
+  courseDescription: string;
+  studentName: string;
+  studentExams: StudentExamResult[];
 }
