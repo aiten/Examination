@@ -2,6 +2,7 @@ import { Component, computed, signal } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { CourseResultService } from '../services/course-result.service';
 import { StudentExamResult } from '../models/course-result.model';
+import { ExamResultDetailComponent } from './exam-result-detail.component';
 
 type SortColumn = 'examDescription' | 'examDate' | 'totalPoints' | 'percent' | 'grade';
 type SortDir = 'asc' | 'desc';
@@ -9,7 +10,7 @@ type SortDir = 'asc' | 'desc';
 @Component({
   selector: 'app-result-course-display',
   standalone: true,
-  imports: [RouterModule],
+  imports: [RouterModule, ExamResultDetailComponent],
   template: `
     @if (result()) {
       <div class="page">
@@ -25,28 +26,35 @@ type SortDir = 'asc' | 'desc';
           </div>
         </div>
 
-        <table class="table">
-          <thead>
-            <tr>
-              <th class="sortable" (click)="sort('examDescription')">Exam {{ sortIndicator('examDescription') }}</th>
-              <th class="sortable" (click)="sort('examDate')">Date {{ sortIndicator('examDate') }}</th>
-              <th class="sortable" (click)="sort('totalPoints')">Points {{ sortIndicator('totalPoints') }}</th>
-              <th class="sortable" (click)="sort('percent')">% {{ sortIndicator('percent') }}</th>
-              <th class="sortable" (click)="sort('grade')">Grade {{ sortIndicator('grade') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (exam of sortedExams(); track exam.examDescription) {
+        @if (selectedExam()) {
+          <button class="btn" style="margin-bottom: 16px;" (click)="selectedExam.set(null)">← Back to list</button>
+          <app-exam-result-detail [exam]="selectedExam()!" />
+        } @else {
+          <table class="table">
+            <thead>
               <tr>
-                <td>{{ exam.examDescription }}</td>
-                <td>{{ exam.examDate }}</td>
-                <td>{{ exam.totalPoints != null ? exam.totalPoints : '—' }}</td>
-                <td>{{ exam.percent != null ? (exam.percent + ' %') : '—' }}</td>
-                <td>{{ exam.grade != null ? exam.grade : '—' }}</td>
+                <th class="sortable" (click)="sort('examDescription')">Exam {{ sortIndicator('examDescription') }}</th>
+                <th class="sortable" (click)="sort('examDate')">Date {{ sortIndicator('examDate') }}</th>
+                <th class="sortable" (click)="sort('totalPoints')">Points {{ sortIndicator('totalPoints') }}</th>
+                <th class="sortable" (click)="sort('percent')">% {{ sortIndicator('percent') }}</th>
+                <th class="sortable" (click)="sort('grade')">Grade {{ sortIndicator('grade') }}</th>
+                <th></th>
               </tr>
-            }
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              @for (exam of sortedExams(); track exam.examDescription) {
+                <tr>
+                  <td>{{ exam.examDescription }}</td>
+                  <td>{{ exam.examDate }}</td>
+                  <td>{{ exam.totalPoints != null ? exam.totalPoints : '—' }}</td>
+                  <td>{{ exam.percent != null ? (exam.percent + ' %') : '—' }}</td>
+                  <td>{{ exam.grade != null ? exam.grade : '—' }}</td>
+                  <td><a class="link" (click)="selectedExam.set(exam)">Details</a></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
       </div>
     } @else {
       <div class="page">
@@ -57,10 +65,12 @@ type SortDir = 'asc' | 'desc';
   styles: [`
     .sortable { cursor: pointer; user-select: none; }
     .sortable:hover { background: #e4eaf0; }
+    .link { cursor: pointer; color: #1a73e8; text-decoration: underline; }
   `]
 })
 export class CourseResultDisplayComponent {
   result;
+  selectedExam = signal<StudentExamResult | null>(null);
   sortCol = signal<SortColumn>('examDate');
   sortDir = signal<SortDir>('asc');
 
