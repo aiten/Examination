@@ -17,6 +17,7 @@ public record CourseDto(
     IList<int> ClassIds,
     IList<int> TeacherIds,
     bool       CanRegister,
+    bool       CanShowResults,
     string?    Pin
 );
 
@@ -39,6 +40,7 @@ public static class CourseEndpoints
             entity.Classes.Select(c => c.Id).ToList(),
             entity.Teachers.Select(t => t.Id).ToList(),
             entity.CanRegister,
+            entity.CanShowResults,
             entity.Pin
         );
     }
@@ -95,7 +97,7 @@ public static class CourseEndpoints
 
                 using var trans = await transactionProvider.BeginTransactionAsync();
 
-                await courseService.UpdateCourseAsync(id, dto.Name, dto.Year, dto.SubjectId, dto.ClassIds, dto.TeacherIds, dto.CanRegister, dto.Pin);
+                await courseService.UpdateCourseAsync(id, dto.Name, dto.Year, dto.SubjectId, dto.ClassIds, dto.TeacherIds, dto.CanRegister, dto.CanShowResults, dto.Pin);
 
                 await trans.CommitTransactionAsync();
 
@@ -112,7 +114,7 @@ public static class CourseEndpoints
 
                 using var trans    = await transactionProvider.BeginTransactionAsync();
 
-                var entity = await courseService.AddCourseAsync(dto.Name, dto.Year, dto.SubjectId, dto.ClassIds, dto.TeacherIds, dto.CanRegister, dto.Pin);
+                var entity = await courseService.AddCourseAsync(dto.Name, dto.Year, dto.SubjectId, dto.ClassIds, dto.TeacherIds, dto.CanRegister, dto.CanShowResults, dto.Pin);
 
                 await trans.CommitTransactionAsync();
 

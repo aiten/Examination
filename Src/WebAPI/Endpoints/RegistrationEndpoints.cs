@@ -62,7 +62,7 @@ public static class RegistrationEndpoints
             .Produces<RegistrationExamResultDto>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest);
 
-        route.MapPost("course", async (RegistrationExamDto dto, ICourseService courseService, ITransactionProvider transactionProvider, ILoggerFactory loggerFactory) =>
+        route.MapPost("course", async (RegistrationCourseDto dto, ICourseService courseService, ITransactionProvider transactionProvider, ILoggerFactory loggerFactory) =>
         {
             var logger = loggerFactory.CreateLogger(nameof(RegistrationEndpoints));
             try

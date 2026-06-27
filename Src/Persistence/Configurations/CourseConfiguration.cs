@@ -17,6 +17,9 @@ public class CourseConfiguration : IEntityTypeConfiguration<Course>
             .IsRequired()
             .HasMaxLength(64);
 
+        builder.Property(c => c.CanShowResults)
+            .HasDefaultValue(false);
+
         builder.HasOne(c => c.Subject)
             .WithMany(s => s.Courses)
             .HasForeignKey(c => c.SubjectId)

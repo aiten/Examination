@@ -18,6 +18,8 @@ public interface IStudentExamRepository : IGenericRepository<StudentExam>
 
     Task<StudentExam?> GetStudentExamAsync(int examId, string firstName, string lastName, string registrationCode);
 
+    Task<StudentExam?> GetStudentExamAsync(int examId, int studentId);
+
     Task DeleteAsync(StudentExam entity);
 
     Task<bool> AnyAsync(int examId, int    studentId);
@@ -112,6 +114,17 @@ public class StudentExamRepository : GenericRepository<StudentExam>, IStudentExa
                 se.Student.FirstName == firstName &&
                 se.Student.LastName == lastName);
 
+    }
+
+    public async Task<StudentExam?> GetStudentExamAsync(int examId, int studentId)
+    {
+        return await _dbContext.StudentExams
+            .Include(se => se.Student)
+            .Include(se => se.StudentSubtasks)
+            .ThenInclude(ss => ss.Subtask)
+            .FirstOrDefaultAsync(se =>
+                se.ExamId == examId &&
+                se.StudentId == studentId);
     }
 
     public void Check(int examId, int studentExamId)

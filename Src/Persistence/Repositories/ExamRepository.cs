@@ -9,6 +9,8 @@ using Microsoft.Extensions.Logging;
 using Persistence.Model;
 using Persistence.QueryResult;
 
+using Shared;
+
 public interface IExamRepository : IGenericRepository<Exam>
 {
     Task<IList<ExamOverview>> GetExamOverviewsAsync(int? teacherId, int? courseId, int? courseYear);
@@ -68,7 +70,7 @@ public class ExamRepository : GenericRepository<Exam>, IExamRepository
                 e.From,
                 e.To,
                 e.Subtasks.Select(s => s.Description).ToList(),
-                e.StudentExams.Select(se => $"{se.Student.LastName}, {se.Student.FirstName}").ToList()
+                e.StudentExams.Select(se => StudentHelper.FullName(se.Student.FirstName,se.Student.LastName)).ToList()
             ))
             .ToListAsync();
     }

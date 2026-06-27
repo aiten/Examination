@@ -8,6 +8,7 @@ using Persistence.QueryResult;
 
 using Service.Tools;
 
+using Shared;
 using Shared.Exceptions;
 
 using System;
@@ -123,15 +124,15 @@ public class ExamService : IExamService
 
         var student = await _uow.Students.GetStudentByNameAsync(lastName, firstName);
         if (student is null)
-            throw new IllegalValuesException($"No student found with name '{lastName}, {firstName}'");
+            throw new IllegalValuesException($"No student found with name '{StudentHelper.FullName(firstName, lastName)}'");
 
         var course = exam.Course;
         if (course is null || !course.Classes.Any(c => student.Classes.Any(sc => sc.Id == c.Id)))
-            throw new IllegalValuesException($"Student '{lastName}, {firstName} ' is not enrolled in any class of this exam's course");
+            throw new IllegalValuesException($"Student '{StudentHelper.FullName(firstName, lastName)}' is not enrolled in any class of this exam's course");
 
         bool alreadyRegistered = await _uow.StudentExams.AnyAsync(exam.Id, student.Id);
         if (alreadyRegistered)
-            throw new IllegalValuesException($"Student '{lastName}, {firstName}' is already registered for this exam");
+            throw new IllegalValuesException($"Student '{StudentHelper.FullName(firstName, lastName)}' is already registered for this exam");
 
         var registration = new StudentExam
         {

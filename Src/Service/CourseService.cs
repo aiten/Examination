@@ -14,15 +14,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
+using Shared;
+
 public interface ICourseService
 {
     Task<IList<Course>> GetCoursesAsync(params string[] includeProperties);
 
     Task<Course> SingleCourseAsync(int id, params string[] includeProperties);
 
-    Task UpdateCourseAsync(int id, string name, int year, int subjectId, ICollection<int> classIds, ICollection<int> teacherIds, bool canRegister, string? pin);
+    Task UpdateCourseAsync(int id, string name, int year, int subjectId, ICollection<int> classIds, ICollection<int> teacherIds, bool canRegister, bool canShowResults, string? pin);
 
-    Task<Course> AddCourseAsync(string name, int year, int subjectId, ICollection<int> classIds, ICollection<int> teacherIds, bool canRegister, string? pin);
+    Task<Course> AddCourseAsync(string name, int year, int subjectId, ICollection<int> classIds, ICollection<int> teacherIds, bool canRegister, bool canShowResults, string? pin);
 
     Task DeleteCourseAsync(int id);
 
@@ -57,39 +59,41 @@ public class CourseService : ICourseService
         return (await GetCourseByIdAsync(id, includeProperties)) ?? throw new NotFoundException($"Course {id} not found");
     }
 
-    public async Task UpdateCourseAsync(int id, string name, int year, int subjectId, ICollection<int> classIds, ICollection<int> teacherIds, bool canRegister, string? pin)
+    public async Task UpdateCourseAsync(int id, string name, int year, int subjectId, ICollection<int> classIds, ICollection<int> teacherIds, bool canRegister, bool canShowResults, string? pin)
     {
         var entity = await SingleCourseAsync(id, nameof(Course.Classes), nameof(Course.Teachers));
 
         var classes  = await _uow.Classes.GetAsync(c => classIds.Contains(c.Id));
         var teachers = await _uow.Teachers.GetAsync(t => teacherIds.Contains(t.Id));
 
-        entity.Name        = name;
-        entity.Year        = year;
-        entity.SubjectId   = subjectId;
-        entity.Classes     = classes.ToList();
-        entity.Teachers    = teachers.ToList();
-        entity.CanRegister = canRegister;
-        entity.Pin         = pin;
+        entity.Name           = name;
+        entity.Year           = year;
+        entity.SubjectId      = subjectId;
+        entity.Classes        = classes.ToList();
+        entity.Teachers       = teachers.ToList();
+        entity.CanRegister    = canRegister;
+        entity.CanShowResults = canShowResults;
+        entity.Pin            = pin;
 
         await _uow.SaveChangesAsync();
         //await _hub.NotifyCourseUpdatedAsync(id);
     }
 
-    public async Task<Course> AddCourseAsync(string name, int year, int subjectId, ICollection<int> classIds, ICollection<int> teacherIds, bool canRegister, string? pin)
+    public async Task<Course> AddCourseAsync(string name, int year, int subjectId, ICollection<int> classIds, ICollection<int> teacherIds, bool canRegister, bool canShowResults, string? pin)
     {
         var classes  = await _uow.Classes.GetAsync(c => classIds.Contains(c.Id));
         var teachers = await _uow.Teachers.GetAsync(t => teacherIds.Contains(t.Id));
 
         var value = new Course()
         {
-            Name        = name,
-            Year        = year,
-            SubjectId   = subjectId,
-            Classes     = classes.ToList(),
-            Teachers    = teachers.ToList(),
-            CanRegister = canRegister,
-            Pin         = pin
+            Name           = name,
+            Year           = year,
+            SubjectId      = subjectId,
+            Classes        = classes.ToList(),
+            Teachers       = teachers.ToList(),
+            CanRegister    = canRegister,
+            CanShowResults = canShowResults,
+            Pin            = pin
         };
 
         await _uow.Courses.AddAsync(value);
@@ -110,7 +114,7 @@ public class CourseService : ICourseService
 
     public async Task<StudentCourse> RegisterStudentAsync(string firstName, string lastName, string pin)
     {
-        var course = await _uow.Courses.GetCourseWithPINAsync(pin);
+        var course = await _uow.Courses.GetCourseWithPINAsync(pin, includeClasses:true);
         if (course is null)
             throw new IllegalValuesException($"No course found with PIN {pin}");
 
@@ -119,10 +123,10 @@ public class CourseService : ICourseService
 
         var student = await _uow.Students.GetStudentByNameAsync(lastName, firstName);
         if (student is null)
-            throw new IllegalValuesException($"No student found with name '{lastName}, {firstName}'");
+            throw new IllegalValuesException($"No student found with name '{StudentHelper.FullName(firstName, lastName)}'");
 
         if (!course.Classes.Any(c => student.Classes.Any(sc => sc.Id == c.Id)))
-            throw new IllegalValuesException($"Student '{lastName}, {firstName} ' is not enrolled in any class of course");
+            throw new IllegalValuesException($"Student '{StudentHelper.FullName(firstName, lastName)} ' is not enrolled in any class of course");
 
         var registration = await _uow.StudentCourses.GetByStudentAndCourseAsync(student.Id, course.Id);
         
@@ -143,7 +147,7 @@ public class CourseService : ICourseService
         {
             if (registration.RegistrationCode is not null)
             {
-                throw new IllegalValuesException($"Student '{lastName}, {firstName}' is already registered for this course");
+                throw new IllegalValuesException($"Student '{StudentHelper.FullName(firstName, lastName)}' is already registered for this course");
             }
 
             registration.RegistrationCode = await GenerateUniqueRegistrationCodeAsync(course.Id);

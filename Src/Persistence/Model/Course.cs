@@ -14,7 +14,8 @@ public class Course : EntityObject
     [MaxLength(5)]
     public string? Pin { get; set; }
 
-    public bool CanRegister { get; set; } = true;
+    public bool CanRegister    { get; set; } = true;
+    public bool CanShowResults { get; set; } = false;
 
     public Subject Subject   { get; set; } = null!;
     public int     SubjectId { get; set; }
