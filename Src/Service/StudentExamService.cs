@@ -7,6 +7,8 @@ using Persistence;
 using Persistence.Model;
 using Persistence.QueryResult;
 
+using Service.Tools;
+
 using Shared.Exceptions;
 
 using System;
@@ -14,23 +16,21 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
+using Shared;
+
 public interface IStudentExamService
 {
-    Task<StudentExamResult>          GetStudentResultAsync(string     firstName, string lastName, int pin, string registrationCode);
+    Task<StudentExamResult> GetStudentExamResultAsync(string firstName, string lastName, string pin, string registrationCode);
+
+    Task<StudentCourseResult> GetStudentCourseResultAsync(string firstName, string lastName, string pin, string registrationCode);
+
     Task<IList<StudentExamOverview>> GetStudentExamOverviewsAsync(int examId);
-    Task<IList<StudentExamSummary>>  GetStudentExamSummaryAsync(int   examId);
 
-    Task<IList<StudentExam>> GetStudentExamsForExamAsync(int examId, params string[] includeProperties);
-
-    Task<IList<StudentExam>> GetStudentExamsAsync(params string[] includeProperties);
-
-    Task<StudentExam?> GetStudentExamByIdAsync(int id, params string[] includeProperties);
+    Task<IList<StudentExamSummary>> GetStudentExamSummaryAsync(int examId);
 
     Task<StudentExam> SingleStudentExamAsync(int id, params string[] includeProperties);
 
     Task UpdateStudentExamAsync(int id, StudentExam value);
-
-    Task<StudentExam> AddStudentExamAsync(StudentExam value);
 
     Task DeleteStudentExamAsync(int id);
 }
@@ -48,9 +48,114 @@ public class StudentExamService : IStudentExamService
         _hub    = hub;
     }
 
-    public async Task<StudentExamResult> GetStudentResultAsync(string firstName, string lastName, int pin, string registrationCode)
+    public async Task<StudentExamResult> GetStudentExamResultAsync(string firstName, string lastName, string pin, string registrationCode)
     {
-        return await _uow.StudentExams.GetStudentResultAsync(firstName, lastName, pin, registrationCode);
+        var exam = await _uow.Exams.GetExamWithPINAsync(pin) ?? throw new NotFoundException($"No exam found with pin: {pin}.");
+
+        if (!exam.CanShowResults)
+            throw new NotFoundException("Results are not yet available for this exam.");
+
+        var studentExam = await _uow.StudentExams.GetStudentExamAsync(exam.Id, firstName, lastName, registrationCode) ?? throw new NotFoundException($"No exam found with student");
+
+        var result = await GetStudentResultAsync(studentExam, exam);
+
+        return new StudentExamResult(
+            null,
+            exam.Description,
+            exam.Date,
+            StudentHelper.FullName(studentExam.Student.FirstName, studentExam.Student.LastName),
+            result.resultSubtasks,
+            result.totalPoints,
+            result.percent,
+            result.grade);
+    }
+
+    private async Task<(IList<StudentExamResultSubtask> resultSubtasks, decimal? totalPoints, decimal? percent, int? grade)> GetStudentResultAsync(StudentExam studentExam, Exam exam)
+    {
+        var subtasks = await _uow.Subtasks.GetForExamAsync(exam.Id);
+
+        var totalMaxPoints = subtasks.Sum(s => s.Bonus ? 0 : s.Points);
+        var countRatable   = subtasks.Count(s => !s.Bonus);
+
+        var resultSubtasks = subtasks
+            .OrderBy(s => s.SeqNo)
+            .Select(s =>
+            {
+                var ss = studentExam.StudentSubtasks.FirstOrDefault(x => x.SubtaskId == s.Id);
+                return new StudentExamResultSubtask(s.SeqNo, s.Description, s.Points, ss?.Result, ss?.Comment, s.Bonus);
+            })
+            .ToList();
+
+        var countRated = studentExam.StudentSubtasks.Count(ss => ss.Result.HasValue && !ss.Subtask.Bonus);
+        var allRated   = countRated == countRatable;
+
+        if (!allRated)
+            throw new NotFoundException("Results are not yet available for this exam.");
+
+        var totalPoints = (decimal?)studentExam.StudentSubtasks.Sum(ss => (ss.Result ?? 0m) * ss.Subtask.Points);
+        var percent     = totalMaxPoints > 0 ? Math.Round(totalPoints!.Value / totalMaxPoints * 100m, 2) : (decimal?)null;
+        var grade       = totalMaxPoints > 0 ? (int?)ExamHelper.CalculateGrade(totalPoints!.Value / totalMaxPoints) : null;
+
+        return (resultSubtasks, totalPoints, percent, grade);
+    }
+
+
+    public async Task<StudentCourseResult> GetStudentCourseResultAsync(string firstName, string lastName, string pin, string registrationCode)
+    {
+        var course = await _uow.Courses.GetCourseWithPINAsync(pin, includeExams: true) ?? throw new NotFoundException($"No course found with pin: {pin}.");
+
+        if (!course.CanShowResults)
+            throw new NotFoundException("Results are not available for this course.");
+
+        var studentCourse = await _uow.StudentCourses.GetStudentCourseAsync(course.Id, firstName, lastName, registrationCode) ?? throw new NotFoundException($"No course found for student");
+
+        var resultList = new List<StudentExamResult>();
+
+        foreach (var exam in course.Exams)
+        {
+            StudentExamResult examResult;
+
+            StudentExamResult ErrorResult(string status) => new StudentExamResult(status, exam.Description, exam.Date, StudentHelper.FullName(studentCourse.Student.FirstName, studentCourse.Student.LastName), [], null, null, null);
+
+            if (exam.CanShowResults)
+            {
+                var studentExam = await _uow.StudentExams.GetStudentExamAsync(exam.Id, studentCourse.StudentId);
+
+                if (studentExam is null)
+                {
+                    examResult = ErrorResult("Not registered for this exam.");
+                }
+                else
+                {
+                    try
+                    {
+                        var result = await GetStudentResultAsync(studentExam, exam);
+                        examResult = new StudentExamResult(
+                            null,
+                            exam.Description,
+                            exam.Date,
+                            StudentHelper.FullName(studentExam.Student.FirstName, studentExam.Student.LastName),
+                            result.resultSubtasks,
+                            result.totalPoints,
+                            result.percent,
+                            result.grade);
+
+                    }
+                    catch (NotFoundException e)
+                    {
+                        examResult  = ErrorResult(e.Message);
+                    }
+                }
+            }
+            else
+            {
+                examResult = ErrorResult("Results are not yet available for this exam.");
+            }
+
+            resultList.Add(examResult);
+        }
+
+        return new StudentCourseResult(course.Name, studentCourse.Student.FullName, resultList);
     }
 
     public async Task<IList<StudentExamOverview>> GetStudentExamOverviewsAsync(int examId)
@@ -61,16 +166,6 @@ public class StudentExamService : IStudentExamService
     public async Task<IList<StudentExamSummary>> GetStudentExamSummaryAsync(int examId)
     {
         return await _uow.StudentExams.GetStudentExamSummaryAsync(examId);
-    }
-
-    public async Task<IList<StudentExam>> GetStudentExamsForExamAsync(int examId, params string[] includeProperties)
-    {
-        return await _uow.StudentExams.GetNoTrackingAsync(s => s.ExamId == examId);
-    }
-
-    public async Task<IList<StudentExam>> GetStudentExamsAsync(params string[] includeProperties)
-    {
-        return await _uow.StudentExams.GetAsync(null, null, includeProperties);
     }
 
     public async Task<StudentExam?> GetStudentExamByIdAsync(int id, params string[] includeProperties)
@@ -97,23 +192,6 @@ public class StudentExamService : IStudentExamService
 
         await _uow.SaveChangesAsync();
         //await _hub.NotifyStudentExamUpdatedAsync(id);
-    }
-
-    public async Task<StudentExam> AddStudentExamAsync(StudentExam value)
-    {
-        if (value.Id != 0)
-        {
-            throw new IllegalValuesException("Id must be 0 for new entities");
-        }
-
-        //value.Created  = DateTime.Now;
-        //value.Modified = null;
-
-        await _uow.StudentExams.AddAsync(value);
-        await _uow.SaveChangesAsync();
-        //await _hub.NotifyStudentExamUpdatedAsync(value.Id);
-
-        return value;
     }
 
     public async Task DeleteStudentExamAsync(int id)

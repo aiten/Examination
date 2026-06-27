@@ -8,9 +8,11 @@ using Shared.Exceptions;
 
 using WebAPI.Filters;
 
-public record ExamRegistrationDto(string FirstName, string LastName, string? LoginName, int Pin);
+public record RegistrationExamDto(string FirstName, string LastName, string? LoginName, string Pin);
+public record RegistrationCourseDto(string FirstName, string LastName, string Pin);
 
-public record ExamRegistrationResultDto(int Id, string LastName, string FirstName, int Pin, string ExamDescription, DateOnly ExamDate, string RegistrationCode);
+public record RegistrationExamResultDto(int Id, string LastName, string FirstName, string? Pin, string ExamDescription, DateOnly ExamDate, string RegistrationCode);
+public record RegistrationCourseResultDto(int Id, string LastName, string FirstName, string? Pin, string CourseDescription, string RegistrationCode);
 
 public static class RegistrationEndpoints
 {
@@ -21,7 +23,7 @@ public static class RegistrationEndpoints
             .WithTags("Registration");
         // NO Auth required .RequireAuthorization(Settings.AdminPolicyName);
 
-        route.MapPost("", async (ExamRegistrationDto dto, IExamService examService, ITransactionProvider transactionProvider, ILoggerFactory loggerFactory) =>
+        route.MapPost("exam", async (RegistrationExamDto dto, IExamService examService, ITransactionProvider transactionProvider, ILoggerFactory loggerFactory) =>
             {
                 var logger = loggerFactory.CreateLogger(nameof(RegistrationEndpoints));
                 try
@@ -38,29 +40,65 @@ public static class RegistrationEndpoints
                         registration.Exam.Description);
 
                     return Results.Created($"/api/exam/{registration.ExamId}",
-                        new ExamRegistrationResultDto(
+                        new RegistrationExamResultDto(
                             registration.Id,
                             registration.Student.LastName,
                             registration.Student.FirstName,
-                            registration.Exam.Pin ?? 0,
+                            registration.Exam.Pin,
                             registration.Exam.Description,
                             registration.Exam.Date,
                             registration.RegistrationCode));
                 }
                 catch (IllegalValuesException ex)
                 {
-                    logger.LogWarning("Registration failed: '{LastName}, {FirstName}' Pin={Pin} Error={Error}",
+                    logger.LogWarning("Exam registration failed: '{LastName}, {FirstName}' Pin={Pin} Error={Error}",
                         dto.LastName, dto.FirstName, dto.Pin, ex.Message);
 
-                    return Results.Problem(
-                        statusCode: StatusCodes.Status400BadRequest,
-                        title: "Registration failed",
-                        detail: ex.Message);
+                    throw;
                 }
             })
-            .WithValidation<ExamRegistrationDto>()
+            .WithValidation<RegistrationExamDto>()
             .WithName("RegisterForExam")
-            .Produces<ExamRegistrationResultDto>(StatusCodes.Status201Created)
+            .Produces<RegistrationExamResultDto>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest);
+
+        route.MapPost("course", async (RegistrationCourseDto dto, ICourseService courseService, ITransactionProvider transactionProvider, ILoggerFactory loggerFactory) =>
+        {
+            var logger = loggerFactory.CreateLogger(nameof(RegistrationEndpoints));
+            try
+            {
+                using var trans = await transactionProvider.BeginTransactionAsync();
+
+                var registration = await courseService.RegisterStudentAsync(dto.FirstName, dto.LastName, dto.Pin);
+
+                await trans.CommitTransactionAsync();
+
+                logger.LogInformation("Registration success: '{LastName}, {FirstName}' Course={CourseName}",
+                    registration.Student.LastName,
+                    registration.Student.FirstName,
+                    registration.Course.Name);
+
+                return Results.Created($"/api/course/{registration.CourseId}",
+                    new RegistrationCourseResultDto(
+                        registration.Id,
+                        registration.Student.LastName,
+                        registration.Student.FirstName,
+                        registration.Course.Pin,
+                        registration.Course.Name,
+                        registration.RegistrationCode!));
+            }
+            catch (IllegalValuesException ex)
+            {
+                logger.LogWarning("Course registration failed: '{LastName}, {FirstName}' Pin={Pin} Error={Error}",
+                    dto.LastName, dto.FirstName, dto.Pin, ex.Message);
+
+                throw;
+            }
+
+        })
+        .WithValidation<RegistrationExamDto>()
+        .WithName("RegisterForCourse")
+        .Produces<RegistrationExamResultDto>(StatusCodes.Status201Created)
+        .ProducesProblem(StatusCodes.Status400BadRequest);
     }
 }

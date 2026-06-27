@@ -32,6 +32,23 @@ import { TeacherService } from '../services/teacher.service';
             required min="2020" max="2035" class="form-control" />
         </div>
         <div class="form-group">
+          <label>
+            <input type="checkbox" name="canRegister" [(ngModel)]="course().canRegister" />
+            Can Register
+          </label>
+        </div>
+        <div class="form-group">
+          <label>
+            <input type="checkbox" name="canShowResults" [(ngModel)]="course().canShowResults" />
+            Can Show Results
+          </label>
+        </div>
+        <div class="form-group">
+          <label>Pin (5 digits)</label>
+          <input type="text" name="pin" [(ngModel)]="course().pin"
+            pattern="[0-9]{5}" maxlength="5" class="form-control" />
+        </div>
+        <div class="form-group">
           <label>Subject *</label>
           <select name="subjectId" [(ngModel)]="course().subjectId" required class="form-control">
             <option [ngValue]="0" disabled>— select subject —</option>
@@ -84,7 +101,7 @@ import { TeacherService } from '../services/teacher.service';
   `
 })
 export class CourseFormComponent implements OnInit {
-  course = signal<Course>({ id: 0, name: '', year: 0, subjectId: 0, classIds: [], teacherIds: [] });
+  course = signal<Course>({ id: 0, name: '', year: 0, subjectId: 0, classIds: [], teacherIds: [], canRegister: true, canShowResults: false, pin: null });
   // Separate signal so filteredClasses computed reacts to year changes from ngModel
   year = signal(0);
 

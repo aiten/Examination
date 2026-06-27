@@ -3,13 +3,13 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { ExamOverview } from '../models/exam-overview.model';
 import { ExamService } from '../services/exam.service';
+import { ConfigService } from '../services/config.service';
 
-type SortCol = 'description' | 'teacher' | 'course' | 'date';
+type SortCol = 'description' | 'teacher' | 'date';
 
-function likeMatch(value: string, pattern: string): boolean {
-  if (!pattern) return true;
-  const regex = new RegExp('^' + pattern.replace(/%/g, '.*').replace(/_/g, '.') + '$', 'i');
-  return regex.test(value);
+interface CourseGroup {
+  course: string;
+  exams: ExamOverview[];
 }
 
 @Component({
@@ -21,6 +21,8 @@ function likeMatch(value: string, pattern: string): boolean {
     th.sortable:hover { background: #e2e8f0; }
     .sort-icon { margin-left: 4px; font-size: .8em; opacity: .5; }
     th.sort-active .sort-icon { opacity: 1; }
+    .course-section { margin-top: 2rem; }
+    .course-section h3 { margin-bottom: .5rem; }
   `],
   template: `
     <div class="page">
@@ -29,54 +31,54 @@ function likeMatch(value: string, pattern: string): boolean {
         <a routerLink="/exams/new" class="btn btn-primary">+ New Exam</a>
       </div>
       <div class="filter-bar">
-        <input class="form-control" placeholder="Teacher (e.g. stein or %stein)" [ngModel]="filterTeacher()" (ngModelChange)="filterTeacher.set($event)" />
-        <input class="form-control" placeholder="Course (e.g. pos or %htl)" [ngModel]="filterCourse()" (ngModelChange)="filterCourse.set($event)" />
+        <input type="number" class="form-control" placeholder="School year (e.g. 2025)"
+               [ngModel]="filterYear()"
+               (ngModelChange)="onYearChange($event)" />
       </div>
       @if (loading()) {
         <p class="empty">Loading...</p>
       }
-      @if (!loading() && filteredExams().length > 0) {
-        <table class="table">
-          <thead>
-            <tr>
-              <th class="sortable" [class.sort-active]="sortCol() === 'description'" (click)="sort('description')">
-                Description <span class="sort-icon">{{ sortIcon('description') }}</span>
-              </th>
-              <th class="sortable" [class.sort-active]="sortCol() === 'teacher'" (click)="sort('teacher')">
-                Teacher <span class="sort-icon">{{ sortIcon('teacher') }}</span>
-              </th>
-              <th class="sortable" [class.sort-active]="sortCol() === 'course'" (click)="sort('course')">
-                Course <span class="sort-icon">{{ sortIcon('course') }}</span>
-              </th>
-              <th class="sortable" [class.sort-active]="sortCol() === 'date'" (click)="sort('date')">
-                Date <span class="sort-icon">{{ sortIcon('date') }}</span>
-              </th>
-              <th>Time</th>
-              <th>PIN</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (e of filteredExams(); track e.id) {
-              <tr>
-                <td>{{ e.description }}</td>
-                <td>{{ e.teacher }}</td>
-                <td>{{ e.course }}</td>
-                <td>{{ formatDate(e.date) }}</td>
-                <td>{{ formatTime(e.from) }} – {{ formatTime(e.to) }}</td>
-                <td>{{ e.pin ?? '' }}</td>
-                <td>
-                  <a [routerLink]="['/exams', e.id, 'students']" class="btn btn-sm">Students</a>
-                  <a [routerLink]="['/exams', e.id, 'subtasks']" class="btn btn-sm">Subtasks</a>
-                  <a [routerLink]="['/exams', e.id]" class="btn btn-sm">Edit</a>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      }
       @if (!loading() && exams().length === 0) {
         <p class="empty">No exams found.</p>
+      }
+      @for (group of groupedExams(); track group.course) {
+        <div class="course-section">
+          <h3>{{ group.course }}</h3>
+          <table class="table">
+            <thead>
+              <tr>
+                <th class="sortable" [class.sort-active]="sortCol() === 'description'" (click)="sort('description')">
+                  Description <span class="sort-icon">{{ sortIcon('description') }}</span>
+                </th>
+                <th class="sortable" [class.sort-active]="sortCol() === 'teacher'" (click)="sort('teacher')">
+                  Teacher <span class="sort-icon">{{ sortIcon('teacher') }}</span>
+                </th>
+                <th class="sortable" [class.sort-active]="sortCol() === 'date'" (click)="sort('date')">
+                  Date <span class="sort-icon">{{ sortIcon('date') }}</span>
+                </th>
+                <th>Time</th>
+                <th>PIN</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (e of group.exams; track e.id) {
+                <tr>
+                  <td>{{ e.description }}</td>
+                  <td>{{ e.teacher }}</td>
+                  <td>{{ formatDate(e.date) }}</td>
+                  <td>{{ formatTime(e.from) }} – {{ formatTime(e.to) }}</td>
+                  <td>{{ e.pin ?? '' }}</td>
+                  <td>
+                    <a [routerLink]="['/exams', e.id, 'students']" class="btn btn-sm">Students</a>
+                    <a [routerLink]="['/exams', e.id, 'subtasks']" class="btn btn-sm">Subtasks</a>
+                    <a [routerLink]="['/exams', e.id]" class="btn btn-sm">Edit</a>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
       }
     </div>
   `
@@ -85,44 +87,60 @@ export class ExamListComponent implements OnInit {
   exams = signal<ExamOverview[]>([]);
   loading = signal(false);
 
-  filterTeacher = signal('');
-  filterCourse = signal('');
+  filterYear = signal<number | null>(null);
   sortCol = signal<SortCol>('date');
   sortAsc = signal(false);
 
-  filteredExams = computed(() => {
+  groupedExams = computed((): CourseGroup[] => {
     const col = this.sortCol();
     const asc = this.sortAsc();
 
-    const filtered = this.exams().filter(e => {
-      const tf = this.filterTeacher();
-      const cf = this.filterCourse();
-      const tp = tf && !tf.endsWith('%') ? tf + '%' : tf;
-      const cp = cf && !cf.endsWith('%') ? cf + '%' : cf;
-      return likeMatch(e.teacher, tp) && likeMatch(e.course, cp);
-    });
-
-    return filtered.slice().sort((a, b) => {
+    const sorted = this.exams().slice().sort((a, b) => {
       let cmp: number;
       switch (col) {
         case 'description': cmp = a.description.localeCompare(b.description, undefined, { sensitivity: 'base' }); break;
         case 'teacher':     cmp = a.teacher.localeCompare(b.teacher, undefined, { sensitivity: 'base' }); break;
-        case 'course':      cmp = a.course.localeCompare(b.course, undefined, { sensitivity: 'base' }); break;
         case 'date':        cmp = a.date.localeCompare(b.date); break;
         default:            cmp = 0;
       }
       return asc ? cmp : -cmp;
     });
+
+    const map = new Map<string, ExamOverview[]>();
+    for (const e of sorted) {
+      const group = map.get(e.course) ?? [];
+      group.push(e);
+      map.set(e.course, group);
+    }
+
+    return Array.from(map.entries())
+      .sort(([a], [b]) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+      .map(([course, exams]) => ({ course, exams }));
   });
 
-  constructor(private service: ExamService) {}
+  constructor(private service: ExamService, private configService: ConfigService) {}
 
   ngOnInit(): void {
+    this.configService.getConfig().subscribe({
+      next: cfg => {
+        this.filterYear.set(cfg.currentSchoolYear);
+        this.loadExams();
+      },
+      error: () => this.loadExams()
+    });
+  }
+
+  private loadExams(): void {
     this.loading.set(true);
-    this.service.getOverview().subscribe({
+    this.service.getOverview(this.filterYear()).subscribe({
       next: data => { this.exams.set(data); this.loading.set(false); },
       error: () => { this.loading.set(false); }
     });
+  }
+
+  onYearChange(value: number | null): void {
+    this.filterYear.set(value || null);
+    this.loadExams();
   }
 
   sort(col: SortCol): void {

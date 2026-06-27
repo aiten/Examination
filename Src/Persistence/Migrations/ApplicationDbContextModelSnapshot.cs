@@ -146,10 +146,22 @@ namespace Persistence.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("CanRegister")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("CanShowResults")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("Pin")
+                        .HasMaxLength(5)
+                        .HasColumnType("nvarchar(5)");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
@@ -206,8 +218,9 @@ namespace Persistence.Migrations
                     b.Property<DateTime?>("Modified")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("Pin")
-                        .HasColumnType("int");
+                    b.Property<string>("Pin")
+                        .HasMaxLength(5)
+                        .HasColumnType("nvarchar(5)");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
@@ -258,6 +271,43 @@ namespace Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("Student", (string)null);
+                });
+
+            modelBuilder.Entity("Persistence.Model.StudentCourse", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CourseId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RegistrationCode")
+                        .HasMaxLength(5)
+                        .HasColumnType("nvarchar(5)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("StudentId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourseId");
+
+                    b.HasIndex("RegistrationCode", "CourseId")
+                        .IsUnique()
+                        .HasFilter("[RegistrationCode] IS NOT NULL");
+
+                    b.HasIndex("StudentId", "CourseId")
+                        .IsUnique();
+
+                    b.ToTable("StudentCourse", (string)null);
                 });
 
             modelBuilder.Entity("Persistence.Model.StudentExam", b =>
@@ -537,6 +587,25 @@ namespace Persistence.Migrations
                     b.Navigation("Teacher");
                 });
 
+            modelBuilder.Entity("Persistence.Model.StudentCourse", b =>
+                {
+                    b.HasOne("Persistence.Model.Course", "Course")
+                        .WithMany("StudentCourses")
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Persistence.Model.Student", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Course");
+
+                    b.Navigation("Student");
+                });
+
             modelBuilder.Entity("Persistence.Model.StudentExam", b =>
                 {
                     b.HasOne("Persistence.Model.Exam", "Exam")
@@ -589,6 +658,8 @@ namespace Persistence.Migrations
             modelBuilder.Entity("Persistence.Model.Course", b =>
                 {
                     b.Navigation("Exams");
+
+                    b.Navigation("StudentCourses");
                 });
 
             modelBuilder.Entity("Persistence.Model.Exam", b =>

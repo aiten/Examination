@@ -11,7 +11,7 @@ public class StudentSubtaskConfiguration : IEntityTypeConfiguration<StudentSubta
 {
     public void Configure(EntityTypeBuilder<StudentSubtask> builder)
     {
-        builder.ToTable("StudentSubtask");
+        builder.ToTable(nameof(StudentSubtask));
 
         builder.HasKey(ss => ss.Id);
 

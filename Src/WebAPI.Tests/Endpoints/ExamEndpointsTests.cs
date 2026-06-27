@@ -71,9 +71,9 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     {
         var overviews = new List<ExamOverview>
         {
-            new(1, "Kinder, lernt!", 12345, "Mustermann", "2AHIF", new DateOnly(2026, 5, 7), new TimeOnly(8, 0), new TimeOnly(10, 0), ["X", "Y"], ["S1", "S2"])
+            new(1, "Kinder, lernt!", "12345", "Mustermann", "2AHIF", 2, new DateOnly(2026, 5, 7), new TimeOnly(8, 0), new TimeOnly(10, 0), ["X", "Y"], ["S1", "S2"])
         };
-        _examService.GetExamOverviewsAsync(null, null).ReturnsForAnyArgs(overviews);
+        _examService.GetExamOverviewsAsync(null, null, null).ReturnsForAnyArgs(overviews);
 
         var response = await _client.GetAsync("/api/exam/overview");
         var result   = await response.Content.ReadFromJsonAsync<List<ExamOverview>>();
@@ -196,7 +196,7 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task PostExam_PinOutOfRange_ReturnsBadRequest()
     {
-        var dto = new ExamDto(0, "Test", (int)ExamType.Standard, 1, 1, new DateOnly(2026, 1, 1), new TimeOnly(8, 0), new TimeOnly(10, 0), 99, false, false);
+        var dto = new ExamDto(0, "Test", (int)ExamType.Standard, 1, 1, new DateOnly(2026, 1, 1), new TimeOnly(8, 0), new TimeOnly(10, 0), "99", false, false);
 
         var response = await _client.PostAsJsonAsync("/api/exam", dto);
 
@@ -206,9 +206,9 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task PostExam_ValidPin_ReturnsCreated()
     {
-        var dto     = new ExamDto(0, "Test", (int)ExamType.Standard, 1, 1, new DateOnly(2026, 1, 1), new TimeOnly(8, 0), new TimeOnly(10, 0), 12345, false, false);
+        var dto     = new ExamDto(0, "Test", (int)ExamType.Standard, 1, 1, new DateOnly(2026, 1, 1), new TimeOnly(8, 0), new TimeOnly(10, 0), "12345", false, false);
         var teacher = new Teacher { Id = 1, LastName    = "Mustermann" };
-        var created = new Exam { Id    = 1, Description = "Test", TeacherId = 1, Teacher = teacher, Created = DateTime.Today, ExamType = ExamType.Standard, Pin = 12345, From = new TimeOnly(8, 0), To = new TimeOnly(10, 0) };
+        var created = new Exam { Id    = 1, Description = "Test", TeacherId = 1, Teacher = teacher, Created = DateTime.Today, ExamType = ExamType.Standard, Pin = "12345", From = new TimeOnly(8, 0), To = new TimeOnly(10, 0) };
 
         _examService.AddExamAsync(Arg.Any<Exam>()).Returns(created);
 
@@ -220,17 +220,17 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task RegisterForExam_ValidRegistration_ReturnsCreated()
     {
-        var exam         = new Exam { Id        = 1, Description = "Test", CourseId  = 1, Pin = 12345, Date = new DateOnly(2026, 1, 1), ExamType = ExamType.Standard };
+        var exam         = new Exam { Id        = 1, Description = "Test", CourseId  = 1, Pin = "12345", Date = new DateOnly(2026, 1, 1), ExamType = ExamType.Standard };
         var student      = new Student { Id     = 1, FirstName   = "Alice", LastName = "Smith" };
         var registration = new StudentExam { Id = 1, StudentId   = 1, ExamId         = 1, LoginName = "alice", RegistrationCode = "ABC12", Student = student, Exam = exam };
         var trans        = Substitute.For<ITransaction>();
-        var dto          = new ExamRegistrationDto("Alice", "Smith", "alice", 12345);
+        var dto          = new RegistrationExamDto("Alice", "Smith", "alice", "12345");
 
-        _examService.RegisterStudentAsync("Alice", "Smith", "alice", 12345).Returns(registration);
+        _examService.RegisterStudentAsync("Alice", "Smith", "alice", "12345").Returns(registration);
         _uow.BeginTransactionAsync().Returns(trans);
 
-        var response = await _client.PostAsJsonAsync("/api/registration", dto);
-        var result   = await response.Content.ReadFromJsonAsync<ExamRegistrationResultDto>();
+        var response = await _client.PostAsJsonAsync("/api/registration/exam", dto);
+        var result   = await response.Content.ReadFromJsonAsync<RegistrationExamResultDto>();
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
         result!.LastName.Should().Be("Smith");
@@ -242,10 +242,10 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task RegisterForExam_InvalidPin_ReturnsBadRequest()
     {
-        var dto = new ExamRegistrationDto("Alice", "Smith", "alice", 12345);
-        _examService.RegisterStudentAsync(default!, default!, default!, default).ReturnsForAnyArgs<StudentExam>(_ => throw new IllegalValuesException("No exam found with PIN 12345"));
+        var dto = new RegistrationExamDto("Alice", "Smith", "alice", "12345");
+        _examService.RegisterStudentAsync(default!, default!, default!, "").ReturnsForAnyArgs<StudentExam>(_ => throw new IllegalValuesException("No exam found with PIN 12345"));
 
-        var response = await _client.PostAsJsonAsync("/api/registration", dto);
+        var response = await _client.PostAsJsonAsync("/api/registration/exam", dto);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -253,10 +253,10 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task RegisterForExam_StudentNotFound_ReturnsBadRequest()
     {
-        var dto = new ExamRegistrationDto("Unknown", "User", "unknown", 12345);
-        _examService.RegisterStudentAsync(default!, default!, default!, default).ReturnsForAnyArgs<StudentExam>(_ => throw new IllegalValuesException("No student found with name 'Unknown User'"));
+        var dto = new RegistrationExamDto("Unknown", "User", "unknown", "12345");
+        _examService.RegisterStudentAsync(default!, default!, default!, "").ReturnsForAnyArgs<StudentExam>(_ => throw new IllegalValuesException("No student found with name 'Unknown User'"));
 
-        var response = await _client.PostAsJsonAsync("/api/registration", dto);
+        var response = await _client.PostAsJsonAsync("/api/registration/exam", dto);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -264,10 +264,10 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task RegisterForExam_StudentNotInClass_ReturnsBadRequest()
     {
-        var dto = new ExamRegistrationDto("Alice", "Smith", "alice", 12345);
-        _examService.RegisterStudentAsync(default!, default!, default!, default).ReturnsForAnyArgs<StudentExam>(_ => throw new IllegalValuesException("Student 'Alice Smith' is not enrolled in the class of this exam"));
+        var dto = new RegistrationExamDto("Alice", "Smith", "alice", "12345");
+        _examService.RegisterStudentAsync(default!, default!, default!, "").ReturnsForAnyArgs<StudentExam>(_ => throw new IllegalValuesException("Student 'Alice Smith' is not enrolled in the class of this exam"));
 
-        var response = await _client.PostAsJsonAsync("/api/registration", dto);
+        var response = await _client.PostAsJsonAsync("/api/registration/exam", dto);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -275,10 +275,10 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task RegisterForExam_AlreadyRegistered_ReturnsBadRequest()
     {
-        var dto = new ExamRegistrationDto("Alice", "Smith", "alice", 12345);
-        _examService.RegisterStudentAsync(default!, default!, default!, default).ReturnsForAnyArgs<StudentExam>(_ => throw new IllegalValuesException("Student 'Alice Smith' is already registered for this exam"));
+        var dto = new RegistrationExamDto("Alice", "Smith", "alice", "12345");
+        _examService.RegisterStudentAsync(default!, default!, default!, "").ReturnsForAnyArgs<StudentExam>(_ => throw new IllegalValuesException("Student 'Alice Smith' is already registered for this exam"));
 
-        var response = await _client.PostAsJsonAsync("/api/registration", dto);
+        var response = await _client.PostAsJsonAsync("/api/registration/exam", dto);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -286,19 +286,9 @@ public class ExamEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task RegisterForExam_InvalidPinFormat_ReturnsBadRequest()
     {
-        var dto = new ExamRegistrationDto("Alice", "Smith", "alice", 99);
+        var dto = new RegistrationExamDto("Alice", "Smith", "alice", "99");
 
-        var response = await _client.PostAsJsonAsync("/api/registration", dto);
-
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-    }
-
-    [Fact]
-    public async Task RegisterForExam_EmptyLoginName_ReturnsBadRequest()
-    {
-        var dto = new ExamRegistrationDto("Alice", "Smith", "", 12345);
-
-        var response = await _client.PostAsJsonAsync("/api/registration", dto);
+        var response = await _client.PostAsJsonAsync("/api/registration/exam", dto);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }

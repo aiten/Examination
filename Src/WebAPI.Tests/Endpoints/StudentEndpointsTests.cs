@@ -156,7 +156,7 @@ public class StudentEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     public async Task PutStudent_NotFound_ReturnsNotFound()
     {
         var dto = new StudentDto(99, "Alice", "Smith", Array.Empty<int>());
-        _studentService.SingleStudentAsync(default, null!)
+        _studentService.UpdateStudentAsync(99, "Alice", "Smith", Array.Empty<int>())
             .ReturnsForAnyArgs(Task.FromException<Student>(new NotFoundException("Student 99 not found")));
 
         var response = await _client.PutAsJsonAsync("/api/student/99", dto);

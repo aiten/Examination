@@ -9,7 +9,7 @@ public class StudentExamConfiguration : IEntityTypeConfiguration<StudentExam>
 {
     public void Configure(EntityTypeBuilder<StudentExam> builder)
     {
-        builder.ToTable("StudentExam");
+        builder.ToTable(nameof(StudentExam));
 
         builder.HasKey(se => se.Id);
 

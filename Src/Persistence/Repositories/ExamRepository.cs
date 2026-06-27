@@ -9,13 +9,13 @@ using Microsoft.Extensions.Logging;
 using Persistence.Model;
 using Persistence.QueryResult;
 
+using Shared;
+
 public interface IExamRepository : IGenericRepository<Exam>
 {
-    Task<IList<ExamOverview>> GetExamOverviewsAsync(int? teacherId, int? courseId);
+    Task<IList<ExamOverview>> GetExamOverviewsAsync(int? teacherId, int? courseId, int? courseYear);
 
-    Task<Exam?> GetExamWithPINAsync(int pin);
-
-    Task<int> CalculateGrade(int id, decimal percent);
+    Task<Exam?> GetExamWithPINAsync(string pin);
 }
 
 public class ExamRepository : GenericRepository<Exam>, IExamRepository
@@ -29,7 +29,7 @@ public class ExamRepository : GenericRepository<Exam>, IExamRepository
         _logger    = logger;
     }
 
-    public async Task<Exam?> GetExamWithPINAsync(int pin)
+    public async Task<Exam?> GetExamWithPINAsync(string pin)
     {
         return await DbSet
             .Include(e => e.Course)
@@ -37,20 +37,26 @@ public class ExamRepository : GenericRepository<Exam>, IExamRepository
             .FirstOrDefaultAsync(e => e.Pin == pin);
     }
 
-    public async Task<IList<ExamOverview>> GetExamOverviewsAsync(int? teacherId, int? courseId)
+    public async Task<IList<ExamOverview>> GetExamOverviewsAsync(int? teacherId, int? courseId, int? courseYear)
     {
         var query = _dbContext.Exams.AsNoTracking();
 
         if (teacherId is not null)
         {
             _logger.LogInformation("Query with teacher={0}", teacherId);
-            query = query.Where(j => j.TeacherId == teacherId);
+            query = query.Where(e => e.TeacherId == teacherId);
         }
 
         if (courseId is not null)
         {
             _logger.LogInformation("Query with course={0}", courseId);
-            query = query.Where(j => j.CourseId == courseId);
+            query = query.Where(e => e.CourseId == courseId);
+        }
+
+        if (courseYear is not null)
+        {
+            _logger.LogInformation("Query with courseYear={0}", courseYear);
+            query = query.Where(e => e.Course.Year == courseYear);
         }
 
         return await query.Select(e => new ExamOverview(
@@ -59,29 +65,13 @@ public class ExamRepository : GenericRepository<Exam>, IExamRepository
                 e.Pin,
                 $"{e.Teacher.LastName}, {e.Teacher.FirstName}",
                 e.Course.Name,
+                e.Course.Year,
                 e.Date,
                 e.From,
                 e.To,
                 e.Subtasks.Select(s => s.Description).ToList(),
-                e.StudentExams.Select(se => $"{se.Student.LastName}, {se.Student.FirstName}").ToList()
+                e.StudentExams.Select(se => StudentHelper.FullName(se.Student.FirstName,se.Student.LastName)).ToList()
             ))
             .ToListAsync();
-    }
-
-    public async Task<int> CalculateGrade(int id, decimal percent)
-    {
-        return CalculateGrade(percent);
-    }
-
-    public static int CalculateGrade(decimal percent)
-    {
-        return percent switch
-        {
-            >= 0.88m => 1,
-            >= 0.75m => 2,
-            >= 0.63m => 3,
-            >= 0.5m  => 4,
-            _        => 5
-        };
     }
 }

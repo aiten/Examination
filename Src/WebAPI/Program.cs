@@ -210,6 +210,7 @@ app.MapSubtaskStudentEndpoints("/api/exam");
 app.MapStudentEndpoints("/api/student");
 app.MapRegistrationEndpoints("/api/registration");
 app.MapResultEndpoints("/api/result");
+app.MapConfigEndpoints("/api/config");
 
 app.MapHub<ExaminationHub>("/hubs/examination").RequireCors("SignalRCors");
 

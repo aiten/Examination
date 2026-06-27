@@ -7,7 +7,7 @@ export interface Exam {
   date: string;
   from: string;
   to: string;
-  pin: number | null;
+  pin: string | null;
   canRegister: boolean;
   canShowResults: boolean;
 }

@@ -1,18 +1,20 @@
 ﻿namespace Service;
 
+using Microsoft.Extensions.Logging;
+
+using Persistence;
+using Persistence.Model;
+using Persistence.QueryResult;
+
+using Service.Tools;
+
+using Shared;
+using Shared.Exceptions;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-
-using Microsoft.Extensions.Logging;
-
-using Persistence;
-
-using Shared.Exceptions;
-
-using Persistence.Model;
-using Persistence.QueryResult;
 
 public interface IExamService
 {
@@ -28,9 +30,9 @@ public interface IExamService
 
     Task DeleteExamAsync(int id);
 
-    Task<IList<ExamOverview>> GetExamOverviewsAsync(int?  teacherId, int?   courseId);
+    Task<IList<ExamOverview>> GetExamOverviewsAsync(int?  teacherId, int?   courseId, int? courseYear);
 
-    Task<StudentExam>         RegisterStudentAsync(string firstName, string lastName, string? loginName, int pin);
+    Task<StudentExam>         RegisterStudentAsync(string firstName, string lastName, string? loginName, string pin);
 }
 
 public class ExamService : IExamService
@@ -106,28 +108,31 @@ public class ExamService : IExamService
         await _hub.NotifyExamUpdatedAsync(id);
     }
 
-    public async Task<IList<ExamOverview>> GetExamOverviewsAsync(int? teacherId, int? courseId)
+    public async Task<IList<ExamOverview>> GetExamOverviewsAsync(int? teacherId, int? courseId, int? courseYear)
     {
-        return await _uow.Exams.GetExamOverviewsAsync(teacherId, courseId);
+        return await _uow.Exams.GetExamOverviewsAsync(teacherId, courseId, courseYear);
     }
 
-    public async Task<StudentExam> RegisterStudentAsync(string firstName, string lastName, string? loginName, int pin)
+    public async Task<StudentExam> RegisterStudentAsync(string firstName, string lastName, string? loginName, string pin)
     {
         var exam = await _uow.Exams.GetExamWithPINAsync(pin);
         if (exam is null)
             throw new IllegalValuesException($"No exam found with PIN {pin}");
 
+        if (!exam.CanRegister)
+            throw new IllegalValuesException($"Exam registration with PIN {pin} is not permitted");
+
         var student = await _uow.Students.GetStudentByNameAsync(lastName, firstName);
         if (student is null)
-            throw new IllegalValuesException($"No student found with name '{lastName}, {firstName}'");
+            throw new IllegalValuesException($"No student found with name '{StudentHelper.FullName(firstName, lastName)}'");
 
         var course = exam.Course;
         if (course is null || !course.Classes.Any(c => student.Classes.Any(sc => sc.Id == c.Id)))
-            throw new IllegalValuesException($"Student '{lastName}, {firstName} ' is not enrolled in any class of this exam's course");
+            throw new IllegalValuesException($"Student '{StudentHelper.FullName(firstName, lastName)}' is not enrolled in any class of this exam's course");
 
         bool alreadyRegistered = await _uow.StudentExams.AnyAsync(exam.Id, student.Id);
         if (alreadyRegistered)
-            throw new IllegalValuesException($"Student '{lastName}, {firstName}' is already registered for this exam");
+            throw new IllegalValuesException($"Student '{StudentHelper.FullName(firstName, lastName)}' is already registered for this exam");
 
         var registration = new StudentExam
         {
@@ -140,6 +145,21 @@ public class ExamService : IExamService
         };
 
         await _uow.StudentExams.AddAsync(registration);
+
+        // check, if a StudentCourse exists and created
+
+        var studentCourse = await _uow.StudentCourses.GetByStudentAndCourseAsync(student.Id, course.Id);
+
+        if (studentCourse is null)
+        {
+            studentCourse = new StudentCourse()
+            {
+                Course  = course,
+                Student = student,
+            };
+            await _uow.StudentCourses.AddAsync(studentCourse);
+        }
+
         await _uow.SaveChangesAsync();
 
         return registration;
@@ -147,13 +167,6 @@ public class ExamService : IExamService
 
     private async Task<string> GenerateUniqueRegistrationCodeAsync(int examId)
     {
-        var    rng = Random.Shared;
-        string code;
-        do
-        {
-            code = rng.Next(10000, 100000).ToString();
-        } while (await _uow.StudentExams.AnyAsync(examId, code));
-
-        return code;
+        return await ServiceHelper.GenerateUniqueRegistrationCodeAsync(async (code) => await _uow.StudentExams.AnyAsync(examId, code));
     }
 }

@@ -4,9 +4,9 @@ using FluentValidation;
 
 using WebAPI.Endpoints;
 
-public class ExamRegistrationDtoValidator : AbstractValidator<ExamRegistrationDto>
+public class RegistrationCourseDtoValidator : AbstractValidator<RegistrationCourseDto>
 {
-    public ExamRegistrationDtoValidator()
+    public RegistrationCourseDtoValidator()
     {
         RuleFor(x => x.FirstName)
             .NotEmpty()
@@ -18,13 +18,9 @@ public class ExamRegistrationDtoValidator : AbstractValidator<ExamRegistrationDt
             .MaximumLength(64)
             .WithMessage("LastName must not be empty and at most 64 characters.");
 
-        RuleFor(x => x.LoginName)
-            .MaximumLength(32)
-            .WithMessage("LoginName must be at most 32 characters.")
-            .When(x => x.LoginName is not null);
-
         RuleFor(x => x.Pin)
-            .InclusiveBetween(10000, 99999)
-            .WithMessage("Pin must be between 10000 and 99999.");
+            .NotEmpty()
+            .Matches(@"^\d{5}$")
+            .WithMessage("Pin must be exactly 5 digits.");
     }
 }

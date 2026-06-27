@@ -30,8 +30,8 @@ import { SignalRService } from '../services/signalr.service';
           <textarea name="description" [(ngModel)]="exam().description" required rows="3" class="form-control"></textarea>
         </div>
         <div class="form-group">
-          <label>PIN (10000–99999)</label>
-          <input type="number" name="pin" [(ngModel)]="exam().pin" min="10000" max="99999" class="form-control" />
+          <label>PIN (5 digits)</label>
+          <input type="text" name="pin" [(ngModel)]="exam().pin" pattern="[0-9]{5}" maxlength="5" class="form-control" />
         </div>
         <div class="form-group">
           <label class="checkbox-label">

@@ -19,14 +19,10 @@ public interface IStudentSubtaskService
     Task CheckValidSubtask(int id, int expectedExamId, int expectedSubtaskId);
     Task CheckValidStudentExam(int id, int expectedExamId, int expectedStudentExamId);
 
-    Task CheckSubtaskBelongsToExam(int expectedExamId, int subtaskId);
-    Task CheckStudentExamBelongsToExam(int expectedExamId, int studentExamId);
-
     Task<IList<StudentSubtask>> GetAllForSubtaskAsync(int examId, int subtaskId);
 
     Task<IList<StudentSubtask>> GetAllForStudentAsync(int examId, int studentExamId);
 
-    Task<IList<StudentSubtask>> GetStudentSubtasksAsync(params string[] includeProperties);
 
     Task<StudentSubtask?> GetStudentSubtaskByIdAsync(int id, params string[] includeProperties);
 
@@ -35,8 +31,6 @@ public interface IStudentSubtaskService
     Task UpdateStudentSubtaskAsync(int id, int examId, StudentSubtask value);
 
     Task<StudentSubtask> AddStudentSubtaskAsync(int examId, StudentSubtask value);
-
-    Task DeleteStudentSubtaskAsync(int id);
 }
 
 public class StudentSubtaskService : IStudentSubtaskService
@@ -119,11 +113,6 @@ public class StudentSubtaskService : IStudentSubtaskService
         return await _uow.StudentSubtasks.GetAllForSubtaskAsync(examId, subtaskId);
     }
 
-    public async Task<IList<StudentSubtask>> GetStudentSubtasksAsync(params string[] includeProperties)
-    {
-        return await _uow.StudentSubtasks.GetAsync(null, null, includeProperties);
-    }
-
     public async Task<StudentSubtask?> GetStudentSubtaskByIdAsync(int id, params string[] includeProperties)
     {
         return await _uow.StudentSubtasks.GetByIdAsync(id, includeProperties);
@@ -175,14 +164,5 @@ public class StudentSubtaskService : IStudentSubtaskService
         //await _hub.NotifyStudentSubtaskUpdatedAsync(value.Id);
 
         return value;
-    }
-
-    public async Task DeleteStudentSubtaskAsync(int id)
-    {
-        var entity = await SingleStudentSubtaskAsync(id);
-
-        _uow.StudentSubtasks.Remove(entity);
-        await _uow.SaveChangesAsync();
-        // await _hub.NotifyStudentSubtaskUpdatedAsync(id);
     }
 }

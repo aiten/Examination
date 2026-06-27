@@ -1,6 +1,6 @@
 import { Component, computed, effect, ElementRef, ViewChild } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { RegistrationService } from '../services/registration.service';
+import { ExamRegistrationService } from '../services/exam-registration.service';
 import QRCode from 'qrcode';
 
 @Component({
@@ -33,25 +33,25 @@ import QRCode from 'qrcode';
             <canvas #qrCanvas></canvas>
           </div>
           <div class="form-actions">
-            <a [routerLink]="['/result']" [queryParams]="resultQueryParams()" class="btn btn-primary">View My Result</a>
+            <a [routerLink]="['/result/exam']" [queryParams]="resultQueryParams()" class="btn btn-primary">View My Result</a>
           </div>
         </div>
       </div>
     } @else {
       <div class="page">
-        <p class="empty">No registration result. <a routerLink="/registration">Go back</a>.</p>
+        <p class="empty">No registration result. <a routerLink="/registration/exam">Go back</a>.</p>
       </div>
     }
   `
 })
-export class RegisterResultComponent {
+export class ExamRegistrationResultComponent {
   @ViewChild('qrCanvas') qrCanvas!: ElementRef<HTMLCanvasElement>;
 
   result;
   resultQueryParams;
   resultUrl;
 
-  constructor(private service: RegistrationService) {
+  constructor(private service: ExamRegistrationService) {
     this.result = service.result;
     this.resultQueryParams = computed(() => {
       const r = this.result();
@@ -67,7 +67,7 @@ export class RegisterResultComponent {
         pin: String(r.pin),
         registrationCode: r.registrationCode
       });
-      return `${window.location.origin}/result?${params}`;
+      return `${window.location.origin}/result/exam?${params}`;
     });
 
     effect(() => {

@@ -6,9 +6,10 @@ using System.Collections.Generic;
 public record ExamOverview(
     int                 Id,
     string              Description,
-    int?                Pin,
+    string?             Pin,
     string              Teacher,
     string              Course,
+    int                 CourseYear,
     DateOnly            Date,
     TimeOnly            From,
     TimeOnly            To,
