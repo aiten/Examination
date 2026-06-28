@@ -51,6 +51,7 @@ textarea.form-control { resize: vertical; }
 .filter-bar .form-control { max-width: 260px; }
 
 .input-narrow { width: 80px; padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; font-size: .9rem; }
+.input-date  { width: 150px; padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; font-size: .9rem; }
 .input-wide { width: 100%; min-width: 160px; padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; font-size: .9rem; }
 
 .empty { color: #888; padding: 16px 0; }

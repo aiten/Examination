@@ -45,7 +45,7 @@ import { ExamService } from '../services/exam.service';
                   <td>{{ s.bonus ? '(' + s.points + ')' : s.points }}</td>
                   @if (examType() === 1) {
                     <td>
-                      <input type="date" [(ngModel)]="s.date" [name]="'date_' + s.id" class="input-narrow" />
+                      <input type="date" [(ngModel)]="s.date" [name]="'date_' + s.id" class="input-date" />
                     </td>
                   }
                   <td>

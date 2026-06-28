@@ -24,7 +24,8 @@ interface StudentRow {
   standalone: true,
   imports: [FormsModule, RouterModule],
   styles: [`
-    .input-narrow { width: 80px; padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; font-size: .95rem; }
+    .input-narrow { width: 80px;  padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; font-size: .95rem; }
+    .input-date   { width: 150px; padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; font-size: .95rem; }
     .input-wide { width: 100%; padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; font-size: .95rem; box-sizing: border-box; }
   `],
   template: `
@@ -60,7 +61,7 @@ interface StudentRow {
                   <td>{{ row.firstName }}</td>
                   @if (isParticipation()) {
                     <td>
-                      <input type="date" [(ngModel)]="row.date" [name]="'date_' + row.studentExamId" class="input-narrow" />
+                      <input type="date" [(ngModel)]="row.date" [name]="'date_' + row.studentExamId" class="input-date" />
                     </td>
                   }
                   <td>
