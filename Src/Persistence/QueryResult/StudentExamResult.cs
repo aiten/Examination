@@ -18,7 +18,7 @@ public record StudentExamResultSubtask(
 public record StudentExamResult(
     string?                         Status,
     string                          ExamDescription,
-    DateOnly                        ExamDate,
+    DateOnly?                       ExamDate,
     string                          StudentName,
     IList<StudentExamResultSubtask> Subtasks,
     decimal?                        TotalPoints,

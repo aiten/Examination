@@ -100,7 +100,7 @@ export class ExamListComponent implements OnInit {
       switch (col) {
         case 'description': cmp = a.description.localeCompare(b.description, undefined, { sensitivity: 'base' }); break;
         case 'teacher':     cmp = a.teacher.localeCompare(b.teacher, undefined, { sensitivity: 'base' }); break;
-        case 'date':        cmp = a.date.localeCompare(b.date); break;
+        case 'date':        cmp = (a.date ?? '').localeCompare(b.date ?? ''); break;
         default:            cmp = 0;
       }
       return asc ? cmp : -cmp;
@@ -157,13 +157,13 @@ export class ExamListComponent implements OnInit {
     return this.sortAsc() ? '▲' : '▼';
   }
 
-  formatDate(dateStr: string): string {
+  formatDate(dateStr: string | null): string {
     if (!dateStr) return '';
     const [y, m, d] = dateStr.split('-');
     return `${d}.${m}.${y}`;
   }
 
-  formatTime(timeStr: string): string {
+  formatTime(timeStr: string | null): string {
     return timeStr ? timeStr.slice(0, 5) : '';
   }
 }

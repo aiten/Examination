@@ -11,7 +11,7 @@ using WebAPI.Filters;
 public record RegistrationExamDto(string FirstName, string LastName, string? LoginName, string Pin);
 public record RegistrationCourseDto(string FirstName, string LastName, string Pin);
 
-public record RegistrationExamResultDto(int Id, string LastName, string FirstName, string? Pin, string ExamDescription, DateOnly ExamDate, string RegistrationCode);
+public record RegistrationExamResultDto(int Id, string LastName, string FirstName, string? Pin, string ExamDescription, DateOnly? ExamDate, string RegistrationCode);
 public record RegistrationCourseResultDto(int Id, string LastName, string FirstName, string? Pin, string CourseDescription, string RegistrationCode);
 
 public static class RegistrationEndpoints

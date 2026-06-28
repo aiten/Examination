@@ -2,6 +2,6 @@
 
 public enum ExamType
 {
-    Standard, // A regular exam.
-    Repeated, // The exam is repeated.
+    Standard,       // A regular exam.
+    Participation,  // Subtasks are participation assessment.
 }
