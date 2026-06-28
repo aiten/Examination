@@ -10,9 +10,9 @@ public record ExamOverview(
     string              Teacher,
     string              Course,
     int                 CourseYear,
-    DateOnly            Date,
-    TimeOnly            From,
-    TimeOnly            To,
+    DateOnly?            Date,
+    TimeOnly?            From,
+    TimeOnly?            To,
     ICollection<string> Subtask,
     ICollection<string> Students
 );

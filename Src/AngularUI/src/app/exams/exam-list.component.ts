@@ -1,9 +1,10 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, WritableSignal, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { ExamOverview } from '../models/exam-overview.model';
 import { ExamService } from '../services/exam.service';
 import { ConfigService } from '../services/config.service';
+import { GlobalStateService } from '../services/global-state.service';
 
 type SortCol = 'description' | 'teacher' | 'date';
 
@@ -87,7 +88,7 @@ export class ExamListComponent implements OnInit {
   exams = signal<ExamOverview[]>([]);
   loading = signal(false);
 
-  filterYear = signal<number | null>(null);
+  filterYear: WritableSignal<number | null>;
   sortCol = signal<SortCol>('date');
   sortAsc = signal(false);
 
@@ -100,7 +101,7 @@ export class ExamListComponent implements OnInit {
       switch (col) {
         case 'description': cmp = a.description.localeCompare(b.description, undefined, { sensitivity: 'base' }); break;
         case 'teacher':     cmp = a.teacher.localeCompare(b.teacher, undefined, { sensitivity: 'base' }); break;
-        case 'date':        cmp = a.date.localeCompare(b.date); break;
+        case 'date':        cmp = (a.date ?? '').localeCompare(b.date ?? ''); break;
         default:            cmp = 0;
       }
       return asc ? cmp : -cmp;
@@ -118,16 +119,22 @@ export class ExamListComponent implements OnInit {
       .map(([course, exams]) => ({ course, exams }));
   });
 
-  constructor(private service: ExamService, private configService: ConfigService) {}
+  constructor(private service: ExamService, private configService: ConfigService, private globalState: GlobalStateService) {
+    this.filterYear = globalState.filterYear;
+  }
 
   ngOnInit(): void {
-    this.configService.getConfig().subscribe({
-      next: cfg => {
-        this.filterYear.set(cfg.currentSchoolYear);
-        this.loadExams();
-      },
-      error: () => this.loadExams()
-    });
+    if (this.filterYear() !== null) {
+      this.loadExams();
+    } else {
+      this.configService.getConfig().subscribe({
+        next: cfg => {
+          this.filterYear.set(cfg.currentSchoolYear);
+          this.loadExams();
+        },
+        error: () => this.loadExams()
+      });
+    }
   }
 
   private loadExams(): void {
@@ -157,13 +164,13 @@ export class ExamListComponent implements OnInit {
     return this.sortAsc() ? '▲' : '▼';
   }
 
-  formatDate(dateStr: string): string {
+  formatDate(dateStr: string | null): string {
     if (!dateStr) return '';
     const [y, m, d] = dateStr.split('-');
     return `${d}.${m}.${y}`;
   }
 
-  formatTime(timeStr: string): string {
+  formatTime(timeStr: string | null): string {
     return timeStr ? timeStr.slice(0, 5) : '';
   }
 }

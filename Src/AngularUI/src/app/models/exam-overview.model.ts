@@ -4,9 +4,9 @@ export interface ExamOverview {
   teacher: string;
   course: string;
   courseYear: number;
-  date: string;
-  from: string;
-  to: string;
+  date: string | null;
+  from: string | null;
+  to: string | null;
   pin?: number | null;
   subtask: string[];
   students: string[];

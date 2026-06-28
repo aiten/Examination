@@ -12,10 +12,12 @@ export interface StudentExamResultSubtask {
   result: number | null;
   comment: string | null;
   bonus: boolean;
+  date: string | null;
 }
 
 export interface StudentExamResult {
   examDescription: string;
+  examType: number;
   examDate: string;
   studentName: string;
   subtasks: StudentExamResultSubtask[];

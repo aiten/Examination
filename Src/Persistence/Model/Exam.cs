@@ -14,11 +14,11 @@ public class Exam : EntityObject
 
     public ExamType ExamType { get; set; }
 
-    public DateOnly Date { get; set; }
-    public TimeOnly From { get; set; }
+    public DateOnly? Date { get; set; }
+    public TimeOnly? From { get; set; }
 
     [ExamRange]
-    public TimeOnly To { get; set; }
+    public TimeOnly? To { get; set; }
 
     [MaxLength(5)]
     public string? Pin { get; set; }

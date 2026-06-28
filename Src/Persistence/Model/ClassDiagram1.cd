@@ -63,8 +63,8 @@
     <AssociationLine Name="StudentSubtasks" Type="Persistence.Model.StudentSubtask" FixedFromPoint="true" FixedToPoint="true">
       <Path>
         <Point X="10.344" Y="7.002" />
-        <Point X="10.344" Y="7.479" />
-        <Point X="7" Y="7.479" />
+        <Point X="10.344" Y="7.573" />
+        <Point X="7" Y="7.573" />
       </Path>
     </AssociationLine>
     <TypeIdentifier>
@@ -112,13 +112,13 @@
     <Position X="5.5" Y="6.5" Width="1.5" />
     <AssociationLine Name="Subtask" Type="Persistence.Model.Subtask" ManuallyRouted="true" FixedFromPoint="true" FixedToPoint="true">
       <Path>
-        <Point X="7" Y="7.759" />
-        <Point X="10.75" Y="7.759" />
+        <Point X="7" Y="7.88" />
+        <Point X="10.75" Y="7.88" />
         <Point X="10.75" Y="7.002" />
       </Path>
     </AssociationLine>
     <TypeIdentifier>
-      <HashCode>AAAAAAAEAEAAgAAAAgAAAAQAAAAAIAAAAAAAQAAAAAA=</HashCode>
+      <HashCode>AAAAAAAEAEAAgAAAAgAAAAQAAAAAIAABAAAAQAAAAAA=</HashCode>
       <FileName>Model\StudentSubtask.cs</FileName>
     </TypeIdentifier>
     <ShowAsAssociation>

@@ -128,7 +128,7 @@ public class StudentSubtaskEndpointsTests : IClassFixture<CustomWebApplicationFa
     [Fact]
     public async Task PutStudentSubtask_ValidUpdate_ReturnsNoContentAndUpdatesResult()
     {
-        var dto   = new StudentSubtaskDto(1, 1, "Part 1", 20, false, 1, 75m, null, null);
+        var dto   = new StudentSubtaskDto(1, 1, "Part 1", 20, false, 1, 75m, null, null, null);
         var trans = Substitute.For<ITransaction>();
         _uow.BeginTransactionAsync().Returns(trans);
 
@@ -143,7 +143,7 @@ public class StudentSubtaskEndpointsTests : IClassFixture<CustomWebApplicationFa
     [Fact]
     public async Task PutStudentSubtask_IdMismatch_ReturnsBadRequest()
     {
-        var dto = new StudentSubtaskDto(2, 1, "Part 1", 20, false, 1, 75m, null, null);
+        var dto = new StudentSubtaskDto(2, 1, "Part 1", 20, false, 1, 75m, null, null, null);
 
         var response = await _client.PutAsJsonAsync("/api/exam/1/students/1/subtasks/1", dto);
 
@@ -154,7 +154,7 @@ public class StudentSubtaskEndpointsTests : IClassFixture<CustomWebApplicationFa
     [Fact]
     public async Task PutStudentSubtask_NonExistingId_Returns404()
     {
-        var dto = new StudentSubtaskDto(99, 1, "Part 1", 20, false, 1, 75m, null, null);
+        var dto = new StudentSubtaskDto(99, 1, "Part 1", 20, false, 1, 75m, null, null, null);
         _studentSubtaskService.When(s => s.UpdateStudentSubtaskAsync(99, 1, Arg.Any<StudentSubtask>()))
             .Throw(new NotFoundException("StudentSubtask 99 not found"));
 
@@ -166,7 +166,7 @@ public class StudentSubtaskEndpointsTests : IClassFixture<CustomWebApplicationFa
     [Fact]
     public async Task PutStudentSubtask_WrongStudentExamId_Returns409()
     {
-        var dto = new StudentSubtaskDto(1, 1, "Part 1", 20, false, 1, 75m, null, null);
+        var dto = new StudentSubtaskDto(1, 1, "Part 1", 20, false, 1, 75m, null, null, null);
         _studentSubtaskService.When(s => s.UpdateStudentSubtaskAsync(1, 1, Arg.Any<StudentSubtask>()))
             .Throw(new ConflictException("StudentSubtask 1 does not belong to studentexam 1"));
 

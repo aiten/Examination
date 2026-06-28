@@ -6,6 +6,7 @@ import { forkJoin } from 'rxjs';
 import { StudentSubtask } from '../models/student-subtask.model';
 import { StudentSubtaskService } from '../services/student-subtask.service';
 import { StudentExamService } from '../services/student-exam.service';
+import { ExamService } from '../services/exam.service';
 
 @Component({
   selector: 'app-student-exam-subtasks',
@@ -29,6 +30,9 @@ import { StudentExamService } from '../services/student-exam.service';
               <tr>
                 <th>Description</th>
                 <th>Max Points</th>
+                @if (examType() === 1) {
+                  <th style="width:140px">Date</th>
+                }
                 <th>Result (%)</th>
                 <th>Comment</th>
                 <th>Private Comment</th>
@@ -39,6 +43,11 @@ import { StudentExamService } from '../services/student-exam.service';
                 <tr>
                   <td>{{ s.description }}</td>
                   <td>{{ s.bonus ? '(' + s.points + ')' : s.points }}</td>
+                  @if (examType() === 1) {
+                    <td>
+                      <input type="date" [(ngModel)]="s.date" [name]="'date_' + s.id" class="input-date" />
+                    </td>
+                  }
                   <td>
                     <input type="number" [(ngModel)]="s.result" [name]="'result_' + s.id"
                            (ngModelChange)="refresh()"
@@ -57,6 +66,9 @@ import { StudentExamService } from '../services/student-exam.service';
               <tr class="summary-row">
                 <td><strong>Total</strong></td>
                 <td><strong>{{ totalMaxPoints() }}</strong></td>
+                @if (examType() === 1) {
+                  <td></td>
+                }
                 <td><strong>{{ totalPercentage() | number:'1.2-2' }} %</strong></td>
                 <td></td>
                 <td></td>
@@ -86,11 +98,19 @@ export class StudentExamSubtasksComponent implements OnInit {
 
   title = signal('');
   subtasks = signal<StudentSubtask[]>([]);
+  examType = signal(0);
   loading = signal(false);
   error = signal('');
   successMessage = signal('');
 
-  totalMaxPoints = computed(() => this.subtasks().reduce((sum, s) => sum + (s.bonus ? 0 : s.points ), 0));
+  totalMaxPoints = computed(() => {
+    const isParticipation = this.examType() === 1;
+    return this.subtasks().reduce((sum, s) => {
+      if (s.bonus) return sum;
+      if (isParticipation && s.result === null) return sum;
+      return sum + s.points;
+    }, 0);
+  });
   totalPercentage = computed(() => {
     const max = this.totalMaxPoints();
     if (max === 0) return 0;
@@ -100,6 +120,7 @@ export class StudentExamSubtasksComponent implements OnInit {
   constructor(
     private subtaskService: StudentSubtaskService,
     private studentExamService: StudentExamService,
+    private examService: ExamService,
     private route: ActivatedRoute
   ) {}
 
@@ -111,14 +132,15 @@ export class StudentExamSubtasksComponent implements OnInit {
 
   private load(): void {
     this.loading.set(true);
-    this.studentExamService.getById(this.examId, this.studentExamId).subscribe({
-      next: detail => {
+    forkJoin({
+      exam: this.examService.getById(this.examId),
+      detail: this.studentExamService.getById(this.examId, this.studentExamId),
+      subtasks: this.subtaskService.getAll(this.examId, this.studentExamId)
+    }).subscribe({
+      next: ({ exam, detail, subtasks }) => {
+        this.examType.set(exam.examType);
         this.title.set(`${detail.lastName}, ${detail.firstName} — Subtask Results`);
-      }
-    });
-    this.subtaskService.getAll(this.examId, this.studentExamId).subscribe({
-      next: data => {
-        this.subtasks.set(data.slice().sort((a, b) => a.seqNo - b.seqNo));
+        this.subtasks.set(subtasks.slice().sort((a, b) => a.seqNo - b.seqNo));
         this.loading.set(false);
       },
       error: () => {
@@ -136,7 +158,7 @@ export class StudentExamSubtasksComponent implements OnInit {
     this.error.set('');
     this.successMessage.set('');
     const updates = this.subtasks().map(s => {
-      const normalized = { ...s, comment: s.comment || null, commentPrivate: s.commentPrivate || null };
+      const normalized = { ...s, comment: s.comment || null, commentPrivate: s.commentPrivate || null, date: s.date || null };
       return s.id ? this.subtaskService.update(this.examId, this.studentExamId, normalized) : this.subtaskService.create(this.examId, this.studentExamId, normalized);
     });
     forkJoin(updates).subscribe({

@@ -10,6 +10,8 @@ public class StudentSubtask : EntityObject
 
     public string? CommentPrivate { get; set; }
 
+    public DateOnly? Date { get; set; }
+
     public StudentExam StudentExam   { get; set; } = null!;
     public int         StudentExamId { get; set; }
 

@@ -6,6 +6,7 @@ export interface SubtaskStudent {
   result: number | null;
   comment: string | null;
   commentPrivate: string | null;
+  date: string | null;
 }
 
 export interface SubtaskStudentCreate {
@@ -13,4 +14,5 @@ export interface SubtaskStudentCreate {
   result: number | null;
   comment: string | null;
   commentPrivate: string | null;
+  date: string | null;
 }

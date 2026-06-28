@@ -1,7 +1,8 @@
 import { Component, computed, signal } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { CourseResultService } from '../services/course-result.service';
-import { StudentExamResult } from '../models/course-result.model';
+import { StudentCourseResult } from '../models/course-result.model';
+import { StudentExamResult } from '../models/exam-result.model';
 import { ExamResultDetailComponent } from './exam-result-detail.component';
 
 type SortColumn = 'examDescription' | 'examDate' | 'totalPoints' | 'percent' | 'grade';

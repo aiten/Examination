@@ -7,9 +7,9 @@ using Persistence.Model;
 
 using Service;
 
-public record StudentSubtaskDto(int Id, int SubtaskId, string Description, int Points, bool Bonus, int SeqNo, decimal? Result, string? Comment, string? CommentPrivate);
+public record StudentSubtaskDto(int Id, int SubtaskId, string Description, int Points, bool Bonus, int SeqNo, decimal? Result, string? Comment, string? CommentPrivate, DateOnly? Date);
 
-public record StudentSubtaskCreateDto(int SubtaskId, decimal? Result, string? Comment, string? CommentPrivate);
+public record StudentSubtaskCreateDto(int SubtaskId, decimal? Result, string? Comment, string? CommentPrivate, DateOnly? Date);
 
 public static class StudentSubtaskEndpoints
 {
@@ -25,7 +25,8 @@ public static class StudentSubtaskEndpoints
             entity.Subtask.SeqNo,
             entity.Result.HasValue ? (entity.Result) * 100M : null,
             entity.Comment,
-            entity.CommentPrivate);
+            entity.CommentPrivate,
+            entity.Date);
 
     private static IList<StudentSubtaskDto> ToDto(IList<StudentSubtask> list) =>
         list.Select(ToDto).ToList();
@@ -72,7 +73,8 @@ public static class StudentSubtaskEndpoints
                     StudentExamId  = studentExamId,
                     Result         = dto.Result.HasValue ? dto.Result / 100M : null,
                     Comment        = dto.Comment,
-                    CommentPrivate = dto.CommentPrivate
+                    CommentPrivate = dto.CommentPrivate,
+                    Date           = dto.Date
                 };
 
                 await studentSubtaskService.AddStudentSubtaskAsync(examId, entity);
@@ -100,7 +102,8 @@ public static class StudentSubtaskEndpoints
                     StudentExamId  = studentExamId,
                     Result         = dto.Result.HasValue ? dto.Result / 100M : null,
                     Comment        = dto.Comment,
-                    CommentPrivate = dto.CommentPrivate
+                    CommentPrivate = dto.CommentPrivate,
+                    Date           = dto.Date
                 };
 
                 await studentSubtaskService.UpdateStudentSubtaskAsync(id, examId, entity);

@@ -1,7 +1,7 @@
 import { Component, computed, input, signal } from '@angular/core';
 import { StudentExamResult, StudentExamResultSubtask } from '../models/exam-result.model';
 
-type SortColumn = 'seqNo' | 'description' | 'points' | 'percent' | 'comment';
+type SortColumn = 'seqNo' | 'description' | 'points' | 'percent' | 'comment' | 'date';
 type SortDir = 'asc' | 'desc';
 
 @Component({
@@ -16,6 +16,9 @@ type SortDir = 'asc' | 'desc';
         <tr>
           <th class="sortable" (click)="sort('seqNo')">No {{ sortIndicator('seqNo') }}</th>
           <th class="sortable" (click)="sort('description')">Task {{ sortIndicator('description') }}</th>
+          @if (isParticipation()) {
+            <th class="sortable" (click)="sort('date')">Date {{ sortIndicator('date') }}</th>
+          }
           <th class="sortable" (click)="sort('points')">Points {{ sortIndicator('points') }}</th>
           <th class="sortable" (click)="sort('percent')">Reached % {{ sortIndicator('percent') }}</th>
           <th class="sortable" (click)="sort('comment')">Comment {{ sortIndicator('comment') }}</th>
@@ -26,6 +29,9 @@ type SortDir = 'asc' | 'desc';
           <tr [class.bonus-row]="row.bonus">
             <td>{{ row.seqNo }}{{ row.bonus ? ' ★' : '' }}</td>
             <td>{{ row.description }}</td>
+            @if (isParticipation()) {
+              <td>{{ row.date ?? '' }}</td>
+            }
             <td>{{ row.points }}</td>
             <td>{{ reachedPercent(row) }}</td>
             <td>{{ row.comment ?? '' }}</td>
@@ -61,6 +67,8 @@ export class ExamResultDetailComponent {
 
   sortCol = signal<SortColumn>('seqNo');
   sortDir = signal<SortDir>('asc');
+
+  isParticipation = computed(() => this.exam().examType === 1);
 
   sortedSubtasks = computed(() =>
     [...this.exam().subtasks].sort((a, b) => this.compare(a, b))
@@ -98,6 +106,8 @@ export class ExamResultDetailComponent {
       }
       case 'comment':
         return dir * (a.comment ?? '').localeCompare(b.comment ?? '');
+      case 'date':
+        return dir * (a.date ?? '').localeCompare(b.date ?? '');
     }
   }
 }

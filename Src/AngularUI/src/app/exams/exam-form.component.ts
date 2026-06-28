@@ -49,7 +49,7 @@ import { SignalRService } from '../services/signalr.service';
           <label>Type *</label>
           <select name="examType" [(ngModel)]="exam().examType" class="form-control">
             <option [ngValue]="0">Standard</option>
-            <option [ngValue]="1">Repeated</option>
+            <option [ngValue]="1">Participation</option>
           </select>
         </div>
         <div class="form-group">
@@ -73,22 +73,22 @@ import { SignalRService } from '../services/signalr.service';
           </select>
         </div>
         <div class="form-group">
-          <label>Date *</label>
-          <input type="date" name="date" [(ngModel)]="exam().date" required class="form-control" />
+          <label>Date{{ exam().examType === 0 ? ' *' : '' }}</label>
+          <input type="date" name="date" [(ngModel)]="exam().date" [required]="exam().examType === 0" class="form-control" />
         </div>
         <div class="form-group">
-          <label>From *</label>
-          <input type="time" name="from" [(ngModel)]="exam().from" required class="form-control" />
+          <label>From{{ exam().examType === 0 ? ' *' : '' }}</label>
+          <input type="time" name="from" [(ngModel)]="exam().from" [required]="exam().examType === 0" class="form-control" />
         </div>
         <div class="form-group">
-          <label>To *</label>
-          <input type="time" name="to" [(ngModel)]="exam().to" required class="form-control" />
+          <label>To{{ exam().examType === 0 ? ' *' : '' }}</label>
+          <input type="time" name="to" [(ngModel)]="exam().to" [required]="exam().examType === 0" class="form-control" />
         </div>
-        @if (exam().from && exam().to && exam().from >= exam().to) {
+        @if (exam().from && exam().to && exam().from! >= exam().to!) {
           <p class="error">End time must be after start time.</p>
         }
         <div class="form-actions">
-          <button type="submit" class="btn btn-primary" [disabled]="form.invalid || (exam().from && exam().to && exam().from >= exam().to)">Save</button>
+          <button type="submit" class="btn btn-primary" [disabled]="form.invalid || !!(exam().from && exam().to && exam().from! >= exam().to!)">Save</button>
           <a routerLink="/exams" class="btn">Cancel</a>
         </div>
         @if (error()) {
@@ -99,7 +99,7 @@ import { SignalRService } from '../services/signalr.service';
   `
 })
 export class ExamFormComponent implements OnInit, OnDestroy {
-  exam = signal<Exam>({ id: 0, description: '', examType: 0, teacherId: 0, courseId: 0, date: '2026-05-07', from: '08:00', to: '09:00', pin: null, canRegister: true, canShowResults: false });
+  exam = signal<Exam>({ id: 0, description: '', examType: 0, teacherId: 0, courseId: 0, date: null, from: null, to: null, pin: null, canRegister: true, canShowResults: false });
   teachers = signal<Teacher[]>([]);
   courses = signal<Course[]>([]);
   isNew = true;
@@ -132,8 +132,8 @@ export class ExamFormComponent implements OnInit, OnDestroy {
       this.examId = +id;
       this.service.getById(this.examId).subscribe(e => this.exam.set({
         ...e,
-        from: e.from.slice(0, 5),
-        to: e.to.slice(0, 5),
+        from: e.from ? e.from.slice(0, 5) : null,
+        to: e.to ? e.to.slice(0, 5) : null,
       }));
       this.signalR.joinExamGroup(this.examId);
       this.signalRSub = this.signalR.examUpdated$.subscribe(msg => {
@@ -148,8 +148,8 @@ export class ExamFormComponent implements OnInit, OnDestroy {
     this.reloadPending.set(false);
     this.service.getById(this.examId).subscribe(e => this.exam.set({
       ...e,
-      from: e.from.slice(0, 5),
-      to: e.to.slice(0, 5),
+      from: e.from ? e.from.slice(0, 5) : null,
+      to: e.to ? e.to.slice(0, 5) : null,
     }));
   }
 
@@ -162,14 +162,17 @@ export class ExamFormComponent implements OnInit, OnDestroy {
 
   save(): void {
     const e = this.exam();
-    if (e.from >= e.to) {
+    const from = e.from || null;
+    const to   = e.to   || null;
+    if (from && to && from >= to) {
       this.error.set('End time must be after start time.');
       return;
     }
     const payload: Exam = {
       ...e,
-      from: e.from.length === 5 ? e.from + ':00' : e.from,
-      to:   e.to.length   === 5 ? e.to   + ':00' : e.to,
+      date: e.date || null,
+      from: from ? (from.length === 5 ? from + ':00' : from) : null,
+      to:   to   ? (to.length   === 5 ? to   + ':00' : to)   : null,
     };
     const done = () => this.router.navigate(['/exams']);
     const fail = (err: any) => this.error.set(err.error?.detail ?? 'Save failed.');

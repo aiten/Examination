@@ -8,4 +8,5 @@ export interface StudentSubtask {
   result: number | null;
   comment: string | null;
   commentPrivate: string | null;
+  date: string | null;
 }

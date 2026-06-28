@@ -4,9 +4,9 @@ export interface Exam {
   examType: number;
   teacherId: number;
   courseId: number;
-  date: string;
-  from: string;
-  to: string;
+  date: string | null;
+  from: string | null;
+  to: string | null;
   pin: string | null;
   canRegister: boolean;
   canShowResults: boolean;

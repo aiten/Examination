@@ -16,6 +16,7 @@ interface StudentRow {
   result: number | null;
   comment: string | null;
   commentPrivate: string | null;
+  date: string | null;
 }
 
 @Component({
@@ -23,7 +24,8 @@ interface StudentRow {
   standalone: true,
   imports: [FormsModule, RouterModule],
   styles: [`
-    .input-narrow { width: 80px; padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; font-size: .95rem; }
+    .input-narrow { width: 80px;  padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; font-size: .95rem; }
+    .input-date   { width: 150px; padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; font-size: .95rem; }
     .input-wide { width: 100%; padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; font-size: .95rem; box-sizing: border-box; }
   `],
   template: `
@@ -44,6 +46,9 @@ interface StudentRow {
               <tr>
                 <th>Last Name</th>
                 <th>First Name</th>
+                @if (isParticipation()) {
+                  <th style="width:140px">Date</th>
+                }
                 <th style="width:100px">Result (%)</th>
                 <th>Comment</th>
                 <th>Private Comment</th>
@@ -54,6 +59,11 @@ interface StudentRow {
                 <tr>
                   <td>{{ row.lastName }}</td>
                   <td>{{ row.firstName }}</td>
+                  @if (isParticipation()) {
+                    <td>
+                      <input type="date" [(ngModel)]="row.date" [name]="'date_' + row.studentExamId" class="input-date" />
+                    </td>
+                  }
                   <td>
                     <input type="number" [(ngModel)]="row.result" [name]="'result_' + row.studentExamId"
                            min="0" max="100" step="1" class="input-narrow" />
@@ -95,6 +105,7 @@ export class SubtaskStudentsComponent implements OnInit {
 
   title = signal('');
   rows = signal<StudentRow[]>([]);
+  isParticipation = signal(false);
   loading = signal(false);
   error = signal('');
   successMessage = signal('');
@@ -125,6 +136,7 @@ export class SubtaskStudentsComponent implements OnInit {
       next: ([students, results, subtasks, exam]) => {
         const subtask = subtasks.find(s => s.id === this.subtaskId);
         this.title.set(`${subtask?.description ?? 'Subtask'} — ${exam.description}`);
+        this.isParticipation.set(exam.examType === 1);
 
         const resultMap = new Map(results.map(r => [r.studentExamId, r]));
         const rows = students
@@ -139,7 +151,8 @@ export class SubtaskStudentsComponent implements OnInit {
               id: existing?.id ?? 0,
               result: existing?.result ?? null,
               comment: existing?.comment ?? null,
-              commentPrivate: existing?.commentPrivate ?? null
+              commentPrivate: existing?.commentPrivate ?? null,
+              date: existing?.date ?? null
             } satisfies StudentRow;
           });
 
@@ -162,12 +175,13 @@ export class SubtaskStudentsComponent implements OnInit {
     for (const row of this.rows()) {
       if (row.id) {
         ops.push(this.subtaskStudentService.update(this.examId, this.subtaskId, row as SubtaskStudent));
-      } else if (row.result !== null || row.comment || row.commentPrivate) {
+      } else if (row.result !== null || row.comment || row.commentPrivate || row.date) {
         const dto: SubtaskStudentCreate = {
           studentExamId: row.studentExamId,
           result: row.result,
           comment: row.comment,
-          commentPrivate: row.commentPrivate
+          commentPrivate: row.commentPrivate,
+          date: row.date
         };
         ops.push(this.subtaskStudentService.create(this.examId, this.subtaskId, dto));
       }

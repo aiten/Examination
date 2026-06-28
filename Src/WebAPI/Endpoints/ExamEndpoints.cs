@@ -13,17 +13,17 @@ using Shared.Exceptions;
 using WebAPI.Filters;
 
 public record ExamDto(
-    int      Id,
-    string   Description,
-    int      ExamType,
-    int      TeacherId,
-    int      CourseId,
-    DateOnly Date,
-    TimeOnly From,
-    TimeOnly To,
-    string?  Pin,
-    bool     CanRegister,
-    bool     CanShowResults
+    int       Id,
+    string    Description,
+    int       ExamType,
+    int       TeacherId,
+    int       CourseId,
+    DateOnly? Date,
+    TimeOnly? From,
+    TimeOnly? To,
+    string?   Pin,
+    bool      CanRegister,
+    bool      CanShowResults
 );
 
 public static class ExamEndpoints
