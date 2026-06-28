@@ -3,21 +3,25 @@ namespace Persistence.QueryResult;
 using System;
 using System.Collections.Generic;
 
+using Persistence.Model;
+
 // The result, which can be displayed to the student, of an exam.
 // It contains the description and date of the exam, the name of the student, a list of subtasks with their description, points, result, comment and whether they are bonus or not, and the total points, percent and grade for the exam.
 
 public record StudentExamResultSubtask(
-    int      SeqNo,
-    string   Description,
-    int      Points,
-    decimal? Result,
-    string?  Comment,
-    bool     Bonus
+    int       SeqNo,
+    string    Description,
+    int       Points,
+    decimal?  Result,
+    string?   Comment,
+    bool      Bonus,
+    DateOnly? Date
 );
 
 public record StudentExamResult(
     string?                         Status,
     string                          ExamDescription,
+    ExamType                        ExamType,
     DateOnly?                       ExamDate,
     string                          StudentName,
     IList<StudentExamResultSubtask> Subtasks,

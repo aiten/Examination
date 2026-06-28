@@ -9,14 +9,14 @@ using Persistence.QueryResult;
 
 using Service.Tools;
 
+using Shared;
 using Shared.Exceptions;
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Threading.Tasks;
-
-using Shared;
 
 public interface IStudentExamService
 {
@@ -62,6 +62,7 @@ public class StudentExamService : IStudentExamService
         return new StudentExamResult(
             null,
             exam.Description,
+            exam.ExamType,
             exam.Date,
             StudentHelper.FullName(studentExam.Student.FirstName, studentExam.Student.LastName),
             result.resultSubtasks,
@@ -74,17 +75,26 @@ public class StudentExamService : IStudentExamService
     {
         var subtasks = await _uow.Subtasks.GetForExamAsync(exam.Id);
 
-        var totalMaxPoints = subtasks.Sum(s => s.Bonus ? 0 : s.Points);
-        var countRatable   = subtasks.Count(s => !s.Bonus);
-
         var resultSubtasks = subtasks
             .OrderBy(s => s.SeqNo)
             .Select(s =>
             {
                 var ss = studentExam.StudentSubtasks.FirstOrDefault(x => x.SubtaskId == s.Id);
-                return new StudentExamResultSubtask(s.SeqNo, s.Description, s.Points, ss?.Result, ss?.Comment, s.Bonus);
+                return new StudentExamResultSubtask(s.SeqNo, s.Description, s.Points, ss?.Result, ss?.Comment, s.Bonus,ss?.Date);
             })
             .ToList();
+
+        var totalMaxPoints = subtasks.Sum(s => s.Bonus ? 0 : s.Points);
+        var countRatable   = subtasks.Count(s => !s.Bonus);
+
+        if (exam.ExamType == ExamType.Participation)
+        {
+            // only with result are counting
+            resultSubtasks = resultSubtasks.Where(r => r.Result.HasValue).ToList();
+
+            totalMaxPoints = resultSubtasks.Where(r => r.Bonus == false).Sum(r => r.Points);
+            countRatable   = resultSubtasks.Count(r => r.Bonus == false);
+        }
 
         var countRated = studentExam.StudentSubtasks.Count(ss => ss.Result.HasValue && !ss.Subtask.Bonus);
         var allRated   = countRated == countRatable;
@@ -115,7 +125,7 @@ public class StudentExamService : IStudentExamService
         {
             StudentExamResult examResult;
 
-            StudentExamResult ErrorResult(string status) => new StudentExamResult(status, exam.Description, exam.Date, StudentHelper.FullName(studentCourse.Student.FirstName, studentCourse.Student.LastName), [], null, null, null);
+            StudentExamResult ErrorResult(string status) => new StudentExamResult(status, exam.Description, exam.ExamType, exam.Date, StudentHelper.FullName(studentCourse.Student.FirstName, studentCourse.Student.LastName), [], null, null, null);
 
             if (exam.CanShowResults)
             {
@@ -133,17 +143,17 @@ public class StudentExamService : IStudentExamService
                         examResult = new StudentExamResult(
                             null,
                             exam.Description,
+                            exam.ExamType,
                             exam.Date,
                             StudentHelper.FullName(studentExam.Student.FirstName, studentExam.Student.LastName),
                             result.resultSubtasks,
                             result.totalPoints,
                             result.percent,
                             result.grade);
-
                     }
                     catch (NotFoundException e)
                     {
-                        examResult  = ErrorResult(e.Message);
+                        examResult = ErrorResult(e.Message);
                     }
                 }
             }
@@ -160,12 +170,57 @@ public class StudentExamService : IStudentExamService
 
     public async Task<IList<StudentExamOverview>> GetStudentExamOverviewsAsync(int examId)
     {
-        return await _uow.StudentExams.GetStudentExamOverviewsAsync(examId);
+        var exam = await _uow.Exams.GetByIdAsync(examId,
+                       nameof(Exam.StudentExams),
+                       $"{nameof(Exam.StudentExams)}.{nameof(StudentExam.StudentSubtasks)}",
+                       $"{nameof(Exam.StudentExams)}.{nameof(StudentExam.Student)}",
+                       nameof(Exam.Subtasks))
+                   ?? throw new NotFoundException($"No exam found with id: {examId}.");
+
+        var subtasks = exam.Subtasks;
+
+        bool isParticipation = exam.ExamType == ExamType.Participation;
+
+        var totalMaxPoints = subtasks.Sum(s => s.Bonus ? 0 : s.Points);
+        var countRatable   = subtasks.Count(s => s.Bonus == false);
+
+        var result = exam.StudentExams
+            .Select(se => new
+            {
+                se.Id,
+                se.StudentId,
+                se.Student.FirstName,
+                se.Student.LastName,
+                se.LoginName,
+                se.RegistrationCode,
+                Points       = (decimal)se.StudentSubtasks.Sum(ss => (double)(ss.Result ?? 0m) * (double)ss.Subtask.Points),
+                TotalPoints  = isParticipation ?  se.StudentSubtasks.Sum(sst => sst.Result.HasValue && sst.Subtask.Bonus==false ? sst.Subtask.Points : 0) : totalMaxPoints,
+                CountRated   = se.StudentSubtasks.Count(ss => ss.Result.HasValue && ss.Subtask.Bonus == false),
+                CountRatable = isParticipation ? se.StudentSubtasks.Count(ss => ss.Result.HasValue && ss.Subtask.Bonus == false) : countRatable
+            })
+            .ToList();
+
+        return result.Select(r => new StudentExamOverview(
+            r.Id,
+            r.StudentId,
+            r.FirstName,
+            r.LastName,
+            r.LoginName,
+            r.RegistrationCode,
+            r.CountRated,
+            r.CountRated == r.CountRatable ? r.Points : null,
+            r.TotalPoints != 0 && r.CountRated == r.CountRatable ? Math.Round(r.Points / r.TotalPoints * 100m, 2) : null,
+            r.TotalPoints != 0 && r.CountRated == r.CountRatable ? ExamHelper.CalculateGrade(r.Points / r.TotalPoints) : null
+        )).ToList();
     }
 
     public async Task<IList<StudentExamSummary>> GetStudentExamSummaryAsync(int examId)
     {
-        return await _uow.StudentExams.GetStudentExamSummaryAsync(examId);
+        var studenResults = await GetStudentExamOverviewsAsync(examId);
+        return studenResults
+            .GroupBy(r => r.Grade)
+            .Select(g => new StudentExamSummary(g.Key, g.Count()))
+            .ToList();
     }
 
     public async Task<StudentExam?> GetStudentExamByIdAsync(int id, params string[] includeProperties)

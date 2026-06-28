@@ -16,7 +16,7 @@ using Persistence.Model;
 
 public interface IStudentSubtaskService
 {
-    Task CheckValidSubtask(int id, int expectedExamId, int expectedSubtaskId);
+    Task CheckValidSubtask(int     id, int expectedExamId, int expectedSubtaskId);
     Task CheckValidStudentExam(int id, int expectedExamId, int expectedStudentExamId);
 
     Task<IList<StudentSubtask>> GetAllForSubtaskAsync(int examId, int subtaskId);
@@ -64,6 +64,7 @@ public class StudentSubtaskService : IStudentSubtaskService
             throw new ConflictException($"StudentSubtask {id} does not belong to subtask {expectedSubtaskId}");
         }
     }
+
     public async Task CheckValidStudentExam(int id, int expectedExamId, int expectedStudentExamId)
     {
         var entity = await _uow.StudentSubtasks.GetByIdAsync(id, nameof(StudentSubtask.StudentExam), nameof(StudentSubtask.Subtask));
@@ -137,6 +138,7 @@ public class StudentSubtaskService : IStudentSubtaskService
         entity.Result         = value.Result;
         entity.Comment        = value.Comment;
         entity.CommentPrivate = value.CommentPrivate;
+        entity.Date           = value.Date;
 
         await _uow.SaveChangesAsync();
         //await _hub.NotifyStudentSubtaskUpdatedAsync(id);
