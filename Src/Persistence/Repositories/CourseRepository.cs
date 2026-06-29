@@ -21,7 +21,7 @@ public class CourseRepository : GenericRepository<Course>, ICourseRepository
     public async Task<Course?> GetCourseWithPINAsync(string pin, bool includeClasses = false, bool includeExams = false)
     {
         var query = DbSet
-            .AsTracking();
+            .AsQueryable();
 
         if (includeClasses)
         {

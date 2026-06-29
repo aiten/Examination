@@ -39,7 +39,11 @@ public class ExamRepository : GenericRepository<Exam>, IExamRepository
 
     public async Task<IList<ExamOverview>> GetExamOverviewsAsync(int? teacherId, int? courseId, int? courseYear)
     {
-        var query = _dbContext.Exams.AsNoTracking();
+        IQueryable<Exam> query = DbSet
+            .AsNoTracking()
+            .Include(e => e.Subtasks)
+            .Include(e => e.StudentExams)
+            .ThenInclude(se => se.Student);
 
         if (teacherId is not null)
         {

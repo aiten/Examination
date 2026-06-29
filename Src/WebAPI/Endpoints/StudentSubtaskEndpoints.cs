@@ -81,7 +81,11 @@ public static class StudentSubtaskEndpoints
 
                 await trans.CommitTransactionAsync();
 
-                var created = await studentSubtaskService.GetStudentSubtaskByIdAsync(entity.Id, "StudentExam", "StudentExam.Student");
+                var created = await studentSubtaskService.GetStudentSubtaskByIdAsync(entity.Id,
+                    nameof(StudentSubtask.Subtask),
+                    nameof(StudentSubtask.StudentExam),
+                    $"{nameof(StudentSubtask.StudentExam)}.{nameof(StudentExam.Student)}");
+
                 return Results.Created($"{examId}/students/{studentExamId}/subtasks/{entity.Id}", ToDto(created!));
             })
             .WithName("AddStudentSubtask")

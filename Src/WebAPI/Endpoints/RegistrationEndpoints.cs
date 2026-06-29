@@ -97,7 +97,7 @@ public static class RegistrationEndpoints
             }
 
         })
-        .WithValidation<RegistrationExamDto>()
+        .WithValidation<RegistrationCourseDto>()
         .WithName("RegisterForCourse")
         .Produces<RegistrationExamResultDto>(StatusCodes.Status201Created)
         .ProducesProblem(StatusCodes.Status400BadRequest);
