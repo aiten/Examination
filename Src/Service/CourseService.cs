@@ -126,7 +126,7 @@ public class CourseService : ICourseService
             throw new IllegalValuesException($"No student found with name '{StudentHelper.FullName(firstName, lastName)}'");
 
         if (!course.Classes.Any(c => student.Classes.Any(sc => sc.Id == c.Id)))
-            throw new IllegalValuesException($"Student '{StudentHelper.FullName(firstName, lastName)} ' is not enrolled in any class of course");
+            throw new IllegalValuesException($"Student '{StudentHelper.FullName(firstName, lastName)}' is not enrolled in any class of course");
 
         var registration = await _uow.StudentCourses.GetByStudentAndCourseAsync(student.Id, course.Id);
         

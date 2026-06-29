@@ -1,5 +1,9 @@
 using Base.Persistence.Contracts;
 
+using Microsoft.AspNetCore.HttpOverrides;
+
+using System.Threading.RateLimiting;
+
 using Serilog;
 
 using FluentValidation;
@@ -150,6 +154,28 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddSignalR();
 
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor;
+    // Trust all proxies — nginx proxy manager IP can vary in Docker environments
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddPolicy("public-lookup", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window      = TimeSpan.FromMinutes(1),
+                QueueLimit  = 0,
+            }));
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+});
+
 
 //builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddSingleton<IHubNotificationService, HubNotificationService>();
@@ -169,11 +195,12 @@ builder.Services.AddValidatorsFromAssemblyContaining<WebAPI.Program>();
 
 var app = builder.Build();
 
+app.UseForwardedHeaders();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 
 // Configure the HTTP request pipeline.
-if (true) // app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.MapScalarApiReference(options =>
@@ -186,6 +213,8 @@ if (true) // app.Environment.IsDevelopment())
 
 // Add CORS to support Single Page Apps (SPAs)
 app.UseCors(b => b.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
+
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();

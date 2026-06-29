@@ -73,13 +73,14 @@ public class StudentExamService : IStudentExamService
 
     private async Task<(IList<StudentExamResultSubtask> resultSubtasks, decimal? totalPoints, decimal? percent, int? grade)> GetStudentResultAsync(StudentExam studentExam, Exam exam)
     {
-        var subtasks = await _uow.Subtasks.GetForExamAsync(exam.Id);
+        var subtasks           = await _uow.Subtasks.GetForExamAsync(exam.Id);
+        var studentSubtasksDict = studentExam.StudentSubtasks.ToDictionary(sst => sst.SubtaskId);
 
         var resultSubtasks = subtasks
             .OrderBy(s => s.SeqNo)
             .Select(s =>
             {
-                var ss = studentExam.StudentSubtasks.FirstOrDefault(x => x.SubtaskId == s.Id);
+                studentSubtasksDict.TryGetValue(s.Id, out var ss);
                 return new StudentExamResultSubtask(s.SeqNo, s.Description, s.Points, ss?.Result, ss?.Comment, s.Bonus,ss?.Date);
             })
             .ToList();

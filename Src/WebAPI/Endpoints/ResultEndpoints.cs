@@ -5,6 +5,8 @@ using Persistence.QueryResult;
 
 using Service;
 
+using Shared.Exceptions;
+
 using WebAPI.Filters;
 
 public record StudentExamResultQueryDto(string FirstName, string LastName, string Pin, string RegistrationCode);
@@ -17,7 +19,8 @@ public static class ResultEndpoints
     {
         var route = app
             .MapGroup(baseRoute)
-            .WithTags("Results");
+            .WithTags("Results")
+            .RequireRateLimiting("public-lookup");
         // Anonymous — no RequireAuthorization
 
         route.MapPost("exam", async (StudentExamResultQueryDto dto, IStudentExamService studentExamService, ILoggerFactory loggerFactory) =>
@@ -33,7 +36,7 @@ public static class ResultEndpoints
 
                     return Results.Ok(result);
                 }
-                catch (InvalidOperationException ex)
+                catch (NotFoundException ex)
                 {
                     logger.LogWarning("QueryResults failed: '{LastName}, {FirstName}' Pin={Pin} Exam={RegistrationCode} Error={Error}",
                         dto.LastName, dto.FirstName, dto.Pin, dto.RegistrationCode, ex.Message);
@@ -58,7 +61,7 @@ public static class ResultEndpoints
 
                     return Results.Ok(result);
                 }
-                catch (InvalidOperationException ex)
+                catch (NotFoundException ex)
                 {
                     logger.LogWarning("QueryResults failed: '{LastName}, {FirstName}' Pin={Pin} Exam={RegistrationCode} Error={Error}",
                         dto.LastName, dto.FirstName, dto.Pin, dto.RegistrationCode, ex.Message);

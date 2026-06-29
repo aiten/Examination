@@ -50,6 +50,7 @@ public class StudentExamRepository : GenericRepository<StudentExam>, IStudentExa
     {
         _dbContext.StudentSubtasks.RemoveRange(entity.StudentSubtasks);
         Remove(entity);
+        await Task.CompletedTask;
     }
 
     public async Task<StudentExam?> GetStudentExamAsync(int examId, string firstName, string lastName, string registrationCode)

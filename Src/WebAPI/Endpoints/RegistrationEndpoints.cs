@@ -20,7 +20,8 @@ public static class RegistrationEndpoints
     {
         var route = app
             .MapGroup(baseRoute)
-            .WithTags("Registration");
+            .WithTags("Registration")
+            .RequireRateLimiting("public-lookup");
         // NO Auth required .RequireAuthorization(Settings.AdminPolicyName);
 
         route.MapPost("exam", async (RegistrationExamDto dto, IExamService examService, ITransactionProvider transactionProvider, ILoggerFactory loggerFactory) =>

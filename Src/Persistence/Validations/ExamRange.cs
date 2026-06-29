@@ -17,7 +17,7 @@ public class ExamRange : ValidationAttribute
         var to   = (TimeOnly)value;
         var exam = (Exam)validationContext.ObjectInstance;
 
-        if (to <= exam.From)
+        if ((exam.From is null || to <= exam.From))
         {
             var result = new ValidationResult("To-Time must be after From");
             return result;
