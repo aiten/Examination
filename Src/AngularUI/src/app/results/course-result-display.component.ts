@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, signal, ChangeDetectionStrategy } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { CourseResultService } from '../services/course-result.service';
 import { StudentCourseResult } from '../models/course-result.model';
@@ -63,6 +63,7 @@ type SortDir = 'asc' | 'desc';
       </div>
     }
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .sortable { cursor: pointer; user-select: none; }
     .sortable:hover { background: #e4eaf0; }

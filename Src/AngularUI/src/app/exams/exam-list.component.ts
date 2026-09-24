@@ -1,4 +1,4 @@
-import { Component, OnInit, WritableSignal, signal, computed } from '@angular/core';
+import { Component, OnInit, WritableSignal, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { ExamOverview } from '../models/exam-overview.model';
@@ -25,6 +25,7 @@ interface CourseGroup {
     .course-section { margin-top: 2rem; }
     .course-section h3 { margin-bottom: .5rem; }
   `],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="page">
       <div class="page-header">

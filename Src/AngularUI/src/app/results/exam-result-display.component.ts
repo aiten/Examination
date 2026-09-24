@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { ExamResultService } from '../services/exam-result.service';
 import { ExamResultDetailComponent } from './exam-result-detail.component';
@@ -7,6 +7,7 @@ import { ExamResultDetailComponent } from './exam-result-detail.component';
   selector: 'app-result-exam-display',
   standalone: true,
   imports: [RouterModule, ExamResultDetailComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (result()) {
       <div class="page">

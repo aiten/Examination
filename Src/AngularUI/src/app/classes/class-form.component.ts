@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { SchoolClass } from '../models/class.model';
@@ -10,6 +10,7 @@ import { TeacherService } from '../services/teacher.service';
   selector: 'app-class-form',
   standalone: true,
   imports: [FormsModule, RouterModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="page">
       <h2>{{ isNew ? 'New Class' : 'Edit Class' }}</h2>

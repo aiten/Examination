@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ExamRegistrationService } from '../services/exam-registration.service';
@@ -8,6 +8,7 @@ import { RegistrationExamRequest } from '../models/registration.model';
   selector: 'app-register-form',
   standalone: true,
   imports: [FormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="page">
       <h2>Register for Exam</h2>

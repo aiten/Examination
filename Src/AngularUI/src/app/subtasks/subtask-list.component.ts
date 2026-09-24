@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { Subtask } from '../models/subtask.model';
@@ -17,6 +17,7 @@ import { ExamService } from '../services/exam.service';
     .col-bonus { width: 80px; text-align: center; }
     .col-actions { width: 220px; white-space: nowrap; }
   `],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="page">
       <div class="page-header">

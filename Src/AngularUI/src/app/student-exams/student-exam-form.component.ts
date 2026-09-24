@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { StudentExamEdit } from '../models/student-exam.model';
@@ -8,6 +8,7 @@ import { StudentExamService } from '../services/student-exam.service';
   selector: 'app-student-exam-form',
   standalone: true,
   imports: [FormsModule, RouterModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="page">
       <div class="page-header">

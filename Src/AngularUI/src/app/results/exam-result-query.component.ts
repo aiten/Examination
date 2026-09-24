@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExamResultService } from '../services/exam-result.service';
@@ -8,6 +8,7 @@ import { StudentExamResultQuery } from '../models/exam-result.model';
   selector: 'app-result-exam-query',
   standalone: true,
   imports: [FormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="page">
       <h2>Get Exam Result</h2>
