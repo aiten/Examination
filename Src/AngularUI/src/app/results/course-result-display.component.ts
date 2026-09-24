@@ -108,7 +108,7 @@ export class CourseResultDisplayComponent {
     const dir = this.sortDir() === 'asc' ? 1 : -1;
     switch (this.sortCol()) {
       case 'examDescription': return dir * a.examDescription.localeCompare(b.examDescription);
-      case 'examDate':        return dir * a.examDate.localeCompare(b.examDate);
+      case 'examDate':        return dir * (a.examDate ?? '').localeCompare(b.examDate ?? '');
       case 'totalPoints':     return dir * ((a.totalPoints ?? -1) - (b.totalPoints ?? -1));
       case 'percent':         return dir * ((a.percent ?? -1) - (b.percent ?? -1));
       case 'grade':           return dir * ((a.grade ?? 99) - (b.grade ?? 99));
