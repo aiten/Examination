@@ -401,3 +401,5 @@ Thumbs.db
 *.bak
 
 .idea/
+CleanProjectDirectory.exe
+.claude/
