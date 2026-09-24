@@ -70,19 +70,22 @@ type SortDir = 'asc' | 'desc';
   `]
 })
 export class CourseResultDisplayComponent {
-  result;
+
+  sortedExams;
+
   selectedExam = signal<StudentExamResult | null>(null);
   sortCol = signal<SortColumn>('examDate');
   sortDir = signal<SortDir>('asc');
 
-  sortedExams = computed(() => {
-    const r = this.result();
-    if (!r) return [];
-    return [...r.studentExams].sort((a, b) => this.compare(a, b));
-  });
+
 
   constructor(private service: CourseResultService) {
-    this.result = service.result;
+    
+    this.sortedExams = computed(() => {
+      const r = this.service.result();
+      if (!r) return [];
+      return [...r.studentExams].sort((a, b) => this.compare(a, b));
+    });
   }
 
   sort(col: SortColumn): void {
