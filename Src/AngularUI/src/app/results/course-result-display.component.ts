@@ -1,4 +1,4 @@
-import { Component, computed, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, signal, Signal, ChangeDetectionStrategy } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { CourseResultService } from '../services/course-result.service';
 import { StudentCourseResult } from '../models/course-result.model';
@@ -72,6 +72,7 @@ type SortDir = 'asc' | 'desc';
 })
 export class CourseResultDisplayComponent {
 
+  result: Signal<StudentCourseResult | null>;
   sortedExams;
 
   selectedExam = signal<StudentExamResult | null>(null);
@@ -81,7 +82,7 @@ export class CourseResultDisplayComponent {
 
 
   constructor(private service: CourseResultService) {
-    
+    this.result = this.service.result;
     this.sortedExams = computed(() => {
       const r = this.service.result();
       if (!r) return [];
