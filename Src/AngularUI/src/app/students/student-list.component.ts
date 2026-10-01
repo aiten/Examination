@@ -25,6 +25,18 @@ type SortCol = 'lastName' | 'firstName' | 'class';
         <a routerLink="/students/new" class="btn btn-primary">+ New Student</a>
         <a routerLink="/students/import" class="btn">Import</a>
       </div>
+      <div class="form-group">
+        <label for="classFilter">Class</label>
+        <select id="classFilter" class="form-control" (change)="classFilter.set(+$any($event.target).value)">
+          <option value="0" [selected]="classFilter() === 0">&lt;All&gt;</option>
+          @for (c of sortedClasses(); track c.id) {
+            <option [value]="c.id" [selected]="classFilter() === c.id">{{ c.description }} ({{ c.year }})</option>
+          }
+        </select>
+      </div>
+      @if (error()) {
+        <p class="error">{{ error() }}</p>
+      }
       @if (loading()) {
         <p class="empty">Loading...</p>
       }
@@ -52,13 +64,16 @@ type SortCol = 'lastName' | 'firstName' | 'class';
                 <td>{{ classLabels(s) }}</td>
                 <td>
                   <a [routerLink]="['/students', s.id]" class="btn btn-sm">Edit</a>
+                  @if (s.classIds.length === 0) {
+                    <button type="button" class="btn btn-sm btn-danger" (click)="delete(s)">Delete</button>
+                  }
                 </td>
               </tr>
             }
           </tbody>
         </table>
       }
-      @if (!loading() && students().length === 0) {
+      @if (!loading() && sortedStudents().length === 0) {
         <p class="empty">No students found.</p>
       }
     </div>
@@ -68,14 +83,21 @@ export class StudentListComponent implements OnInit {
   students = signal<Student[]>([]);
   classes = signal<SchoolClass[]>([]);
   loading = signal(false);
+  error = signal('');
   sortCol = signal<SortCol>('lastName');
   sortAsc = signal(true);
+  classFilter = signal(0); // 0 = <All>
+
+  sortedClasses = computed(() =>
+    this.classes().slice().sort((a, b) =>
+      b.year - a.year || a.description.localeCompare(b.description, undefined, { sensitivity: 'base' })));
 
   sortedStudents = computed(() => {
     const col = this.sortCol();
     const asc = this.sortAsc();
+    const filter = this.classFilter();
     const classMap = new Map(this.classes().map(c => [c.id, c]));
-    return this.students().slice().sort((a, b) => {
+    return this.students().filter(s => filter === 0 || s.classIds.includes(filter)).sort((a, b) => {
       let va: string, vb: string;
       switch (col) {
         case 'lastName':  va = a.lastName;  vb = b.lastName;  break;
@@ -108,6 +130,15 @@ export class StudentListComponent implements OnInit {
 
   classLabels(student: Student): string {
     return this.classLabelsFrom(student, new Map(this.classes().map(c => [c.id, c])));
+  }
+
+  delete(student: Student): void {
+    if (!confirm(`Delete student ${student.firstName} ${student.lastName}?`)) return;
+    this.error.set('');
+    this.service.delete(student.id).subscribe({
+      next: () => this.students.update(list => list.filter(s => s.id !== student.id)),
+      error: (err: any) => this.error.set(err.error?.detail ?? 'Delete failed.')
+    });
   }
 
   sort(col: SortCol): void {
