@@ -18,7 +18,7 @@ export interface StudentExamResultSubtask {
 export interface StudentExamResult {
   examDescription: string;
   examType: number;
-  examDate: string;
+  examDate: string | null;
   studentName: string;
   subtasks: StudentExamResultSubtask[];
   totalPoints: number | null;

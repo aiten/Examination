@@ -21,7 +21,7 @@ COPY package.json package-lock.json ./
 RUN --mount=type=cache,target=/root/.npm npm ci
 
 # Install angular CLI globally
-RUN npm install -g @angular/cli@21.1.4
+RUN npm install -g @angular/cli@22.2.0
 
 # Copy the rest of the application source code into the container
 COPY . .

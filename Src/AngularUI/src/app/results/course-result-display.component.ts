@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, signal, Signal, ChangeDetectionStrategy } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { CourseResultService } from '../services/course-result.service';
 import { StudentCourseResult } from '../models/course-result.model';
@@ -63,6 +63,7 @@ type SortDir = 'asc' | 'desc';
       </div>
     }
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .sortable { cursor: pointer; user-select: none; }
     .sortable:hover { background: #e4eaf0; }
@@ -70,19 +71,23 @@ type SortDir = 'asc' | 'desc';
   `]
 })
 export class CourseResultDisplayComponent {
-  result;
+
+  result: Signal<StudentCourseResult | null>;
+  sortedExams;
+
   selectedExam = signal<StudentExamResult | null>(null);
   sortCol = signal<SortColumn>('examDate');
   sortDir = signal<SortDir>('asc');
 
-  sortedExams = computed(() => {
-    const r = this.result();
-    if (!r) return [];
-    return [...r.studentExams].sort((a, b) => this.compare(a, b));
-  });
+
 
   constructor(private service: CourseResultService) {
-    this.result = service.result;
+    this.result = this.service.result;
+    this.sortedExams = computed(() => {
+      const r = this.service.result();
+      if (!r) return [];
+      return [...r.studentExams].sort((a, b) => this.compare(a, b));
+    });
   }
 
   sort(col: SortColumn): void {
@@ -103,7 +108,7 @@ export class CourseResultDisplayComponent {
     const dir = this.sortDir() === 'asc' ? 1 : -1;
     switch (this.sortCol()) {
       case 'examDescription': return dir * a.examDescription.localeCompare(b.examDescription);
-      case 'examDate':        return dir * a.examDate.localeCompare(b.examDate);
+      case 'examDate':        return dir * (a.examDate ?? '').localeCompare(b.examDate ?? '');
       case 'totalPoints':     return dir * ((a.totalPoints ?? -1) - (b.totalPoints ?? -1));
       case 'percent':         return dir * ((a.percent ?? -1) - (b.percent ?? -1));
       case 'grade':           return dir * ((a.grade ?? 99) - (b.grade ?? 99));

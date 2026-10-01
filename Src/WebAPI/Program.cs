@@ -231,6 +231,7 @@ app.MapTeacherEndpoints("/api/teacher");
 app.MapClassEndpoints("/api/class");
 app.MapSubjectEndpoints("/api/subject");
 app.MapCourseEndpoints("/api/course");
+app.MapStudentCourseEndpoints("/api/course");
 app.MapExamEndpoints("/api/exam");
 app.MapSubtaskEndpoints("/api/exam");
 app.MapStudentExamEndpoints("/api/exam");

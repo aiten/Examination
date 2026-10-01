@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { forkJoin, Observable } from 'rxjs';
@@ -28,6 +28,7 @@ interface StudentRow {
     .input-date   { width: 150px; padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; font-size: .95rem; }
     .input-wide { width: 100%; padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; font-size: .95rem; box-sizing: border-box; }
   `],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="page">
       <div class="page-header">

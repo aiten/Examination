@@ -1,4 +1,4 @@
-import { Component, computed, input, signal } from '@angular/core';
+import { Component, computed, input, signal, ChangeDetectionStrategy } from '@angular/core';
 import { StudentExamResult, StudentExamResultSubtask } from '../models/exam-result.model';
 
 type SortColumn = 'seqNo' | 'description' | 'points' | 'percent' | 'comment' | 'date';
@@ -56,6 +56,7 @@ type SortDir = 'asc' | 'desc';
       </div>
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .sortable { cursor: pointer; user-select: none; }
     .sortable:hover { background: #e4eaf0; }

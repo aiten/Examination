@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Student } from '../models/student.model';
@@ -14,6 +14,7 @@ import { SchoolClass } from '../models/class.model';
     .checkbox-list { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
     .checkbox-item { display: flex; align-items: center; gap: 8px; font-weight: normal; cursor: pointer; }
   `],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="page">
       <h2>{{ isNew ? 'New Student' : 'Edit Student' }}</h2>

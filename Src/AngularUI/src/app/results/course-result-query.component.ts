@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseResultService } from '../services/course-result.service';
@@ -8,6 +8,7 @@ import { StudentCourseResultQuery } from '../models/course-result.model';
   selector: 'app-result-course-query',
   standalone: true,
   imports: [FormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="page">
       <h2>Get Course Result</h2>

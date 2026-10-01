@@ -19,6 +19,7 @@ import { SubjectListComponent } from './subjects/subject-list.component';
 import { SubjectFormComponent } from './subjects/subject-form.component';
 import { CourseListComponent } from './courses/course-list.component';
 import { CourseFormComponent } from './courses/course-form.component';
+import { CourseStudentsComponent } from './courses/course-students.component';
 import { ExamRegistrationFormComponent } from './registration/exam-registration-form.component';
 import { CourseRegistrationFormComponent } from './registration/course-registration-form.component';
 import { ExamRegistrationResultComponent } from './registration/exam-registration-result.component';
@@ -53,6 +54,7 @@ export const routes: Routes = [
   { path: 'subjects', component: SubjectListComponent, canActivate: [canActivateAuthRole],   data: { role: environment.roles.admin },  },
   { path: 'subjects/:id', component: SubjectFormComponent, canActivate: [canActivateAuthRole],   data: { role: environment.roles.admin },  },
   { path: 'courses', component: CourseListComponent, canActivate: [canActivateAuthRole],   data: { role: environment.roles.admin },  },
+  { path: 'courses/:courseId/students', component: CourseStudentsComponent, canActivate: [canActivateAuthRole],   data: { role: environment.roles.admin },  },
   { path: 'courses/:id', component: CourseFormComponent, canActivate: [canActivateAuthRole],   data: { role: environment.roles.admin },  },
   { path: 'registration/exam', component: ExamRegistrationFormComponent },
   { path: 'registration/course', component: CourseRegistrationFormComponent },

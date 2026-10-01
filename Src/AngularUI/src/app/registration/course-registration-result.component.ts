@@ -1,4 +1,4 @@
-import { Component, computed, effect, ElementRef, ViewChild } from '@angular/core';
+import { Component, computed, effect, ElementRef, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { CourseRegistrationService } from '../services/cource-registration.service';
 import QRCode from 'qrcode';
@@ -7,6 +7,7 @@ import QRCode from 'qrcode';
   selector: 'app-register-course-result',
   standalone: true,
   imports: [RouterModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (result()) {
       <div class="page">

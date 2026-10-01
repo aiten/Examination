@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, OnInit, computed, signal, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { GradeSummary, StudentExamOverview } from '../models/student-exam.model';
 import { StudentExamService } from '../services/student-exam.service';
@@ -18,6 +18,7 @@ type SortCol = keyof Pick<StudentExamOverview, 'lastName' | 'firstName' | 'login
     .col-reg-code { width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .col-actions { white-space: nowrap; }
   `],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="page">
       <div class="page-header">

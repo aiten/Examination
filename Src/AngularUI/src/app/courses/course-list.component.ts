@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { Course } from '../models/course.model';
 import { CourseService } from '../services/course.service';
@@ -17,6 +17,7 @@ type SortCol = 'name' | 'year' | 'subject';
     .sort-icon { margin-left: 4px; font-size: .8em; opacity: .5; }
     th.sort-active .sort-icon { opacity: 1; }
   `],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="page">
       <div class="page-header">
@@ -53,6 +54,7 @@ type SortCol = 'name' | 'year' | 'subject';
                 <td>{{ c.classIds.length }}</td>
                 <td>{{ c.teacherIds.length }}</td>
                 <td>
+                  <a [routerLink]="['/courses', c.id, 'students']" class="btn btn-sm">Students</a>
                   <a [routerLink]="['/courses', c.id]" class="btn btn-sm">Edit</a>
                 </td>
               </tr>
