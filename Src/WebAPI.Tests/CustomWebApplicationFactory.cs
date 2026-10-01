@@ -24,6 +24,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
     public ISubtaskService        SubtaskService        { get; } = Substitute.For<ISubtaskService>();
     public IStudentExamService    StudentExamService    { get; } = Substitute.For<IStudentExamService>();
     public IStudentSubtaskService StudentSubtaskService { get; } = Substitute.For<IStudentSubtaskService>();
+    public IStudentCourseService  StudentCourseService  { get; } = Substitute.For<IStudentCourseService>();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -41,6 +42,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
                             d.ServiceType == typeof(ISubtaskService) ||
                             d.ServiceType == typeof(IStudentExamService) ||
                             d.ServiceType == typeof(IStudentSubtaskService) ||
+                            d.ServiceType == typeof(IStudentCourseService) ||
                             (d.ServiceType.FullName != null && d.ServiceType.FullName.Contains("DbContext")) ||
                             (d.ImplementationType != null && d.ImplementationType.Assembly == persistenceAssembly))
                 .ToList();
@@ -60,6 +62,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
             services.AddScoped<ISubtaskService>(_ => SubtaskService);
             services.AddScoped<IStudentExamService>(_ => StudentExamService);
             services.AddScoped<IStudentSubtaskService>(_ => StudentSubtaskService);
+            services.AddScoped<IStudentCourseService>(_ => StudentCourseService);
 
             // Replace Keycloak authentication with a test handler that always succeeds
             services.AddAuthentication(options =>

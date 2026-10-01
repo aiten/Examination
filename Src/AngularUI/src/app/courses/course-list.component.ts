@@ -54,6 +54,7 @@ type SortCol = 'name' | 'year' | 'subject';
                 <td>{{ c.classIds.length }}</td>
                 <td>{{ c.teacherIds.length }}</td>
                 <td>
+                  <a [routerLink]="['/courses', c.id, 'students']" class="btn btn-sm">Students</a>
                   <a [routerLink]="['/courses', c.id]" class="btn btn-sm">Edit</a>
                 </td>
               </tr>
