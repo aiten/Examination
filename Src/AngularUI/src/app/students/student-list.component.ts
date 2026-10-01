@@ -124,6 +124,7 @@ export class StudentListComponent implements OnInit {
     return student.classIds
       .map(id => classMap.get(id))
       .filter(c => c != null)
+      .sort((a, b) => a!.year - b!.year)
       .map(c => `${c!.description}(${c!.year})`)
       .join(', ');
   }
