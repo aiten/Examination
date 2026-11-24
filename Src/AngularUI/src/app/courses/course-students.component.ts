@@ -21,6 +21,10 @@ type SortCol = 'lastName' | 'firstName' | 'registrationCode';
     <div class="page">
       <div class="page-header">
         <h2>Assigned Students{{ courseName() ? ' — ' + courseName() : '' }}</h2>
+        <label>
+          <input type="checkbox" [checked]="showCodes()" (change)="showCodes.set($any($event.target).checked)" />
+          Show registration codes
+        </label>
         <a routerLink="/courses" class="btn">Back to Courses</a>
       </div>
 
@@ -48,11 +52,12 @@ type SortCol = 'lastName' | 'firstName' | 'registrationCode';
               <tr>
                 <td>{{ s.lastName }}</td>
                 <td>{{ s.firstName }}</td>
-                <td>{{ s.registrationCode }}</td>
+                <td>{{ showCodes() ? s.registrationCode : '' }}</td>
               </tr>
             }
           </tbody>
         </table>
+        <p class="count">Assigned students: {{ students().length }}</p>
       }
 
       @if (!loading() && students().length === 0 && !error()) {
@@ -74,12 +79,15 @@ export class CourseStudentsComponent implements OnInit {
   error = signal('');
   sortCol = signal<SortCol>('lastName');
   sortAsc = signal(true);
+  showCodes = signal(false);
 
   sorted = computed(() => {
     const col = this.sortCol();
     const dir = this.sortAsc() ? 1 : -1;
+    const hideCodes = !this.showCodes();
+    const value = (s: StudentCourse) => (col === 'registrationCode' && hideCodes ? '' : s[col]) ?? '';
     return this.students().slice().sort((a, b) =>
-      (a[col] ?? '').localeCompare(b[col] ?? '', undefined, { sensitivity: 'base' }) * dir);
+      value(a).localeCompare(value(b), undefined, { sensitivity: 'base' }) * dir);
   });
 
   constructor(

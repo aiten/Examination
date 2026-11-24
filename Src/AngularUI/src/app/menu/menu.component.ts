@@ -19,7 +19,6 @@ import {
 })
 export class MenuComponent {
   authenticated = false;
-  keycloakStatus: string | undefined;
   readonly roles = environment.roles;
   readonly keycloak = inject(Keycloak);
   readonly keycloakSignal = inject(KEYCLOAK_EVENT_SIGNAL);
@@ -27,8 +26,6 @@ export class MenuComponent {
   constructor() {
     effect(() => {
       const keycloakEvent = this.keycloakSignal();
-
-      this.keycloakStatus = keycloakEvent.type;
 
       if (keycloakEvent.type === KeycloakEventType.Ready) {
         this.authenticated = typeEventArgs<ReadyArgs>(keycloakEvent.args);
