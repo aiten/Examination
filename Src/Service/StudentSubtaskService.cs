@@ -3,6 +3,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -31,7 +33,15 @@ public interface IStudentSubtaskService
     Task UpdateStudentSubtaskAsync(int id, int examId, StudentSubtask value);
 
     Task<StudentSubtask> AddStudentSubtaskAsync(int examId, StudentSubtask value);
+
+    /// <summary>
+    /// Imports an evaluation (JSON array of { name, percent, reason }; other properties are ignored) for a student exam.
+    /// Subtasks are matched by description; unmatched entries are reported in the result.
+    /// </summary>
+    Task<StudentSubtaskImportResult> ImportStudentSubtasksAsync(int examId, int studentExamId, string content);
 }
+
+public record StudentSubtaskImportResult(int Imported, IList<string> NotFound);
 
 public class StudentSubtaskService : IStudentSubtaskService
 {
@@ -166,5 +176,122 @@ public class StudentSubtaskService : IStudentSubtaskService
         //await _hub.NotifyStudentSubtaskUpdatedAsync(value.Id);
 
         return value;
+    }
+
+    private const int MaxCommentLength = 2000;
+
+    private static readonly JsonSerializerOptions ImportJsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        NumberHandling              = JsonNumberHandling.AllowReadingFromString,
+        ReadCommentHandling         = JsonCommentHandling.Skip,
+        AllowTrailingCommas         = true
+    };
+
+    private sealed record ImportItem(string? Name, decimal? Percent, string? Reason);
+
+    public async Task<StudentSubtaskImportResult> ImportStudentSubtasksAsync(int examId, int studentExamId, string content)
+    {
+        var items = ParseImport(content);
+
+        await CheckStudentExamBelongsToExam(examId, studentExamId);
+
+        var subtasks = await _uow.Subtasks.GetNoTrackingAsync(st => st.ExamId == examId);
+        var existing = await _uow.StudentSubtasks.GetAsync(ss => ss.StudentExamId == studentExamId);
+
+        var imported = 0;
+        var notFound = new List<string>();
+
+        foreach (var item in items)
+        {
+            var name    = item.Name!.Trim();
+            var subtask = subtasks.FirstOrDefault(st => string.Equals(st.Description.Trim(), name, StringComparison.OrdinalIgnoreCase));
+            if (subtask is null)
+            {
+                notFound.Add(name);
+                continue;
+            }
+
+            var result  = item.Percent.HasValue ? Math.Round(item.Percent.Value) / 100M : (decimal?)null;
+            var comment = string.IsNullOrWhiteSpace(item.Reason) ? null : item.Reason.Trim();
+            if (comment is { Length: > MaxCommentLength })
+            {
+                comment = comment[..MaxCommentLength];
+            }
+
+            var entity = existing.FirstOrDefault(ss => ss.SubtaskId == subtask.Id);
+            if (entity is null)
+            {
+                entity = new StudentSubtask { StudentExamId = studentExamId, SubtaskId = subtask.Id };
+                await _uow.StudentSubtasks.AddAsync(entity);
+                existing.Add(entity);
+            }
+
+            entity.Result  = result;
+            entity.Comment = comment;
+            imported++;
+        }
+
+        await _uow.SaveChangesAsync();
+
+        return new StudentSubtaskImportResult(imported, notFound);
+    }
+
+    private static IList<ImportItem> ParseImport(string content)
+    {
+        var json = content.Trim();
+
+        // tolerate a markdown code fence around the JSON as copied from a chat
+        if (json.StartsWith("```"))
+        {
+            var start = json.IndexOf('\n');
+            var end   = json.LastIndexOf("```", StringComparison.Ordinal);
+            if (start >= 0 && end > start)
+            {
+                json = json[(start + 1)..end].Trim();
+            }
+        }
+
+        if (json.Length == 0)
+        {
+            throw new IllegalValuesException("Import content is empty");
+        }
+
+        // tolerate a list of objects without surrounding brackets and with a trailing comma
+        if (json.StartsWith('{'))
+        {
+            json = "[" + json.TrimEnd(',', ' ', '\r', '\n', '\t') + "]";
+        }
+
+        List<ImportItem>? items;
+        try
+        {
+            items = JsonSerializer.Deserialize<List<ImportItem>>(json, ImportJsonOptions);
+        }
+        catch (JsonException ex)
+        {
+            throw new IllegalValuesException($"Import content is not valid JSON: {ex.Message}");
+        }
+
+        if (items is null || items.Count == 0)
+        {
+            throw new IllegalValuesException("Import content contains no entries");
+        }
+
+        for (var i = 0; i < items.Count; i++)
+        {
+            var item = items[i];
+            if (item is null || string.IsNullOrWhiteSpace(item.Name))
+            {
+                throw new IllegalValuesException($"Entry {i + 1} has no 'name'");
+            }
+
+            if (item.Percent is < 0 or > 100)
+            {
+                throw new IllegalValuesException($"Entry '{item.Name}': 'percent' must be between 0 and 100");
+            }
+        }
+
+        return items;
     }
 }

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { StudentSubtask } from '../models/student-subtask.model';
+import { StudentSubtask, StudentSubtaskImportResult } from '../models/student-subtask.model';
 
 @Injectable({ providedIn: 'root' })
 export class StudentSubtaskService {
@@ -21,6 +21,10 @@ export class StudentSubtaskService {
 
   create(examId: number, studentExamId: number, subtask: StudentSubtask): Observable<StudentSubtask> {
     return this.http.post<StudentSubtask>(`${this.url(examId, studentExamId)}`, subtask);
+  }
+
+  import(examId: number, studentExamId: number, content: string): Observable<StudentSubtaskImportResult> {
+    return this.http.post<StudentSubtaskImportResult>(`${this.url(examId, studentExamId)}/import`, { content });
   }
 
 }

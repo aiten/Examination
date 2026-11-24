@@ -11,6 +11,10 @@ public record StudentSubtaskDto(int Id, int SubtaskId, string Description, int P
 
 public record StudentSubtaskCreateDto(int SubtaskId, decimal? Result, string? Comment, string? CommentPrivate, DateOnly? Date);
 
+public record StudentSubtaskImportDto(string Content);
+
+public record StudentSubtaskImportResultDto(int Imported, IList<string> NotFound);
+
 public static class StudentSubtaskEndpoints
 {
     #region Dto-Entity Mapping
@@ -120,6 +124,21 @@ public static class StudentSubtaskEndpoints
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound);
+
+        route.MapPost("/import", async (int examId, int studentExamId, StudentSubtaskImportDto dto, IStudentSubtaskService studentSubtaskService, ITransactionProvider transactionProvider) =>
+            {
+                using var trans = await transactionProvider.BeginTransactionAsync();
+
+                var result = await studentSubtaskService.ImportStudentSubtasksAsync(examId, studentExamId, dto.Content);
+
+                await trans.CommitTransactionAsync();
+
+                return Results.Ok(new StudentSubtaskImportResultDto(result.Imported, result.NotFound));
+            })
+            .WithName("ImportStudentSubtasks")
+            .Produces<StudentSubtaskImportResultDto>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status409Conflict);
 
         /*
                 route.MapPut("/bulk/{id:int}", async (int examId, int id, IList<StudentSubtaskUpdateDto> updates, IStudentSubtaskService studentSubtaskService, ITransactionProvider transactionProvider) =>

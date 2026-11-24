@@ -10,3 +10,8 @@ export interface StudentSubtask {
   commentPrivate: string | null;
   date: string | null;
 }
+
+export interface StudentSubtaskImportResult {
+  imported: number;
+  notFound: string[];
+}

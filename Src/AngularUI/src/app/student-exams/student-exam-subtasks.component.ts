@@ -83,6 +83,22 @@ import { ExamService } from '../services/exam.service';
         </form>
       }
 
+      @if (!loading() && subtasks().length > 0) {
+        <details class="import-box">
+          <summary>Import evaluation (JSON)</summary>
+          <p>
+            Paste the evaluation as JSON array, e.g.
+            <code>[{{ '{' }}"name": "Description", "percent": 75, "reason": "Reason"{{ '}' }}]</code>.
+            Subtasks are matched by description, <code>percent</code> is 0-100, other properties (e.g. points, max) are ignored.
+            Existing results and comments of the matched subtasks are overwritten.
+          </p>
+          <textarea [(ngModel)]="importText" name="importText" rows="10" class="input-wide" style="width:100%"></textarea>
+          <div class="form-actions">
+            <button type="button" class="btn btn-primary" (click)="importResults()" [disabled]="!importText.trim() || importing()">Import</button>
+          </div>
+        </details>
+      }
+
       @if (successMessage()) {
         <p class="success">{{ successMessage() }}</p>
       }
@@ -101,6 +117,8 @@ export class StudentExamSubtasksComponent implements OnInit {
   subtasks = signal<StudentSubtask[]>([]);
   examType = signal(0);
   loading = signal(false);
+  importing = signal(false);
+  importText = '';
   error = signal('');
   successMessage = signal('');
 
@@ -153,6 +171,27 @@ export class StudentExamSubtasksComponent implements OnInit {
 
   refresh(): void {
     this.subtasks.update(s => [...s]);
+  }
+
+  importResults(): void {
+    this.error.set('');
+    this.successMessage.set('');
+    this.importing.set(true);
+    this.subtaskService.import(this.examId, this.studentExamId, this.importText).subscribe({
+      next: result => {
+        this.importing.set(false);
+        this.importText = '';
+        this.load();
+        this.successMessage.set(`Imported ${result.imported} subtask(s).`);
+        if (result.notFound.length > 0) {
+          this.error.set(`No matching subtask for: ${result.notFound.join('; ')}`);
+        }
+      },
+      error: err => {
+        this.importing.set(false);
+        this.error.set(err.error?.detail ?? 'Import failed.');
+      }
+    });
   }
 
   save(): void {

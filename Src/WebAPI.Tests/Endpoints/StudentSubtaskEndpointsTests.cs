@@ -174,4 +174,45 @@ public class StudentSubtaskEndpointsTests : IClassFixture<CustomWebApplicationFa
 
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
     }
+
+    // ── POST import ────────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task ImportStudentSubtasks_Valid_ReturnsOkAndCommits()
+    {
+        var trans = Substitute.For<ITransaction>();
+        _uow.BeginTransactionAsync().Returns(trans);
+        _studentSubtaskService.ImportStudentSubtasksAsync(1, 1, "[]")
+            .Returns(new StudentSubtaskImportResult(2, new List<string> { "Unknown" }));
+
+        var response = await _client.PostAsJsonAsync("/api/exam/1/students/1/subtasks/import", new StudentSubtaskImportDto("[]"));
+        var result   = await response.Content.ReadFromJsonAsync<StudentSubtaskImportResultDto>();
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        result!.Imported.Should().Be(2);
+        result.NotFound.Should().ContainSingle().Which.Should().Be("Unknown");
+        await trans.Received(1).CommitTransactionAsync();
+    }
+
+    [Fact]
+    public async Task ImportStudentSubtasks_InvalidContent_Returns400()
+    {
+        _studentSubtaskService.ImportStudentSubtasksAsync(1, 1, "x")
+            .Returns(Task.FromException<StudentSubtaskImportResult>(new IllegalValuesException("not valid JSON")));
+
+        var response = await _client.PostAsJsonAsync("/api/exam/1/students/1/subtasks/import", new StudentSubtaskImportDto("x"));
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task ImportStudentSubtasks_WrongExam_Returns409()
+    {
+        _studentSubtaskService.ImportStudentSubtasksAsync(1, 99, "[]")
+            .Returns(Task.FromException<StudentSubtaskImportResult>(new ConflictException("No StudentExam found")));
+
+        var response = await _client.PostAsJsonAsync("/api/exam/1/students/99/subtasks/import", new StudentSubtaskImportDto("[]"));
+
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+    }
 }
