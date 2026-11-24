@@ -25,7 +25,7 @@ import { TeacherService } from '../services/teacher.service';
       <form (ngSubmit)="save()" #form="ngForm" class="form">
         <div class="form-group">
           <label>Name *</label>
-          <input name="name" [(ngModel)]="course().name" required minlength="2" class="form-control" />
+          <input name="name" [(ngModel)]="course().name" maxlength="64" required minlength="2" class="form-control" />
         </div>
         <div class="form-group">
           <label>Year *</label>

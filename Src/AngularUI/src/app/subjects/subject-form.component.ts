@@ -15,11 +15,11 @@ import { SubjectService } from '../services/subject.service';
       <form (ngSubmit)="save()" #form="ngForm" class="form">
         <div class="form-group">
           <label>Name *</label>
-          <input name="name" [(ngModel)]="subject().name" required minlength="2" class="form-control" />
+          <input name="name" [(ngModel)]="subject().name" maxlength="64" required minlength="2" class="form-control" />
         </div>
         <div class="form-group">
           <label>Comment</label>
-          <textarea name="comment" [(ngModel)]="subject().comment" maxlength="256" class="form-control" rows="3"></textarea>
+          <textarea name="comment" [(ngModel)]="subject().comment" maxlength="2000" class="form-control" rows="3"></textarea>
         </div>
         <div class="form-actions">
           <button type="submit" class="btn btn-primary" [disabled]="form.invalid">Save</button>

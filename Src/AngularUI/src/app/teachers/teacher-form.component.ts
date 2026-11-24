@@ -15,15 +15,15 @@ import { TeacherService } from '../services/teacher.service';
       <form (ngSubmit)="save()" #form="ngForm" class="form">
         <div class="form-group">
           <label>Last Name *</label>
-          <input name="lastName" [(ngModel)]="teacher().lastName" required minlength="3" class="form-control" />
+          <input name="lastName" [(ngModel)]="teacher().lastName" maxlength="128" required minlength="3" class="form-control" />
         </div>
         <div class="form-group">
           <label>First Name</label>
-          <input name="firstName" [(ngModel)]="teacher().firstName" class="form-control" />
+          <input name="firstName" [(ngModel)]="teacher().firstName" maxlength="128" class="form-control" />
         </div>
         <div class="form-group">
           <label>Nick Name</label>
-          <input name="nickName" [(ngModel)]="teacher().nickName" class="form-control" />
+          <input name="nickName" [(ngModel)]="teacher().nickName" maxlength="128" class="form-control" />
         </div>
         <div class="form-group">
           <label>Abbreviation</label>

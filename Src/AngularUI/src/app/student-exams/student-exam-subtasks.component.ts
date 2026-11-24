@@ -55,10 +55,10 @@ import { ExamService } from '../services/exam.service';
                            min="0" max="100" step="1" class="input-narrow" />
                   </td>
                   <td>
-                    <input type="text" [(ngModel)]="s.comment" [name]="'comment_' + s.id" class="input-wide" />
+                    <input type="text" [(ngModel)]="s.comment" maxlength="2000" [name]="'comment_' + s.id" class="input-wide" />
                   </td>
                   <td>
-                    <input type="text" [(ngModel)]="s.commentPrivate" [name]="'commentPrivate_' + s.id" class="input-wide" />
+                    <input type="text" [(ngModel)]="s.commentPrivate" maxlength="2000" [name]="'commentPrivate_' + s.id" class="input-wide" />
                   </td>
                 </tr>
               }

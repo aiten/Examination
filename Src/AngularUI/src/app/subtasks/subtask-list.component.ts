@@ -53,7 +53,7 @@ import { ExamService } from '../services/exam.service';
                   <input class="grid-input"
                     [ngModel]="editDescription()"
                     (ngModelChange)="editDescription.set($event)"
-                    placeholder="Description" />
+                    maxlength="256" placeholder="Description" />
                 </td>
                 <td class="col-points">
                   <input type="number" class="grid-input"
@@ -99,7 +99,7 @@ import { ExamService } from '../services/exam.service';
                 <input class="grid-input"
                   [ngModel]="newDescription()"
                   (ngModelChange)="newDescription.set($event)"
-                  placeholder="Description" />
+                  maxlength="256" placeholder="Description" />
               </td>
               <td class="col-points">
                 <input type="number" class="grid-input"

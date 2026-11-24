@@ -70,10 +70,10 @@ interface StudentRow {
                            min="0" max="100" step="1" class="input-narrow" />
                   </td>
                   <td>
-                    <input type="text" [(ngModel)]="row.comment" [name]="'comment_' + row.studentExamId" class="input-wide" />
+                    <input type="text" [(ngModel)]="row.comment" maxlength="2000" [name]="'comment_' + row.studentExamId" class="input-wide" />
                   </td>
                   <td>
-                    <input type="text" [(ngModel)]="row.commentPrivate" [name]="'commentPrivate_' + row.studentExamId" class="input-wide" />
+                    <input type="text" [(ngModel)]="row.commentPrivate" maxlength="2000" [name]="'commentPrivate_' + row.studentExamId" class="input-wide" />
                   </td>
                 </tr>
               }

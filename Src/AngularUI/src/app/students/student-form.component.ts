@@ -21,11 +21,11 @@ import { SchoolClass } from '../models/class.model';
       <form (ngSubmit)="save()" #form="ngForm" class="form">
         <div class="form-group">
           <label>Last Name *</label>
-          <input name="lastName" [(ngModel)]="lastName" required minlength="2" class="form-control" />
+          <input name="lastName" [(ngModel)]="lastName" maxlength="64" required minlength="2" class="form-control" />
         </div>
         <div class="form-group">
           <label>First Name *</label>
-          <input name="firstName" [(ngModel)]="firstName" required minlength="2" class="form-control" />
+          <input name="firstName" [(ngModel)]="firstName" maxlength="64" required minlength="2" class="form-control" />
         </div>
         <div class="form-group">
           <label>Classes</label>

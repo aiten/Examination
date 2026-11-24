@@ -28,7 +28,7 @@ import { SignalRService } from '../services/signalr.service';
       <form (ngSubmit)="save()" #form="ngForm" class="form">
         <div class="form-group">
           <label>Description *</label>
-          <textarea name="description" [(ngModel)]="exam().description" required rows="3" class="form-control"></textarea>
+          <textarea name="description" [(ngModel)]="exam().description" required maxlength="2000" rows="3" class="form-control"></textarea>
         </div>
         <div class="form-group">
           <label>PIN (5 digits)</label>
