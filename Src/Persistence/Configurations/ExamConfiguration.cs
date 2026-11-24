@@ -29,6 +29,6 @@ public class ExamConfiguration : IEntityTypeConfiguration<Exam>
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.Property(c => c.Description)
-            .HasMaxLength(200);
+            .HasMaxLength(2000);
     }
 }

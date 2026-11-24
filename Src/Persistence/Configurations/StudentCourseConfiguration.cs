@@ -20,7 +20,7 @@ public class StudentCourseConfiguration : IEntityTypeConfiguration<StudentCourse
             .HasMaxLength(5);
 
         builder.Property(sc => sc.Comment)
-            .HasMaxLength(256);
+            .HasMaxLength(2000);
 
         builder.HasIndex(se => new { se.RegistrationCode, se.CourseId })
             .IsUnique();

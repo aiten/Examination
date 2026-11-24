@@ -19,10 +19,10 @@ public class StudentSubtaskConfiguration : IEntityTypeConfiguration<StudentSubta
             .IsUnique();
 
         builder.Property(ss => ss.Comment)
-            .HasMaxLength(250);
+            .HasMaxLength(2000);
 
         builder.Property(ss => ss.CommentPrivate)
-            .HasMaxLength(250);
+            .HasMaxLength(2000);
 
         builder.Property(ss => ss.Result)
             .AsDecimal(3, 2);

@@ -18,6 +18,6 @@ public class SubjectConfiguration : IEntityTypeConfiguration<Subject>
             .HasMaxLength(64);
 
         builder.Property(s => s.Comment)
-            .HasMaxLength(256);
+            .HasMaxLength(2000);
     }
 }
