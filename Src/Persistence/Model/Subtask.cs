@@ -13,6 +13,8 @@ public class Subtask : EntityObject
     public int  Points { get; set; }
     public bool Bonus  { get; set; }
 
+    public string? ExpectedResult { get; set; }
+
     public int ExamId { get; set; }
 
     public Exam Exam { get; set; } = null!;

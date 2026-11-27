@@ -15,5 +15,8 @@ public class SubtaskConfiguration : IEntityTypeConfiguration<Subtask>
 
         builder.Property(c => c.Description)
             .HasMaxLength(256);
+
+        builder.Property(c => c.ExpectedResult)
+            .HasMaxLength(2000);
     }
 }

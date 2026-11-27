@@ -448,6 +448,10 @@ namespace Persistence.Migrations
                     b.Property<int>("ExamId")
                         .HasColumnType("int");
 
+                    b.Property<string>("ExpectedResult")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
                     b.Property<int>("Points")
                         .HasColumnType("int");
 

@@ -13,6 +13,10 @@ public class SubtaskDtoValidator : AbstractValidator<SubtaskDto>
             .MaximumLength(256)
             .WithMessage("Description must not be empty and at most 256 characters.");
 
+        RuleFor(x => x.ExpectedResult)
+            .MaximumLength(2000)
+            .WithMessage("ExpectedResult must be at most 2000 characters.");
+
         RuleFor(x => x.Points)
             .GreaterThan(0)
             .Unless(x => x.Bonus == true)

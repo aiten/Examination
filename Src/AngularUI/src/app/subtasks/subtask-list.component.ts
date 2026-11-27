@@ -4,14 +4,18 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { Subtask } from '../models/subtask.model';
 import { SubtaskService } from '../services/subtask.service';
 import { ExamService } from '../services/exam.service';
+import { subtasksToMarkdown } from './subtask-export';
+import { SubtaskExportDialogComponent } from './subtask-export-dialog.component';
 
 @Component({
   selector: 'app-subtask-list',
   standalone: true,
-  imports: [FormsModule, RouterModule],
+  imports: [FormsModule, RouterModule, SubtaskExportDialogComponent],
   styles: [`
     .grid-input { width: 100%; padding: 4px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: .95rem; box-sizing: border-box; }
     .grid-input:focus { outline: none; border-color: #1a73e8; box-shadow: 0 0 0 2px rgba(26,115,232,.2); }
+    .expected-input { margin-top: 6px; resize: vertical; font-family: inherit; }
+    .expected-text { margin-top: 4px; font-size: .85rem; color: #666; white-space: pre-wrap; }
     .col-seq { width: 90px; }
     .col-points { width: 110px; }
     .col-bonus { width: 80px; text-align: center; }
@@ -22,7 +26,11 @@ import { ExamService } from '../services/exam.service';
     <div class="page">
       <div class="page-header">
         <h2>Subtasks{{ examDescription() ? ' — ' + examDescription() : '' }}</h2>
-        <a routerLink="/exams" class="btn">Back to Exams</a>
+        <div>
+          <button type="button" class="btn" (click)="openExport()"
+            [disabled]="loading() || subtasks().length === 0">Export</button>
+          <a routerLink="/exams" class="btn">Back to Exams</a>
+        </div>
       </div>
 
       @if (loading()) {
@@ -54,6 +62,10 @@ import { ExamService } from '../services/exam.service';
                     [ngModel]="editDescription()"
                     (ngModelChange)="editDescription.set($event)"
                     maxlength="256" placeholder="Description" />
+                  <textarea class="grid-input expected-input" rows="4"
+                    [ngModel]="editExpectedResult()"
+                    (ngModelChange)="editExpectedResult.set($event)"
+                    maxlength="2000" placeholder="Erwartungshorizont"></textarea>
                 </td>
                 <td class="col-points">
                   <input type="number" class="grid-input"
@@ -76,7 +88,12 @@ import { ExamService } from '../services/exam.service';
             } @else {
               <tr>
                 <td class="col-seq">{{ s.seqNo }}</td>
-                <td>{{ s.description }}</td>
+                <td>
+                  {{ s.description }}
+                  @if (s.expectedResult) {
+                    <div class="expected-text">{{ s.expectedResult }}</div>
+                  }
+                </td>
                 <td class="col-points">{{ s.points }}</td>
                 <td class="col-bonus">{{ s.bonus ? 'Yes' : '' }}</td>
                 <td class="col-actions">
@@ -100,6 +117,10 @@ import { ExamService } from '../services/exam.service';
                   [ngModel]="newDescription()"
                   (ngModelChange)="newDescription.set($event)"
                   maxlength="256" placeholder="Description" />
+                <textarea class="grid-input expected-input" rows="4"
+                  [ngModel]="newExpectedResult()"
+                  (ngModelChange)="newExpectedResult.set($event)"
+                  maxlength="2000" placeholder="Erwartungshorizont"></textarea>
               </td>
               <td class="col-points">
                 <input type="number" class="grid-input"
@@ -137,6 +158,10 @@ import { ExamService } from '../services/exam.service';
       @if (error()) {
         <p class="error">{{ error() }}</p>
       }
+
+      @if (exportContent() !== null) {
+        <app-subtask-export-dialog [content]="exportContent()!" (closed)="exportContent.set(null)" />
+      }
     </div>
   `
 })
@@ -147,18 +172,21 @@ export class SubtaskListComponent implements OnInit {
   examDescription = signal('');
   loading = signal(false);
   error = signal('');
+  exportContent = signal<string | null>(null);
 
   editingId = signal<number | null>(null);
   editSeqNo = signal(0);
   editDescription = signal('');
   editPoints = signal(0);
   editBonus = signal(false);
+  editExpectedResult = signal('');
 
   isAdding = signal(false);
   newSeqNo = signal(0);
   newDescription = signal('');
   newPoints = signal(0);
   newBonus = signal(false);
+  newExpectedResult = signal('');
 
   constructor(
     private service: SubtaskService,
@@ -180,12 +208,17 @@ export class SubtaskListComponent implements OnInit {
     });
   }
 
+  openExport(): void {
+    this.exportContent.set(subtasksToMarkdown(this.examDescription(), this.subtasks()));
+  }
+
   startEdit(s: Subtask): void {
     this.editingId.set(s.id);
     this.editSeqNo.set(s.seqNo);
     this.editDescription.set(s.description);
     this.editPoints.set(s.points);
     this.editBonus.set(s.bonus);
+    this.editExpectedResult.set(s.expectedResult ?? '');
     this.isAdding.set(false);
     this.error.set('');
   }
@@ -195,7 +228,7 @@ export class SubtaskListComponent implements OnInit {
   }
 
   saveEdit(id: number): void {
-    const dto: Subtask = { id, seqNo: this.editSeqNo(), description: this.editDescription(), points: this.editPoints(), bonus: this.editBonus() };
+    const dto: Subtask = { id, seqNo: this.editSeqNo(), description: this.editDescription(), points: this.editPoints(), bonus: this.editBonus(), expectedResult: this.editExpectedResult().trim() || null };
     this.service.update(this.examId, id, dto).subscribe({
       next: () => {
         this.subtasks.update(list => list.map(s => s.id === id ? dto : s).slice().sort((a, b) => a.seqNo - b.seqNo));
@@ -221,6 +254,7 @@ export class SubtaskListComponent implements OnInit {
     this.newDescription.set('');
     this.newPoints.set(0);
     this.newBonus.set(false);
+    this.newExpectedResult.set('');
     this.editingId.set(null);
     this.error.set('');
   }
@@ -230,7 +264,7 @@ export class SubtaskListComponent implements OnInit {
   }
 
   addSave(): void {
-    const dto: Subtask = { id: 0, seqNo: this.newSeqNo(), description: this.newDescription(), points: this.newPoints(), bonus: this.newBonus() };
+    const dto: Subtask = { id: 0, seqNo: this.newSeqNo(), description: this.newDescription(), points: this.newPoints(), bonus: this.newBonus(), expectedResult: this.newExpectedResult().trim() || null };
     this.service.create(this.examId, dto).subscribe({
       next: created => {
         this.subtasks.update(list => [...list, created].slice().sort((a, b) => a.seqNo - b.seqNo));

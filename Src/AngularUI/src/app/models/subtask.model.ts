@@ -4,4 +4,5 @@ export interface Subtask {
   description: string;
   points: number;
   bonus: boolean;
+  expectedResult?: string | null;
 }

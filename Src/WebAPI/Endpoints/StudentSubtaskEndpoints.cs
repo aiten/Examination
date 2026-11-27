@@ -7,7 +7,7 @@ using Persistence.Model;
 
 using Service;
 
-public record StudentSubtaskDto(int Id, int SubtaskId, string Description, int Points, bool Bonus, int SeqNo, decimal? Result, string? Comment, string? CommentPrivate, DateOnly? Date);
+public record StudentSubtaskDto(int Id, int SubtaskId, string Description, int Points, bool Bonus, int SeqNo, decimal? Result, string? Comment, string? CommentPrivate, DateOnly? Date, string? ExpectedResult);
 
 public record StudentSubtaskCreateDto(int SubtaskId, decimal? Result, string? Comment, string? CommentPrivate, DateOnly? Date);
 
@@ -30,7 +30,8 @@ public static class StudentSubtaskEndpoints
             entity.Result.HasValue ? (entity.Result) * 100M : null,
             entity.Comment,
             entity.CommentPrivate,
-            entity.Date);
+            entity.Date,
+            entity.Subtask.ExpectedResult);
 
     private static IList<StudentSubtaskDto> ToDto(IList<StudentSubtask> list) =>
         list.Select(ToDto).ToList();

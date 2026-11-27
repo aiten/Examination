@@ -92,7 +92,7 @@ public class SubtaskEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task PostSubtask_ValidDto_ReturnsCreated()
     {
-        var dto     = new SubtaskDto(0, 1, "Task A", 10, false);
+        var dto     = new SubtaskDto(0, 1, "Task A", 10, false, null);
         var created = new Subtask { Id = 1, ExamId = 1, Description = "Task A", Points = 10 };
         _subtaskService.AddSubtaskAsync(Arg.Any<Subtask>()).Returns(created);
         _subtaskService.GetSubtaskByIdAsync(default, null!).ReturnsForAnyArgs(created);
@@ -105,7 +105,7 @@ public class SubtaskEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task PostSubtask_NonZeroId_ReturnsBadRequest()
     {
-        var dto = new SubtaskDto(5, 1, "Task A", 10, false);
+        var dto = new SubtaskDto(5, 1, "Task A", 10, false, null);
 
         var response = await _client.PostAsJsonAsync("/api/exam/1/subtask", dto);
 
@@ -115,7 +115,7 @@ public class SubtaskEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task PostSubtask_EmptyDescription_ReturnsBadRequest()
     {
-        var dto = new SubtaskDto(0, 3, "", 10, false);
+        var dto = new SubtaskDto(0, 3, "", 10, false, null);
 
         var response = await _client.PostAsJsonAsync("/api/exam/1/subtask", dto);
 
@@ -125,7 +125,7 @@ public class SubtaskEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task PostSubtask_ZeroPoints_ReturnsBadRequest()
     {
-        var dto = new SubtaskDto(0, 5, "Task A", 0, false);
+        var dto = new SubtaskDto(0, 5, "Task A", 0, false, null);
 
         var response = await _client.PostAsJsonAsync("/api/exam/1/subtask", dto);
 
@@ -135,7 +135,7 @@ public class SubtaskEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task PutSubtask_ValidUpdate_ReturnsNoContent()
     {
-        var dto   = new SubtaskDto(1, 3, "Updated", 20, false);
+        var dto   = new SubtaskDto(1, 3, "Updated", 20, false, null);
         var trans = Substitute.For<ITransaction>();
         _uow.BeginTransactionAsync().Returns(trans);
 
@@ -149,7 +149,7 @@ public class SubtaskEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task PutSubtask_IdMismatch_ReturnsBadRequest()
     {
-        var dto = new SubtaskDto(2, 9, "Task A", 10, false);
+        var dto = new SubtaskDto(2, 9, "Task A", 10, false, null);
 
         var response = await _client.PutAsJsonAsync("/api/exam/1/subtask/1", dto);
 
@@ -159,7 +159,7 @@ public class SubtaskEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task PutSubtask_NotFound_ReturnsNotFound()
     {
-        var dto = new SubtaskDto(99, 12, "Task A", 10, false);
+        var dto = new SubtaskDto(99, 12, "Task A", 10, false, null);
         _subtaskService.When(s => s.UpdateSubtaskAsync(99, Arg.Any<Subtask>()))
             .Throw(new NotFoundException("Subtask 99 not found"));
 
@@ -171,7 +171,7 @@ public class SubtaskEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task PutSubtask_WrongExam_ReturnsConflict()
     {
-        var dto = new SubtaskDto(1, 9, "Updated", 20, false);
+        var dto = new SubtaskDto(1, 9, "Updated", 20, false, null);
         _subtaskService.When(s => s.UpdateSubtaskAsync(1, Arg.Any<Subtask>()))
             .Throw(new ConflictException("ExamId mismatch"));
 

@@ -9,14 +9,14 @@ using Service;
 
 using WebAPI.Filters;
 
-public record SubtaskDto(int Id, int SeqNo, string Description, int Points, bool Bonus);
+public record SubtaskDto(int Id, int SeqNo, string Description, int Points, bool Bonus, string? ExpectedResult);
 
 public static class SubtaskEndpoints
 {
     #region Dto-Entity Mapping
 
     private static SubtaskDto ToDto(Subtask entity) =>
-        new(entity.Id, entity.SeqNo, entity.Description, entity.Points, entity.Bonus);
+        new(entity.Id, entity.SeqNo, entity.Description, entity.Points, entity.Bonus, entity.ExpectedResult);
 
     private static IList<SubtaskDto> ToDto(IList<Subtask> list) =>
         list.Select(ToDto).ToList();
@@ -62,7 +62,8 @@ public static class SubtaskEndpoints
                     SeqNo       = dto.SeqNo,
                     Description = dto.Description,
                     Points      = dto.Points,
-                    Bonus       = dto.Bonus
+                    Bonus       = dto.Bonus,
+                    ExpectedResult = dto.ExpectedResult
                 };
 
                 await subtaskService.AddSubtaskAsync(entity);
@@ -89,6 +90,7 @@ public static class SubtaskEndpoints
                     Description = dto.Description,
                     Points      = dto.Points, SeqNo = dto.SeqNo,
                     Bonus       = dto.Bonus,
+                    ExpectedResult = dto.ExpectedResult,
                     ExamId      = examId
                 };
 

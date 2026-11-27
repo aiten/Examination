@@ -76,6 +76,7 @@ public class SubtaskService : ISubtaskService
         entity.SeqNo       = value.SeqNo;
         entity.Points      = value.Points;
         entity.Bonus       = value.Bonus;
+        entity.ExpectedResult = value.ExpectedResult;
 
         await _uow.SaveChangesAsync();
         //await _hub.NotifySubtaskUpdatedAsync(id);
