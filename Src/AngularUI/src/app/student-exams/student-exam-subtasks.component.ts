@@ -12,6 +12,23 @@ import { ExamService } from '../services/exam.service';
   selector: 'app-student-exam-subtasks',
   standalone: true,
   imports: [RouterModule, FormsModule, DecimalPipe],
+  styles: [`
+    .table td { vertical-align: top; }
+    .col-comment { width: 30%; }
+    .comment-box {
+      display: block; min-width: 220px;
+      font-family: inherit; line-height: 1.4; resize: vertical;
+      /* collapsed: grows with the text up to 3 lines, then scrolls */
+      field-sizing: content; min-height: calc(1.4em + 10px); max-height: calc(4.2em + 10px);
+      /* delayed collapse, so the layout does not move while clicking e.g. the Save button */
+      transition: max-height .15s ease .2s;
+    }
+    .comment-box:focus { max-height: 24em; transition-delay: 0s; }
+    @supports not (field-sizing: content) {
+      .comment-box { height: calc(4.2em + 10px); }
+      .comment-box:focus { height: 18em; }
+    }
+  `],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="page">
@@ -35,8 +52,8 @@ import { ExamService } from '../services/exam.service';
                   <th style="width:140px">Date</th>
                 }
                 <th>Result (%)</th>
-                <th>Comment</th>
-                <th>Private Comment</th>
+                <th class="col-comment">Comment</th>
+                <th class="col-comment">Private Comment</th>
               </tr>
             </thead>
             <tbody>
@@ -55,10 +72,10 @@ import { ExamService } from '../services/exam.service';
                            min="0" max="100" step="1" class="input-narrow" />
                   </td>
                   <td>
-                    <input type="text" [(ngModel)]="s.comment" maxlength="2000" [name]="'comment_' + s.id" class="input-wide" />
+                    <textarea [(ngModel)]="s.comment" maxlength="2000" rows="1" [name]="'comment_' + s.id" class="input-wide comment-box"></textarea>
                   </td>
                   <td>
-                    <input type="text" [(ngModel)]="s.commentPrivate" maxlength="2000" [name]="'commentPrivate_' + s.id" class="input-wide" />
+                    <textarea [(ngModel)]="s.commentPrivate" maxlength="2000" rows="1" [name]="'commentPrivate_' + s.id" class="input-wide comment-box"></textarea>
                   </td>
                 </tr>
               }
